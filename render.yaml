@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: anime-tier-night
+    runtime: python
+    plan: free
+    buildCommand: echo "No dependencies to install"
+    startCommand: python server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
