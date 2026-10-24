@@ -161,20 +161,140 @@ def lookup_worker():
         code, aid = lookup_q.get()
         with lock:
             room = rooms.get(code)
-            item = next((x for x in room["anime"] if x["id"] == aid), None) if room else None
+            item = find(room, aid)
             name = item["name"] if item else None
         if not name:
             continue
         m = best_match(name)
         with lock:
             room = rooms.get(code)
-            item = next((x for x in room["anime"] if x["id"] == aid), None) if room else None
+            item = find(room, aid)
             if not item:
                 continue
             item["status"] = "ok" if m and m["img"] else "missing"
             if m:
                 item.update(title=m["title"], img=m["img"], url=m["url"], year=m["year"])
+                # two people typed the same show differently: keep one card, credit both
+                twin = next((x for x in room["anime"] if x is not item and x.get("url") == m["url"]), None)
+                if twin:
+                    for pid in item.get("by", []):
+                        if pid not in twin.setdefault("by", []):
+                            twin["by"].append(pid)
+                    room["anime"].remove(item)
             changed(room)
+
+
+# ---------- AI roast (Gemini, Cerebras, Mistral) ----------
+
+OPENAI_STYLE = {"cerebras": "https://api.cerebras.ai/v1", "mistral": "https://api.mistral.ai/v1"}
+PROVIDER_NAMES = {"gemini": "Gemini", "cerebras": "Cerebras", "mistral": "Mistral"}
+GEMINI = "https://generativelanguage.googleapis.com/v1beta"
+
+
+class AIError(Exception):
+    pass
+
+
+def http_json(url, key_headers, body=None, timeout=90):
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    headers = {"Content-Type": "application/json", "User-Agent": "AnimeTierNight/1.0", **key_headers}
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=headers), timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")
+        try:
+            j = json.loads(detail)
+            detail = (j.get("error") or {}).get("message") if isinstance(j.get("error"), dict) else (j.get("message") or j.get("detail") or j.get("error") or detail)
+        except ValueError:
+            pass
+        reason = {401: "the API key was rejected", 403: "the API key isn't allowed to use this",
+                  404: "that model wasn't found", 429: "it's out of quota or rate limited"}.get(e.code, f"it returned error {e.code}")
+        raise AIError(f"{reason}. {str(detail)[:200]}".strip())
+    except Exception as e:
+        raise AIError(f"couldn't reach it ({e.__class__.__name__}).")
+
+
+def auth(provider, key):
+    return {"x-goog-api-key": key} if provider == "gemini" else {"Authorization": "Bearer " + key}
+
+
+def list_models(provider, key):
+    if provider == "gemini":
+        res = http_json(GEMINI + "/models?pageSize=200", auth(provider, key), timeout=20)
+        ids = [m["name"].split("/", 1)[-1] for m in res.get("models", [])
+               if "generateContent" in (m.get("supportedGenerationMethods") or [])]
+        ids = [i for i in ids if not any(s in i for s in ("embedding", "aqa", "imagen", "tts", "image", "live", "veo"))]
+    else:
+        res = http_json(OPENAI_STYLE[provider] + "/models", auth(provider, key), timeout=20)
+        ids = [m["id"] for m in res.get("data", [])
+               if not any(s in m["id"] for s in ("embed", "moderation", "ocr", "transcribe", "voxtral"))]
+    return sorted(set(ids))
+
+
+def complete(provider, key, model, system, prompt):
+    if provider == "gemini":
+        res = http_json(f"{GEMINI}/models/{urllib.parse.quote(model)}:generateContent", auth(provider, key), {
+            "systemInstruction": {"parts": [{"text": system}]},
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 1.0, "responseMimeType": "application/json"}})
+        parts = ((res.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+    else:
+        res = http_json(OPENAI_STYLE[provider] + "/chat/completions", auth(provider, key), {
+            "model": model, "temperature": 0.95,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]})
+        text = ((res.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+    start, end = text.find("{"), text.rfind("}")
+    if start < 0 or end < start:
+        raise AIError("it answered, but not in the expected format. Try again or switch model.")
+    try:
+        return json.loads(text[start:end + 1])
+    except ValueError:
+        raise AIError("it answered, but the reply was cut off or malformed. Try again or switch model.")
+
+
+SPICE = {
+    "wholesome": "Keep it friendly: gentle teasing, mostly hype and compliments.",
+    "spicy": "Roast properly: sharp, specific jokes about their picks and rankings, balanced with real compliments where earned.",
+    "unhinged": "Go hard: savage, over-the-top roasts like a chaotic friend in the group chat. Still punch at taste, never at identity.",
+}
+
+
+def roast_prompt(room, spice):
+    by_id = {a["id"]: a for a in room["anime"]}
+    lines = [f'Room: "{room["title"]}". Mode: {"each person secretly submitted picks, then everyone ranked the combined pool" if room.get("mode") == "picks" else "host chose the list, everyone ranked it"}.']
+    for pid, p in room["players"].items():
+        lines.append(f'\n## {p["name"]}')
+        if room.get("mode") == "picks":
+            picks = [a["title"] for a in room["anime"] if pid in a.get("by", [])]
+            lines.append("Their secret picks: " + (", ".join(picks) or "none"))
+        for t in TIERS:
+            titles = [by_id[i]["title"] for i in p["tiers"].get(t, []) if i in by_id]
+            if titles:
+                lines.append(f"{t}: " + ", ".join(titles))
+        ranked = {i for t in TIERS for i in p["tiers"].get(t, [])}
+        skipped = [a["title"] for a in room["anime"] if a["id"] not in ranked]
+        if skipped:
+            lines.append("Didn't rank: " + ", ".join(skipped[:15]))
+    if room.get("mode") == "picks":
+        shared = [a["title"] for a in room["anime"] if len(a.get("by", [])) > 1]
+        if shared:
+            lines.append("\nPicked by more than one person: " + ", ".join(shared))
+    names = [p["name"] for p in room["players"].values()]
+    system = ("You are the hype-man and roaster in a friend group's anime tier list night, typing in their group chat "
+              "while they record a video. You know anime deeply: reference real plot points, characters, fandom "
+              "stereotypes and memes so the jokes land. " + SPICE.get(spice, SPICE["spicy"]) +
+              " Never use slurs or attack real-world identity. Keep each message short like a chat text (1-3 sentences), "
+              "casual, funny, no hashtags. Address people by name.")
+    prompt = ("\n".join(lines) + "\n\nWrite the group chat. Return only JSON in this shape:\n"
+              '{"messages":[{"to":"<player name or everyone>","text":"..."}],'
+              '"awards":[{"name":"<player name>","award":"<funny 2-5 word title>"}]}\n'
+              f"Open with one message to everyone, then 2 messages for each of these people: {', '.join(names)}. "
+              "Call out contradictions (e.g. they picked a show then ranked it low, or put a masterpiece in F), "
+              "compare people's taste with each other, then close with one message to everyone naming the best and worst taste. "
+              "Give each person exactly one award.")
+    return system, prompt
 
 
 # ---------- room helpers ----------
@@ -183,22 +303,52 @@ def rid(n=6, alphabet=string.ascii_uppercase + string.digits):
     return "".join(random.choice(alphabet) for _ in range(n))
 
 
+def find(room, aid):
+    return next((x for x in room["anime"] if x["id"] == aid), None) if room else None
+
+
+def clean_name(raw):
+    return raw.strip().lstrip("-*0123456789.) ").strip()[:120]
+
+
+def new_item(room, name, by=None):
+    item = {"id": rid(8), "name": name, "title": name, "img": None, "url": None, "year": None, "status": "searching"}
+    if by is not None:
+        item["by"] = list(by)
+    room["anime"].append(item)
+    lookup_q.put((room["code"], item["id"]))
+    return item
+
+
 def add_anime(room, names):
     seen = {x["name"].lower() for x in room["anime"]}
     for raw in names:
-        name = raw.strip().lstrip("-*0123456789.) ").strip()
+        name = clean_name(raw)
         if not name or name.lower() in seen or len(room["anime"]) >= 150:
             continue
         seen.add(name.lower())
-        item = {"id": rid(8), "name": name[:120], "title": name[:120], "img": None,
-                "url": None, "year": None, "status": "searching"}
-        room["anime"].append(item)
-        lookup_q.put((room["code"], item["id"]))
+        new_item(room, name)
 
 
-def public(room):
-    r = {k: v for k, v in room.items() if k != "hostKey"}
+def hidden_phase(room):
+    return room.get("mode") == "picks" and room.get("phase") != "results"
+
+
+def public(room, viewer=None):
+    r = {k: v for k, v in room.items() if k not in ("hostKey",)}
+    r["now"] = time.time()
     r["players"] = {pid: {k: v for k, v in p.items() if k != "key"} for pid, p in room["players"].items()}
+    if room.get("mode") == "picks":
+        for pid, p in r["players"].items():
+            p["picks"] = sum(1 for a in room["anime"] if pid in a.get("by", []))
+        if hidden_phase(room):
+            # anonymous until the results: nobody sees who picked what
+            r["mine"] = [a["id"] for a in room["anime"] if viewer and viewer in a.get("by", [])]
+            anime = [{k: v for k, v in a.items() if k != "by"} for a in room["anime"]]
+            if room.get("phase") == "submit":
+                r["poolSize"] = len(anime)
+                anime = [a for a in anime if a["id"] in r["mine"]]
+            r["anime"] = anime
     return r
 
 
@@ -212,6 +362,23 @@ def clean_tiers(room, tiers):
                 used.add(aid)
                 out[t].append(aid)
     return out
+
+
+def finish(room):
+    room["phase"] = "results"
+    room["revealed"] = True
+    room["deadline"] = None
+
+
+def ticker():
+    """Ends timed ranking rounds (a 2s grace lets last moves save)."""
+    while True:
+        time.sleep(1)
+        with lock:
+            for room in rooms.values():
+                if room.get("phase") == "ranking" and room.get("deadline") and time.time() > room["deadline"] + 2:
+                    finish(room)
+                    changed(room)
 
 
 # ---------- HTTP ----------
@@ -243,6 +410,10 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             return {}
 
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         parts = [p for p in u.path.split("/") if p]
@@ -270,6 +441,7 @@ class Handler(BaseHTTPRequestHandler):
                 v = int((qs.get("v") or ["-1"])[0])
             except ValueError:
                 v = -1
+            pid, key = (qs.get("pid") or [""])[0], (qs.get("key") or [""])[0]
             deadline = time.time() + 25
             with lock:
                 while code in rooms and rooms[code]["version"] <= v and time.time() < deadline:
@@ -277,7 +449,8 @@ class Handler(BaseHTTPRequestHandler):
                 room = rooms.get(code)
                 if not room:
                     return self.err("Room not found. Check the code.", 404)
-                return self.send_json(public(room))
+                p = room["players"].get(pid)
+                return self.send_json(public(room, pid if p and p["key"] == key else None))
 
         self.err("Not found", 404)
 
@@ -285,16 +458,30 @@ class Handler(BaseHTTPRequestHandler):
         parts = [p for p in urllib.parse.urlparse(self.path).path.split("/") if p]
         b = self.body()
 
+        if parts == ["api", "ai", "models"]:
+            provider, key = b.get("provider"), (b.get("key") or "").strip()
+            if provider not in PROVIDER_NAMES or not key:
+                return self.err("Pick a provider and paste its API key.")
+            try:
+                return self.send_json({"models": list_models(provider, key)})
+            except AIError as e:
+                return self.err(f"{PROVIDER_NAMES[provider]}: {e}", 502)
+
         if parts == ["api", "rooms"]:
             with lock:
                 code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
                 while code in rooms:
                     code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+                mode = "picks" if b.get("mode") == "picks" else "classic"
                 room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Anime Tier Night")[:80],
-                        "anime": [], "players": {}, "revealed": False, "tiers": TIERS,
+                        "mode": mode, "phase": "submit" if mode == "picks" else "ranking",
+                        "picksPer": max(1, min(10, int(b.get("picksPer") or 5))),
+                        "timerSec": max(30, min(1800, int(b.get("timerSec") or 120))), "deadline": None,
+                        "anime": [], "players": {}, "revealed": False, "tiers": TIERS, "roasts": [],
                         "created": time.time(), "version": 0}
                 rooms[code] = room
-                add_anime(room, b.get("list") or [])
+                if mode == "classic":
+                    add_anime(room, b.get("list") or [])
                 changed(room)
                 return self.send_json({"code": code, "hostKey": room["hostKey"]})
 
@@ -302,11 +489,17 @@ class Handler(BaseHTTPRequestHandler):
             return self.err("Not found", 404)
         code, action = parts[2].upper(), parts[3]
 
+        if action == "roast":
+            return self.roast(code, b)
+
         with lock:
             room = rooms.get(code)
             if not room:
                 return self.err("Room not found. Check the code.", 404)
             is_host = b.get("hostKey") == room["hostKey"]
+            player = room["players"].get(b.get("pid"))
+            if player and player["key"] != b.get("key"):
+                player = None
 
             if action == "join":
                 name = (b.get("name") or "").strip()[:24]
@@ -324,14 +517,47 @@ class Handler(BaseHTTPRequestHandler):
                 changed(room)
                 return self.send_json({"pid": pid, "key": room["players"][pid]["key"]})
 
+            if action in ("rank", "pick", "unpick") and not player:
+                return self.err("You're not in this room. Rejoin with your name.", 403)
+
             if action == "rank":
-                p = room["players"].get(b.get("pid"))
-                if not p or p["key"] != b.get("key"):
-                    return self.err("You're not in this room. Rejoin with your name.", 403)
-                p["tiers"] = clean_tiers(room, b.get("tiers"))
+                if room.get("mode") == "picks":
+                    if room["phase"] != "ranking" or (room["deadline"] and time.time() > room["deadline"] + 2):
+                        return self.err("Time's up. Rankings are locked.", 409)
+                player["tiers"] = clean_tiers(room, b.get("tiers"))
                 if "done" in b:
-                    p["done"] = bool(b["done"])
+                    player["done"] = bool(b["done"])
                 changed(room)
+                return self.send_json({"ok": True})
+
+            if action == "pick":
+                if room.get("phase") != "submit":
+                    return self.err("Picks are closed. The ranking has started.", 409)
+                name = clean_name(b.get("name") or "")
+                if not name:
+                    return self.err("Type an anime name.")
+                pid = b.get("pid")
+                if sum(1 for a in room["anime"] if pid in a.get("by", [])) >= room["picksPer"]:
+                    return self.err(f"You already have {room['picksPer']} picks. Remove one to swap it.")
+                same = next((a for a in room["anime"] if a["name"].lower() == name.lower()), None)
+                if same:
+                    if pid in same["by"]:
+                        return self.err("You already picked that one.")
+                    same["by"].append(pid)
+                else:
+                    new_item(room, name, by=[pid])
+                changed(room)
+                return self.send_json({"ok": True})
+
+            if action == "unpick":
+                if room.get("phase") != "submit":
+                    return self.err("Picks are closed. The ranking has started.", 409)
+                item = find(room, b.get("id"))
+                if item and b.get("pid") in item.get("by", []):
+                    item["by"].remove(b.get("pid"))
+                    if not item["by"]:
+                        room["anime"].remove(item)
+                    changed(room)
                 return self.send_json({"ok": True})
 
             if not is_host:
@@ -344,9 +570,32 @@ class Handler(BaseHTTPRequestHandler):
             elif action == "title":
                 room["title"] = (b.get("title") or room["title"])[:80]
             elif action == "kick":
-                room["players"].pop(b.get("pid"), None)
+                pid = b.get("pid")
+                room["players"].pop(pid, None)
+                for a in list(room["anime"]):
+                    if pid in a.get("by", []):
+                        a["by"].remove(pid)
+                        if not a["by"] and room.get("phase") == "submit":
+                            room["anime"].remove(a)
+            elif action == "start":
+                if room.get("phase") != "submit":
+                    return self.err("The ranking already started.")
+                if not room["anime"]:
+                    return self.err("Nobody has submitted a pick yet.")
+                if "timerSec" in b:
+                    room["timerSec"] = max(30, min(1800, int(b["timerSec"])))
+                room["phase"] = "ranking"
+                room["deadline"] = time.time() + room["timerSec"] + 3  # 3s for everyone's screen to switch
+                for p in room["players"].values():
+                    p["tiers"], p["done"] = {t: [] for t in TIERS}, False
+            elif action == "addtime":
+                if room.get("phase") != "ranking" or not room.get("deadline"):
+                    return self.err("No timer is running.")
+                room["deadline"] += int(b.get("sec") or 30)
+            elif action == "end":
+                finish(room)
             elif action == "anime" and len(parts) == 5:
-                item = next((x for x in room["anime"] if x["id"] == parts[4]), None)
+                item = find(room, parts[4])
                 if not item:
                     return self.err("That anime isn't in the room anymore.", 404)
                 if b.get("remove"):
@@ -363,15 +612,54 @@ class Handler(BaseHTTPRequestHandler):
             changed(room)
             return self.send_json({"ok": True})
 
+    def roast(self, code, b):
+        provider, key, model = b.get("provider"), (b.get("key") or "").strip(), (b.get("model") or "").strip()
+        if provider not in PROVIDER_NAMES or not key or not model:
+            return self.err("Pick a provider, paste its key and choose a model.")
+        with lock:
+            room = rooms.get(code)
+            if not room:
+                return self.err("Room not found.", 404)
+            if b.get("hostKey") != room["hostKey"]:
+                return self.err("Only the host can start the roast.", 403)
+            if not any(any(p["tiers"].get(t) for t in TIERS) for p in room["players"].values()):
+                return self.err("Nobody has ranked anything yet, so there's nothing to roast.")
+            system, prompt = roast_prompt(room, b.get("spice"))
+            names = {p["name"].lower(): p["name"] for p in room["players"].values()}
+        try:
+            out = complete(provider, key, model, system, prompt)  # the key is used here and never stored
+        except AIError as e:
+            return self.err(f"{PROVIDER_NAMES[provider]} failed: {e}", 502)
+        msgs = [{"to": str(m.get("to") or "everyone")[:30], "text": str(m.get("text") or "")[:600]}
+                for m in (out.get("messages") or []) if isinstance(m, dict) and m.get("text")][:40]
+        awards = [{"name": names.get(str(a.get("name", "")).lower(), str(a.get("name", ""))[:30]),
+                   "award": str(a.get("award") or "")[:60]}
+                  for a in (out.get("awards") or []) if isinstance(a, dict)][:30]
+        if not msgs:
+            return self.err(f"{PROVIDER_NAMES[provider]} replied with nothing usable. Try again or switch model.", 502)
+        entry = {"id": rid(6), "at": time.time(), "provider": PROVIDER_NAMES[provider], "model": model,
+                 "spice": b.get("spice") or "spicy", "messages": msgs, "awards": awards}
+        with lock:
+            room = rooms.get(code)
+            if room:
+                room.setdefault("roasts", []).insert(0, entry)
+                del room["roasts"][5:]
+                changed(room)
+        return self.send_json({"ok": True, "provider": entry["provider"]})
+
 
 def main():
     load()
-    for code, room in rooms.items():  # resume unfinished poster lookups
+    for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
+        room.setdefault("mode", "classic")
+        room.setdefault("phase", "ranking")
+        room.setdefault("roasts", [])
         for item in room["anime"]:
             if item.get("status") == "searching":
                 lookup_q.put((code, item["id"]))
     threading.Thread(target=saver, daemon=True).start()
     threading.Thread(target=lookup_worker, daemon=True).start()
+    threading.Thread(target=ticker, daemon=True).start()
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     srv.daemon_threads = True
     print(f"Anime Tier Night running on http://localhost:{PORT}")

@@ -136,6 +136,57 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 .res img{width:100%;aspect-ratio:225/320;object-fit:cover;border-radius:9px;display:block}
 .res:hover{border-color:var(--accent);transform:translateY(-2px)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);font-weight:800;border-radius:999px;padding:10px 20px;z-index:60;box-shadow:0 10px 30px -8px rgba(62,224,255,.6)}
+/* create form: mode picker */
+select,input[type=number],input[type=password]{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none;color:var(--fg)}
+select:focus,input[type=number]:focus,input[type=password]:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(62,224,255,.12)}
+select option{background:var(--panel-solid)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg);cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:grid;gap:3px;height:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(0,0,0,.2);transition:border-color .15s,background .15s}
+.seg small{color:var(--muted);font-weight:500;line-height:1.35}
+.seg input:checked+span{border-color:var(--accent);background:rgba(62,224,255,.08);box-shadow:0 0 0 3px rgba(62,224,255,.1)}
+.seg input:focus-visible+span{outline:2px solid var(--accent)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.seg,.opts{grid-template-columns:1fr}}
+
+/* timer */
+.timer{font-family:var(--display);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:4px 14px;background:rgba(77,255,176,.12);color:var(--C);border:1px solid rgba(77,255,176,.35)}
+.timer.low{background:rgba(255,77,125,.15);color:var(--S);border-color:rgba(255,77,125,.45);animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.banner{border-radius:16px;padding:14px 18px;background:linear-gradient(135deg,rgba(62,224,255,.12),rgba(124,140,255,.12));border:1px solid var(--line-strong);font-weight:700;margin-top:16px}
+.locked .card{cursor:default}
+
+/* submit phase */
+.submit-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;margin-top:16px;align-items:start}
+@media (max-width:820px){.submit-grid{grid-template-columns:1fr}}
+.mypicks{display:flex;flex-wrap:wrap;gap:10px}
+.mypicks .pk{display:grid;gap:4px;width:var(--card-w)}
+.mypicks .pk button{border:0;background:none;color:var(--muted);font-size:12px;font-weight:700;padding:2px;text-align:center}
+.mypicks .pk button:hover{color:var(--danger)}
+.slot{width:var(--card-w);aspect-ratio:225/320;border-radius:10px;border:1px dashed var(--line-strong);display:grid;place-items:center;color:var(--muted);font-family:var(--display);font-size:18px}
+.lobby-list{display:grid;gap:8px}
+.lobby-list .li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;font-weight:600}
+.meter{height:6px;border-radius:999px;background:var(--panel2);overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.bigstat{font-family:var(--display);font-size:40px;line-height:1}
+.pickedby{font-size:12px;color:var(--muted);margin:-2px 0 8px}
+
+/* AI roast */
+.ai-panel{margin-top:16px}
+.ai-row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.ai-row>div{min-width:140px}
+.ai-row .grow{flex:1;min-width:200px}
+.convo{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;display:grid;gap:10px}
+.convo .meta{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.msg{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;animation:pop .35s ease-out backwards}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}}
+.msg .bot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:11px;color:var(--accent-ink);background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.bubble{background:var(--panel2);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:9px 13px;max-width:68ch;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.bubble .to{font-weight:800;margin-right:6px}
+.awards{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.award{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 12px 4px 4px;background:rgba(255,216,77,.1);border:1px solid rgba(255,216,77,.3);font-size:13px;font-weight:700}
+.award small{color:var(--B);font-weight:800}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -146,17 +197,29 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
   <div class="wrap">
     <div class="hero">
       <h1>Anime Tier Night <span class="tiers"><i style="background:var(--S)">S</i><i style="background:var(--A)">A</i><i style="background:var(--B)">B</i><i style="background:var(--C)">C</i></span></h1>
-      <p>One host picks the shows. Everyone joins with their name, ranks the same list on their own board, and then you reveal all the boards at once.</p>
+      <p>Everyone secretly adds their favorites, ranks the whole pool before the timer runs out, and then the boards get revealed and an AI roasts your taste. Or the host picks the list and everyone ranks it.</p>
     </div>
     <div class="home-grid">
       <form class="panel" id="createForm">
         <h2>Host a room</h2>
         <div><label for="cTitle">Room name</label><input type="text" id="cTitle" placeholder="Best shonen of all time" maxlength="80"></div>
         <div>
+          <label>Game mode</label>
+          <div class="seg" role="radiogroup">
+            <label><input type="radio" name="mode" value="picks" checked><span><b>Secret picks</b><small>Everyone secretly adds their favorites, then ranks the whole pool against a timer</small></span></label>
+            <label><input type="radio" name="mode" value="classic"><span><b>Host's list</b><small>You choose every show and everyone ranks the same list</small></span></label>
+          </div>
+        </div>
+        <div id="picksOpts" class="opts">
+          <div><label for="cPicks">Picks per person</label><input type="number" id="cPicks" min="1" max="10" value="5"></div>
+          <div><label for="cTimer">Ranking timer</label>
+            <select id="cTimer"><option value="60">1 minute</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option></select></div>
+        </div>
+        <div id="classicOpts" hidden>
           <label for="cList">Anime list, one per line</label>
           <textarea id="cList" rows="10" placeholder="Attack on Titan&#10;Fullmetal Alchemist: Brotherhood&#10;Jujutsu Kaisen&#10;Naruto Shippuden&#10;One Piece&#10;Demon Slayer"></textarea>
-          <p class="hint">Posters are pulled from AniList automatically. You can swap any poster after the room is made.</p>
         </div>
+        <p class="hint" style="margin:0">Posters are pulled from AniList automatically. The host can swap any poster.</p>
         <div class="err" id="cErr"></div>
         <button class="btn primary" id="cBtn">Create room</button>
       </form>
@@ -178,11 +241,13 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
       <h1 id="rTitle"></h1>
       <span class="code" id="rCode" title="Room code"></span>
       <button class="btn small" id="copyLink">Copy invite link</button>
+      <span class="timer" id="timer" hidden></span>
       <span class="spacer"></span>
       <div class="tabs" role="tablist">
         <button role="tab" data-tab="mine" aria-selected="true">My board</button>
         <button role="tab" data-tab="all" aria-selected="false">Everyone</button>
         <button role="tab" data-tab="verdict" aria-selected="false">Group verdict</button>
+        <button role="tab" data-tab="roast" aria-selected="false">AI roast</button>
       </div>
       <button class="btn small" id="hostBtn" hidden>Host tools</button>
     </div>
@@ -198,7 +263,20 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
         <div class="err" id="gErr"></div>
         <button class="btn primary">Join room</button>
       </form>
+      <div id="submitArea" hidden>
+        <div class="submit-grid">
+          <form class="panel" id="pickAdd">
+            <h2 id="pickHead">Your secret picks</h2>
+            <p class="muted" style="margin:0">Nobody sees who picked what until the results. If two people pick the same show, it becomes one card.</p>
+            <div style="display:flex;gap:8px"><input type="text" id="pickName" placeholder="Type an anime, e.g. Steins;Gate" maxlength="120" autocomplete="off"><button class="btn primary" id="pickBtn">Add</button></div>
+            <div class="err" id="pickErr"></div>
+            <div class="mypicks" id="myPicks"></div>
+          </form>
+          <div class="panel" id="lobby"></div>
+        </div>
+      </div>
       <div id="myArea" hidden>
+        <div class="banner" id="banner" hidden></div>
         <div class="board" id="myBoard"></div>
         <div class="pool" data-tier="pool"><h3 id="poolTitle">Unranked</h3><div class="drop" data-tier="pool" id="pool"></div></div>
         <p class="hint">Drag posters into a tier. On a phone, tap a poster, then tap a tier letter or another poster to place it.</p>
@@ -212,6 +290,22 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 
     <div id="tab-all" hidden></div>
     <div id="tab-verdict" hidden></div>
+    <div id="tab-roast" hidden>
+      <form class="panel ai-panel" id="aiForm" hidden>
+        <div class="ai-row">
+          <div><label for="aiProvider">AI</label><select id="aiProvider"><option value="gemini">Gemini</option><option value="cerebras">Cerebras</option><option value="mistral">Mistral</option></select></div>
+          <div class="grow"><label for="aiKey">API key</label><input type="password" id="aiKey" placeholder="Paste this AI's key" autocomplete="off" spellcheck="false"></div>
+          <div class="grow"><label for="aiModel">Model</label><div style="display:flex;gap:6px"><select id="aiModel"><option value="">Load models first</option></select><button type="button" class="btn small" id="aiLoad">Load</button></div></div>
+          <div><label for="aiSpice">Spice</label><select id="aiSpice"><option value="wholesome">Wholesome</option><option value="spicy" selected>Spicy</option><option value="unhinged">Unhinged</option></select></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn primary" id="aiGo">Roast everyone</button>
+          <span class="muted" id="aiStatus" style="font-size:13px"></span>
+        </div>
+        <p class="hint" style="margin:0">Keys stay in this browser and are only sent when you press Roast. Save a key for more than one AI: if one fails or runs out of quota, the next one takes over automatically.</p>
+      </form>
+      <div id="roasts"></div>
+    </div>
   </div>
 </section>
 
@@ -219,11 +313,12 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden>
   <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:22px">Host tools</h2><button class="btn small" id="closeDrawer">Close</button></div>
-  <div class="switch">
+  <div id="phaseCtl"></div>
+  <div class="switch" id="revealSwitch">
     <div><b>Reveal everyone's boards</b><div class="muted" style="font-size:13px">Keep this off while people rank, then flip it for the big reveal.</div></div>
     <button class="btn" id="revealBtn">Reveal</button>
   </div>
-  <div>
+  <div id="addBox">
     <label for="addList">Add more anime, one per line</label>
     <textarea id="addList" rows="4"></textarea>
     <button class="btn small" id="addBtn" style="margin-top:8px">Add to room</button>
@@ -259,7 +354,11 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let code = null, room = null, me = null, hostKey = null, tab = "mine";
-let myTiers = null, selected = null, dragging = null, saveTimer = null, pollGen = 0;
+let myTiers = null, selected = null, dragging = null, saveTimer = null, pollGen = 0, clockOffset = 0;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const isPicks = () => room && room.mode === "picks";
+// rankings are editable in classic rooms always, in picks rooms only while the clock runs
+const canRank = () => !isPicks() || (room.phase === "ranking" && (!room.deadline || serverNow() < room.deadline + 1));
 
 function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2200); }
@@ -289,13 +388,19 @@ function openRoom(c){
 }
 function saveLocal(){ store("atn:"+code, {me, hostKey}); }
 
+const createMode = () => document.querySelector('input[name=mode]:checked').value;
+document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{
+  $("#picksOpts").hidden = createMode()!=="picks"; $("#classicOpts").hidden = createMode()!=="classic";
+});
 $("#createForm").onsubmit = async e => {
   e.preventDefault();
+  const mode = createMode();
   const list = $("#cList").value.split("\n").map(s=>s.trim()).filter(Boolean);
-  if(!list.length){ $("#cErr").textContent = "Add at least one anime to the list."; return; }
+  if(mode==="classic" && !list.length){ $("#cErr").textContent = "Add at least one anime to the list."; return; }
   $("#cBtn").disabled = true; $("#cErr").textContent = "";
   try{
-    const r = await api("/api/rooms", {title: $("#cTitle").value.trim() || "Anime Tier Night", list});
+    const r = await api("/api/rooms", {title: $("#cTitle").value.trim() || "Anime Tier Night", mode, list,
+      picksPer: +$("#cPicks").value || 5, timerSec: +$("#cTimer").value});
     store("atn:"+r.code, {hostKey: r.hostKey, me: null});
     openRoom(r.code);
   }catch(err){ $("#cErr").textContent = err.message; }
@@ -316,7 +421,8 @@ $("#nameGate").onsubmit = async e => {
   e.preventDefault();
   const name = $("#gName").value.trim();
   if(!name){ $("#gErr").textContent = "Enter a name."; return; }
-  try{ me = await api(`/api/rooms/${code}/join`, {name}); myTiers = null; saveLocal(); render(); }
+  // restart the poll so it asks as this player (own secret picks come back)
+  try{ me = await api(`/api/rooms/${code}/join`, {name}); myTiers = null; saveLocal(); poll(++pollGen, -1); }
   catch(err){ $("#gErr").textContent = err.message; }
 };
 
@@ -324,13 +430,19 @@ $("#nameGate").onsubmit = async e => {
 async function poll(gen, v){
   while(gen === pollGen){
     try{
-      const r = await fetch(`/api/rooms/${code}?v=${v}`);
+      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
       if(r.status === 404){ $("#room").hidden=true; $("#home").hidden=false; $("#jErr").textContent="That room doesn't exist anymore."; history.replaceState(null,"","/"); return; }
       const data = await r.json();
       if(gen !== pollGen) return;
+      clockOffset = data.now - Date.now()/1000;
+      if(room && room.phase !== data.phase){
+        myTiers = null; selected = null;
+        if(data.phase === "ranking"){ switchTab("mine"); toast("Ranking started. Go!"); }
+        if(data.phase === "results" && data.mode === "picks"){ toast("Time's up! Boards revealed"); }
+      }
       room = data; v = data.version;
-      if(me && !room.players[me.pid]){ me = null; myTiers = null; saveLocal(); toast("You were removed from this room by the host"); }
-      render();
+      if(me && !room.players[me.pid]){ me = null; myTiers = null; saveLocal(); toast("You were removed from this room by the host"); }      render();
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -344,6 +456,7 @@ function ensureMyTiers(){
   for(const t of TIERS) myTiers[t] = (myTiers[t]||[]).filter(id=>valid.has(id));
 }
 function move(id, tier, beforeId){
+  if(!canRank()){ selected = null; renderMine(); return; }
   for(const t of TIERS) myTiers[t] = myTiers[t].filter(x=>x!==id);
   if(tier !== "pool"){
     const arr = myTiers[tier]; const i = beforeId ? arr.indexOf(beforeId) : -1;
@@ -380,39 +493,82 @@ function render(){
   $("#hostBtn").hidden = !hostKey;
   renderPlayers();
   if(!dragging) renderMine();
-  renderAll(); renderVerdict(); if(!$("#drawer").hidden) renderHost();
+  renderAll(); renderVerdict(); renderRoasts(); tickTimer(); if(!$("#drawer").hidden) renderHost();
 }
 function renderPlayers(){
+  const submitting = isPicks() && room.phase === "submit";
   const total = room.anime.length;
   $("#players").innerHTML = Object.entries(room.players).map(([pid,p])=>{
-    const n = TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
-    return `<span class="chip ${me&&me.pid===pid?"me":""}"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}${me&&me.pid===pid?" (you)":""} <span class="n">${n}/${total}</span>${p.done?'<span class="done" title="Done">✓</span>':""}</span>`;
+    const n = submitting ? p.picks : TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
+    const of = submitting ? room.picksPer : total;
+    const done = submitting ? p.picks >= room.picksPer : p.done;
+    return `<span class="chip ${me&&me.pid===pid?"me":""}"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}${me&&me.pid===pid?" (you)":""} <span class="n">${n}/${of}${submitting?" picks":""}</span>${done?'<span class="done" title="Done">✓</span>':""}</span>`;
   }).join("") || `<span class="muted">Nobody has joined yet. Share the invite link.</span>`;
 }
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !isPicks() || room.phase !== "ranking" || !room.deadline){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.hidden = false;
+  el.textContent = left > 0 ? `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}` : "Time's up";
+  el.classList.toggle("low", left <= 10);
+  if(left === 0 && !tickTimer.locked){ tickTimer.locked = true; selected = null; renderMine(); }
+  if(left > 0) tickTimer.locked = false;
+}
+setInterval(tickTimer, 250);
+function renderSubmit(){
+  const mine = (room.mine||[]).map(id=>room.anime.find(a=>a.id===id)).filter(Boolean);
+  const left = room.picksPer - mine.length;
+  $("#pickHead").textContent = `Your secret picks · ${mine.length}/${room.picksPer}`;
+  $("#pickName").disabled = $("#pickBtn").disabled = left <= 0;
+  $("#pickName").placeholder = left > 0 ? "Type an anime, e.g. Steins;Gate" : "All picks in. Remove one to swap it.";
+  $("#myPicks").innerHTML = mine.map(a=>`<div class="pk">${cardHTML(a)}<button type="button" data-unpick="${a.id}">Remove</button></div>`).join("")
+    + Array.from({length:Math.max(0,left)},(_, i)=>`<div class="pk"><div class="slot">${mine.length+i+1}</div></div>`).join("");
+  const ps = Object.values(room.players);
+  const ready = ps.filter(p=>p.picks >= room.picksPer).length;
+  $("#lobby").innerHTML = `<h2>Waiting room</h2>
+    <div><div class="bigstat">${room.poolSize||0}</div><div class="muted">shows in the pool so far · duplicates count once</div></div>
+    <div class="lobby-list">${ps.map(p=>`<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div>${esc(p.name)}<div class="meter"><i style="width:${Math.min(100,100*p.picks/room.picksPer)}%"></i></div></div><span class="muted" style="font-variant-numeric:tabular-nums">${p.picks}/${room.picksPer}</span></div>`).join("")}</div>
+    <p class="muted" style="margin:0;font-size:14px">${ready} of ${ps.length} ready. Ranking time: ${fmtTime(room.timerSec)}.</p>
+    ${hostKey ? `<button class="btn primary" type="button" id="startBtn" ${room.poolSize?"":"disabled"}>Start ranking (${fmtTime(room.timerSec)})</button>` : `<p class="muted" style="margin:0;font-size:14px">The host starts the ranking when everyone is in.</p>`}`;
+}
+const fmtTime = s => s % 60 ? `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}` : `${s/60} min`;
 function renderMine(){
   const joined = me && room.players[me.pid];
-  $("#nameGate").hidden = !!joined; $("#myArea").hidden = !joined;
+  const submitting = isPicks() && room.phase === "submit";
+  $("#nameGate").hidden = !!joined; $("#myArea").hidden = !joined || submitting; $("#submitArea").hidden = !joined || !submitting;
   if(!joined) return;
+  if(submitting){ renderSubmit(); return; }
+  const locked = !canRank();
+  $("#myArea").classList.toggle("locked", locked);
+  $("#banner").hidden = !(isPicks() && room.phase === "results");
+  $("#banner").textContent = "Time's up. Your board is locked. Check Everyone, Group verdict and the AI roast.";
+  $("#doneBtn").hidden = $("#resetBtn").hidden = locked;
   ensureMyTiers();
   const byId = animeById();
-  $("#myBoard").innerHTML = boardHTML(myTiers, byId, true);
+  $("#myBoard").innerHTML = boardHTML(myTiers, byId, !locked);
   const ranked = new Set(TIERS.flatMap(t=>myTiers[t]));
   const pool = room.anime.filter(a=>!ranked.has(a.id));
-  $("#pool").innerHTML = pool.map(a=>cardHTML(a,{interactive:true})).join("") || `<span class="muted" style="font-size:14px">Everything is ranked. Nice.</span>`;
+  $("#pool").innerHTML = pool.map(a=>cardHTML(a,{interactive:!locked})).join("") || `<span class="muted" style="font-size:14px">Everything is ranked. Nice.</span>`;
   $("#poolTitle").textContent = `Unranked · ${pool.length}`;
   const done = room.players[me.pid].done;
+  $("#poolTitle").textContent = locked ? `Not ranked in time · ${pool.length}` : `Unranked · ${pool.length}`;
   $("#doneBtn").textContent = done ? "Marked done ✓ (tap to undo)" : "I'm done ranking";
 }
 function renderAll(){
   const el = $("#tab-all"); const ps = Object.values(room.players);
   if(!room.revealed){
     const done = ps.filter(p=>p.done).length;
-    el.innerHTML = `<div class="empty"><h2>Boards are hidden</h2><p>${done} of ${ps.length} done ranking. ${hostKey ? "Open Host tools and press Reveal when everyone is ready." : "The host reveals everyone's boards when you're all done."}</p></div>`;
+    const why = isPicks()
+      ? (room.phase === "submit" ? "Everyone is still adding secret picks." : "Boards and who picked what are revealed when the timer runs out.")
+      : `${done} of ${ps.length} done ranking. ${hostKey ? "Open Host tools and press Reveal when everyone is ready." : "The host reveals everyone's boards when you're all done."}`;
+    el.innerHTML = `<div class="empty"><h2>Boards are hidden</h2><p>${why}</p></div>`;
     return;
   }
   if(!ps.length){ el.innerHTML = `<div class="empty"><h2>No players yet</h2></div>`; return; }
   const byId = animeById();
-  el.innerHTML = `<div class="everyone">${ps.map(p=>`<div class="pboard mini"><h3><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}</h3><div class="board" style="margin-top:0">${boardHTML(p.tiers, byId, false)}</div></div>`).join("")}</div>`;
+  const pickedBy = pid => room.anime.filter(a=>(a.by||[]).includes(pid)).map(a=>a.title);
+  el.innerHTML = `<div class="everyone">${Object.entries(room.players).map(([pid,p])=>`<div class="pboard mini"><h3><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}</h3>${isPicks()?`<p class="pickedby">Secretly picked: ${esc(pickedBy(pid).join(", ")||"nothing")}</p>`:""}<div class="board" style="margin-top:0">${boardHTML(p.tiers, byId, false)}</div></div>`).join("")}</div>`;
 }
 function renderVerdict(){
   const el = $("#tab-verdict");
@@ -429,10 +585,15 @@ function renderVerdict(){
   const tiers = Object.fromEntries(TIERS.map(t=>[t,[]]));
   stats.sort((x,y)=>y.avg-x.avg).forEach(s=>{ const t = TIERS[Math.min(5,Math.max(0,6-Math.round(s.avg)))]; tiers[t].push(s.a.id); });
   const spicy = stats.filter(s=>s.votes.length>1).sort((x,y)=>y.sd-x.sd).slice(0,6);
+  if(isPicks()){
+    // who picked it, so people see how their own pick fared
+    const nameOf = pid => room.players[pid]?.name || "someone who left";
+    for(const s of spicy) s.by = (s.a.by||[]).map(nameOf);
+  }
   el.innerHTML = `<div class="verdict-grid">
     <div><h2 style="font-size:22px">Group tier list</h2><p class="muted" style="margin:4px 0 0;font-size:14px">Average of ${ps.length} board${ps.length===1?"":"s"}, S=6 down to F=1.</p><div class="board">${boardHTML(tiers, byId, false)}</div></div>
     <div><h2 style="font-size:22px">Most divisive</h2><p class="muted" style="margin:4px 0 10px;font-size:14px">Where the room disagreed the most.</p>
-      <div class="spicy">${spicy.length ? spicy.map(s=>`<div class="it">${s.a.img?`<img src="${esc(s.a.img)}" alt="" referrerpolicy="no-referrer">`:'<span></span>'}<div><div class="t">${esc(s.a.title)}</div><div class="pills">${s.votes.map(v=>`<span class="pill" style="background:var(--${v.t})">${esc(v.name)}: ${v.t}</span>`).join("")}</div></div></div>`).join("") : '<p class="muted">Needs at least two boards.</p>'}</div>
+      <div class="spicy">${spicy.length ? spicy.map(s=>`<div class="it">${s.a.img?`<img src="${esc(s.a.img)}" alt="" referrerpolicy="no-referrer">`:'<span></span>'}<div><div class="t">${esc(s.a.title)}</div>${s.by&&s.by.length?`<div class="muted" style="font-size:12px">Picked by ${esc(s.by.join(", "))}</div>`:""}<div class="pills">${s.votes.map(v=>`<span class="pill" style="background:var(--${v.t})">${esc(v.name)}: ${v.t}</span>`).join("")}</div></div></div>`).join("") : '<p class="muted">Needs at least two boards.</p>'}</div>
     </div></div>`;
 }
 
@@ -459,6 +620,7 @@ mine.addEventListener("drop", e=>{
   move(id, z.dataset.tier, over && over.dataset.id !== id ? over.dataset.id : null);
 });
 mine.addEventListener("click", e=>{
+  if(e.target.closest("#submitArea")) return;
   const c = e.target.closest(".card"); const z = e.target.closest("[data-tier]");
   if(c && !selected){ selected = c.dataset.id; renderMine(); return; }
   if(c && selected === c.dataset.id){ selected = null; renderMine(); return; }
@@ -473,12 +635,30 @@ mine.addEventListener("keydown", e=>{
 $("#doneBtn").onclick = ()=>{ const d = !room.players[me.pid].done; room.players[me.pid].done = d; renderMine(); queueSave({done:d}); };
 $("#resetBtn").onclick = ()=>{ for(const t of TIERS) myTiers[t]=[]; renderMine(); queueSave(); };
 
-/* ---------- tabs, links ---------- */
-document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
-  tab = b.dataset.tab;
-  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
-  for(const t of ["mine","all","verdict"]) $("#tab-"+t).hidden = t!==tab;
+/* ---------- secret picks ---------- */
+$("#pickAdd").onsubmit = async e=>{
+  e.preventDefault();
+  const name = $("#pickName").value.trim(); if(!name) return;
+  $("#pickErr").textContent = "";
+  try{ await api(`/api/rooms/${code}/pick`, {pid:me.pid, key:me.key, name}); $("#pickName").value = ""; $("#pickName").focus(); }
+  catch(err){ $("#pickErr").textContent = err.message; }
+};
+$("#submitArea").addEventListener("click", async e=>{
+  const u = e.target.closest("[data-unpick]");
+  if(u){ try{ await api(`/api/rooms/${code}/unpick`, {pid:me.pid, key:me.key, id:u.dataset.unpick}); }catch(err){ toast(err.message); } }
+  if(e.target.closest("#startBtn")) startRanking();
 });
+async function startRanking(){
+  try{ await api(`/api/rooms/${code}/start`, {hostKey}); }catch(err){ toast(err.message); }
+}
+
+/* ---------- tabs, links ---------- */
+function switchTab(name){
+  tab = name;
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", x.dataset.tab===name));
+  for(const t of ["mine","all","verdict","roast"]) $("#tab-"+t).hidden = t!==name;
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $("#copyLink").onclick = async ()=>{
   const link = location.origin + "/?room=" + code;
   try{ await navigator.clipboard.writeText(link); toast("Invite link copied"); }
@@ -492,13 +672,20 @@ $("#hostBtn").onclick = ()=>openDrawer(true);
 $("#closeDrawer").onclick = ()=>openDrawer(false);
 $("#scrim").onclick = ()=>{ openDrawer(false); $("#picker").hidden = true; };
 function renderHost(){
+  $("#revealSwitch").hidden = $("#addBox").hidden = isPicks();
+  const ph = $("#phaseCtl");
+  if(!isPicks()) ph.innerHTML = "";
+  else if(room.phase === "submit") ph.innerHTML = `<div class="switch"><div><b>Start the ranking</b><div class="muted" style="font-size:13px">${room.poolSize||0} shows in the pool. Picks close when you start.</div></div><div style="display:grid;gap:6px;min-width:120px"><select id="hTimer">${[60,120,180,300,600].map(s=>`<option value="${s}" ${s===room.timerSec?"selected":""}>${fmtTime(s)}</option>`).join("")}</select><button class="btn primary" data-ph="start" ${room.poolSize?"":"disabled"}>Start</button></div></div>`;
+  else if(room.phase === "ranking") ph.innerHTML = `<div class="switch"><div><b>Ranking in progress</b><div class="muted" style="font-size:13px">Boards reveal when the timer hits zero.</div></div><div style="display:flex;gap:6px"><button class="btn small" data-ph="addtime">+30s</button><button class="btn small" data-ph="end">End now</button></div></div>`;
+  else ph.innerHTML = `<div class="switch"><div><b>Round finished</b><div class="muted" style="font-size:13px">Boards are revealed. Head to the AI roast tab.</div></div></div>`;
   $("#revealBtn").textContent = room.revealed ? "Hide again" : "Reveal";
   $("#revealBtn").className = "btn" + (room.revealed ? "" : " primary");
   const ps = Object.entries(room.players);
   $("#hostPlayers").innerHTML = ps.length ? ps.map(([pid,p])=>{
     const n = TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
     const confirming = kickConfirm === pid;
-    return `<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div class="nm">${esc(p.name)}${me&&me.pid===pid?" (you)":""}<small>${n}/${room.anime.length} ranked${p.done?" · done":""}</small></div><button class="btn small ${confirming?"danger":""}" data-kick="${pid}">${confirming?"Confirm kick":"Kick"}</button></div>`;
+    const status = isPicks() && room.phase === "submit" ? `${p.picks}/${room.picksPer} picks` : `${n}/${room.anime.length} ranked${p.done?" · done":""}`;
+    return `<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div class="nm">${esc(p.name)}${me&&me.pid===pid?" (you)":""}<small>${status}</small></div><button class="btn small ${confirming?"danger":""}" data-kick="${pid}">${confirming?"Confirm kick":"Kick"}</button></div>`;
   }).join("") : `<p class="muted" style="margin:0;font-size:14px">Nobody has joined yet.</p>`;
   $("#hostList").innerHTML = room.anime.map(a=>`<div class="li">${a.img?`<img src="${esc(a.img)}" alt="" referrerpolicy="no-referrer">`:'<span class="noimg"></span>'}<div class="nm">${esc(a.title)}<small>${a.status==="searching"?"Finding poster…":a.status==="missing"?"No poster found":esc([a.year, a.name!==a.title?"typed: "+a.name:""].filter(Boolean).join(" · "))}</small></div><button class="btn small" data-fix="${a.id}">Change</button></div>`).join("");
 }
@@ -506,6 +693,13 @@ $("#revealBtn").onclick = async ()=>{ try{ await api(`/api/rooms/${code}/reveal`
 $("#addBtn").onclick = async ()=>{
   const list = $("#addList").value.split("\n").map(s=>s.trim()).filter(Boolean); if(!list.length) return;
   try{ await api(`/api/rooms/${code}/add`, {hostKey, list}); $("#addList").value=""; toast(`Added ${list.length}`); }catch(err){ toast(err.message); }
+};
+$("#phaseCtl").onclick = async e=>{
+  const b = e.target.closest("[data-ph]"); if(!b) return;
+  const body = {hostKey};
+  if(b.dataset.ph === "start") body.timerSec = +$("#hTimer").value;
+  if(b.dataset.ph === "addtime") body.sec = 30;
+  try{ await api(`/api/rooms/${code}/${b.dataset.ph}`, body); if(b.dataset.ph==="addtime") toast("Added 30 seconds"); }catch(err){ toast(err.message); }
 };
 let kickConfirm = null;
 $("#hostPlayers").onclick = async e=>{
@@ -545,6 +739,80 @@ $("#urlForm").onsubmit = async e=>{
 $("#removeAnime").onclick = async ()=>{ try{ await api(`/api/rooms/${code}/anime/${pickId}`, {hostKey, remove:true}); closePicker(); toast("Removed"); }catch(err){ toast(err.message); } };
 function closePicker(){ $("#picker").hidden = true; if($("#drawer").hidden) $("#scrim").hidden = true; }
 $("#closePicker").onclick = closePicker;
+
+/* ---------- AI roast ---------- */
+const PROVIDERS = ["gemini","cerebras","mistral"];
+const PNAME = {gemini:"Gemini", cerebras:"Cerebras", mistral:"Mistral"};
+// keys live only in this browser: {provider, keys:{}, models:{}, lists:{}, spice}
+let ai = store("atn:ai") || {};
+ai.keys = ai.keys || {}; ai.models = ai.models || {}; ai.lists = ai.lists || {};
+ai.provider = ai.provider || "gemini"; ai.spice = ai.spice || "spicy";
+const saveAI = () => store("atn:ai", ai);
+function pickDefault(p, list){
+  const prefs = {gemini:["flash"], cerebras:["gpt-oss","llama-3.3","qwen","llama"], mistral:["mistral-large-latest","mistral-medium-latest","mistral-small-latest"]}[p];
+  for(const s of prefs){ const hit = list.find(m=>m.includes(s) && !m.includes("lite")) || list.find(m=>m.includes(s)); if(hit) return hit; }
+  return list[0] || "";
+}
+function fillAIForm(){
+  const p = ai.provider;
+  $("#aiProvider").value = p; $("#aiKey").value = ai.keys[p] || ""; $("#aiSpice").value = ai.spice;
+  const list = ai.lists[p] || [];
+  $("#aiModel").innerHTML = list.length ? list.map(m=>`<option ${m===ai.models[p]?"selected":""}>${esc(m)}</option>`).join("") : `<option value="">Load models first</option>`;
+}
+async function loadModels(p){
+  const r = await api("/api/ai/models", {provider:p, key:ai.keys[p]});
+  ai.lists[p] = r.models;
+  if(!r.models.includes(ai.models[p])) ai.models[p] = pickDefault(p, r.models);
+  saveAI();
+}
+$("#aiProvider").onchange = ()=>{ ai.provider = $("#aiProvider").value; saveAI(); fillAIForm(); };
+$("#aiKey").onchange = ()=>{ ai.keys[ai.provider] = $("#aiKey").value.trim(); ai.lists[ai.provider] = []; saveAI(); fillAIForm(); };
+$("#aiModel").onchange = ()=>{ ai.models[ai.provider] = $("#aiModel").value; saveAI(); };
+$("#aiSpice").onchange = ()=>{ ai.spice = $("#aiSpice").value; saveAI(); };
+$("#aiLoad").onclick = async ()=>{
+  ai.keys[ai.provider] = $("#aiKey").value.trim(); saveAI();
+  if(!ai.keys[ai.provider]) return toast("Paste the API key first");
+  $("#aiStatus").textContent = `Loading ${PNAME[ai.provider]} models…`;
+  try{ await loadModels(ai.provider); fillAIForm(); $("#aiStatus").textContent = `${ai.lists[ai.provider].length} models loaded`; }
+  catch(err){ $("#aiStatus").textContent = err.message; }
+};
+$("#aiForm").onsubmit = async e=>{
+  e.preventDefault();
+  ai.keys[ai.provider] = $("#aiKey").value.trim(); saveAI();
+  // chosen AI first, then any other AI with a saved key as backup
+  const order = [ai.provider, ...PROVIDERS.filter(p=>p!==ai.provider)].filter(p=>ai.keys[p]);
+  if(!order.length) return toast("Paste an API key for at least one AI");
+  $("#aiGo").disabled = true;
+  const fails = [];
+  for(const p of order){
+    try{
+      if(!ai.models[p]){ $("#aiStatus").textContent = `Loading ${PNAME[p]} models…`; await loadModels(p); }
+      $("#aiStatus").textContent = `${fails.length ? fails.at(-1) + " Trying " : ""}${PNAME[p]} (${ai.models[p]}) is judging you all…`;
+      await api(`/api/rooms/${code}/roast`, {hostKey, provider:p, key:ai.keys[p], model:ai.models[p], spice:ai.spice});
+      $("#aiStatus").textContent = fails.length ? `${fails.join(" ")} Used ${PNAME[p]} instead.` : `Roasted by ${PNAME[p]}.`;
+      fails.length = 0; break;
+    }catch(err){ fails.push(err.message.endsWith(".") ? err.message : err.message + "."); }
+  }
+  if(fails.length) $("#aiStatus").textContent = fails.join(" ") + (order.length < 3 ? " Add a key for another AI as a backup." : "");
+  $("#aiGo").disabled = false; fillAIForm();
+};
+function renderRoasts(){
+  $("#aiForm").hidden = !hostKey;
+  if(hostKey && !renderRoasts.filled){ renderRoasts.filled = true; fillAIForm(); }
+  const list = room.roasts || [];
+  const colorOf = n => { const p = Object.values(room.players).find(p=>p.name.toLowerCase()===String(n).toLowerCase()); return p ? colorFor(p.name) : "var(--accent)"; };
+  const ago = t => { const s = Math.max(0, Math.round(serverNow()-t)); return s < 60 ? "just now" : s < 3600 ? `${Math.round(s/60)} min ago` : `${Math.round(s/3600)} h ago`; };
+  if(!list.length){
+    $("#roasts").innerHTML = `<div class="empty"><h2>No roast yet</h2><p>${hostKey ? "When the boards are in, pick an AI above and press Roast everyone." : "Once the boards are in, the host asks the AI to judge everyone's taste. It shows up here for the whole room."}</p></div>`;
+    return;
+  }
+  const html = list.map(r=>`<div class="convo"><div class="meta">${esc(r.provider)} · ${esc(r.model)} · ${esc(r.spice)} · ${ago(r.at)}</div>
+    ${r.messages.map((m,i)=>`<div class="msg" style="animation-delay:${Math.min(i,12)*60}ms"><span class="bot">AI</span><div class="bubble">${m.to && m.to.toLowerCase()!=="everyone" ? `<span class="to" style="color:${colorOf(m.to)}">@${esc(m.to)}</span>` : ""}${esc(m.text)}</div></div>`).join("")}
+    ${r.awards.length ? `<div class="awards">${r.awards.map(a=>`<span class="award"><span class="av" style="background:${colorOf(a.name)}">${esc((a.name||"?")[0].toUpperCase())}</span>${esc(a.name)} <small>${esc(a.award)}</small></span>`).join("")}</div>` : ""}</div>`).join("");
+  // only redraw when a new roast arrives so the pop-in animation doesn't replay on every update
+  const sig = list.map(r=>r.id).join();
+  if(renderRoasts.sig !== sig){ renderRoasts.sig = sig; $("#roasts").innerHTML = html; }
+}
 
 boot();
 </script>
