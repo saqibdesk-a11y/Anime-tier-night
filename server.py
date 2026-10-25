@@ -188,6 +188,35 @@ def lookup_worker():
 
 OPENAI_STYLE = {"cerebras": "https://api.cerebras.ai/v1", "mistral": "https://api.mistral.ai/v1"}
 PROVIDER_NAMES = {"gemini": "Gemini", "cerebras": "Cerebras", "mistral": "Mistral"}
+# built-in keys come from the host's environment (Render > Environment), never from the code
+BUILTIN_KEYS = {p: os.environ.get(p.upper() + "_API_KEY", "").strip() for p in PROVIDER_NAMES}
+BUILTIN_ORDER = [p for p in ("gemini", "mistral", "cerebras") if BUILTIN_KEYS[p]]
+_builtin_calls = []
+_default_models = {}
+
+
+def builtin_allowed(per_hour=40):
+    """Caps roasts on the built-in keys so one busy room can't burn the whole quota."""
+    now = time.time()
+    with _api_lock:
+        _builtin_calls[:] = [t for t in _builtin_calls if now - t < 3600]
+        if len(_builtin_calls) >= per_hour:
+            return False
+        _builtin_calls.append(now)
+        return True
+
+
+def default_model(provider, key):
+    if provider not in _default_models:
+        models = list_models(provider, key)
+        prefs = {"gemini": ["flash-latest", "flash"], "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
+                 "cerebras": ["gpt-oss", "llama-3.3", "qwen", "llama"]}[provider]
+        # newest versions sort last, so search from the end
+        pick = next((m for s in prefs for m in reversed(models) if s in m and "lite" not in m and "preview" not in m), None) or (models[0] if models else None)
+        if not pick:
+            raise AIError("no usable models were found for this key.")
+        _default_models[provider] = pick
+    return _default_models[provider]
 GEMINI = "https://generativelanguage.googleapis.com/v1beta"
 
 
@@ -337,6 +366,7 @@ def hidden_phase(room):
 def public(room, viewer=None):
     r = {k: v for k, v in room.items() if k not in ("hostKey",)}
     r["now"] = time.time()
+    r["builtinAI"] = BUILTIN_ORDER
     r["players"] = {pid: {k: v for k, v in p.items() if k != "key"} for pid, p in room["players"].items()}
     if room.get("mode") == "picks":
         for pid, p in r["players"].items():
@@ -614,8 +644,21 @@ class Handler(BaseHTTPRequestHandler):
 
     def roast(self, code, b):
         provider, key, model = b.get("provider"), (b.get("key") or "").strip(), (b.get("model") or "").strip()
-        if provider not in PROVIDER_NAMES or not key or not model:
-            return self.err("Pick a provider, paste its key and choose a model.")
+        if provider not in PROVIDER_NAMES:
+            return self.err("Pick an AI.")
+        if not key:  # no key from the host: use the built-in one from the server's settings
+            key = BUILTIN_KEYS.get(provider)
+            if not key:
+                return self.err(f"There's no built-in {PROVIDER_NAMES[provider]} key. Paste your own.")
+            if not builtin_allowed():
+                return self.err("The built-in AI is busy (too many roasts this hour). Try again soon or use your own key.", 429)
+            if not model:
+                try:
+                    model = default_model(provider, key)
+                except AIError as e:
+                    return self.err(f"{PROVIDER_NAMES[provider]} failed: {e}", 502)
+        if not model:
+            return self.err("Choose a model first (press Load).")
         with lock:
             room = rooms.get(code)
             if not room:

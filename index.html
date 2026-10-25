@@ -293,16 +293,20 @@ select option{background:var(--panel-solid)}
     <div id="tab-roast" hidden>
       <form class="panel ai-panel" id="aiForm" hidden>
         <div class="ai-row">
-          <div><label for="aiProvider">AI</label><select id="aiProvider"><option value="gemini">Gemini</option><option value="cerebras">Cerebras</option><option value="mistral">Mistral</option></select></div>
-          <div class="grow"><label for="aiKey">API key</label><input type="password" id="aiKey" placeholder="Paste this AI's key" autocomplete="off" spellcheck="false"></div>
-          <div class="grow"><label for="aiModel">Model</label><div style="display:flex;gap:6px"><select id="aiModel"><option value="">Load models first</option></select><button type="button" class="btn small" id="aiLoad">Load</button></div></div>
           <div><label for="aiSpice">Spice</label><select id="aiSpice"><option value="wholesome">Wholesome</option><option value="spicy" selected>Spicy</option><option value="unhinged">Unhinged</option></select></div>
+          <button class="btn primary" id="aiGo" style="padding:11px 22px">Roast everyone</button>
+          <span class="muted grow" id="aiStatus" style="font-size:13px;align-self:center"></span>
         </div>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <button class="btn primary" id="aiGo">Roast everyone</button>
-          <span class="muted" id="aiStatus" style="font-size:13px"></span>
-        </div>
-        <p class="hint" style="margin:0">Keys stay in this browser and are only sent when you press Roast. Save a key for more than one AI: if one fails or runs out of quota, the next one takes over automatically.</p>
+        <p class="hint" style="margin:0" id="aiHelp"></p>
+        <details id="ownKey">
+          <summary class="muted" style="cursor:pointer;font-size:14px;font-weight:700">Use your own key</summary>
+          <div class="ai-row" style="margin-top:12px">
+            <div><label for="aiProvider">AI</label><select id="aiProvider"><option value="gemini">Gemini</option><option value="mistral">Mistral</option><option value="cerebras">Cerebras</option></select></div>
+            <div class="grow"><label for="aiKey">API key</label><input type="password" id="aiKey" placeholder="Paste this AI's key" autocomplete="off" spellcheck="false"></div>
+            <div class="grow"><label for="aiModel">Model</label><div style="display:flex;gap:6px"><select id="aiModel"><option value="">Load models first</option></select><button type="button" class="btn small" id="aiLoad">Load</button></div></div>
+          </div>
+          <p class="hint" style="margin:8px 0 0">Your key stays in this browser and is only sent when you press Roast. When this section is open, your key is tried first.</p>
+        </details>
       </form>
       <div id="roasts"></div>
     </div>
@@ -779,25 +783,32 @@ $("#aiLoad").onclick = async ()=>{
 $("#aiForm").onsubmit = async e=>{
   e.preventDefault();
   ai.keys[ai.provider] = $("#aiKey").value.trim(); saveAI();
-  // chosen AI first, then any other AI with a saved key as backup
-  const order = [ai.provider, ...PROVIDERS.filter(p=>p!==ai.provider)].filter(p=>ai.keys[p]);
-  if(!order.length) return toast("Paste an API key for at least one AI");
+  // built-in AIs first (Gemini, then Mistral); your own keys are the backup, or go first when that section is open
+  const own = [ai.provider, ...PROVIDERS.filter(p=>p!==ai.provider)].filter(p=>ai.keys[p]).map(p=>({p, own:true}));
+  const builtin = (room.builtinAI||[]).map(p=>({p, own:false}));
+  const order = $("#ownKey").open ? [...own, ...builtin] : [...builtin, ...own];
+  if(!order.length){ $("#ownKey").open = true; return toast("Paste an API key under Use your own key"); }
   $("#aiGo").disabled = true;
   const fails = [];
-  for(const p of order){
+  for(const {p, own:mine} of order){
+    const label = mine ? `your ${PNAME[p]} key` : PNAME[p];
     try{
-      if(!ai.models[p]){ $("#aiStatus").textContent = `Loading ${PNAME[p]} models…`; await loadModels(p); }
-      $("#aiStatus").textContent = `${fails.length ? fails.at(-1) + " Trying " : ""}${PNAME[p]} (${ai.models[p]}) is judging you all…`;
-      await api(`/api/rooms/${code}/roast`, {hostKey, provider:p, key:ai.keys[p], model:ai.models[p], spice:ai.spice});
-      $("#aiStatus").textContent = fails.length ? `${fails.join(" ")} Used ${PNAME[p]} instead.` : `Roasted by ${PNAME[p]}.`;
+      if(mine && !ai.models[p]){ $("#aiStatus").textContent = `Loading ${PNAME[p]} models…`; await loadModels(p); }
+      $("#aiStatus").textContent = `${fails.length ? "Backup: " : ""}${label} is judging you all…`;
+      await api(`/api/rooms/${code}/roast`, {hostKey, provider:p, key: mine ? ai.keys[p] : "", model: mine ? ai.models[p] : "", spice:ai.spice});
+      $("#aiStatus").textContent = fails.length ? `Roasted by ${label} (the first try didn't work).` : `Roasted by ${label}.`;
       fails.length = 0; break;
     }catch(err){ fails.push(err.message.endsWith(".") ? err.message : err.message + "."); }
   }
-  if(fails.length) $("#aiStatus").textContent = fails.join(" ") + (order.length < 3 ? " Add a key for another AI as a backup." : "");
+  if(fails.length){ $("#aiStatus").textContent = "None of the AIs worked: " + fails.join(" ") + " Open Use your own key and paste a key."; $("#ownKey").open = true; }
   $("#aiGo").disabled = false; fillAIForm();
 };
 function renderRoasts(){
   $("#aiForm").hidden = !hostKey;
+  const bi = (room.builtinAI||[]).map(p=>PNAME[p]);
+  $("#aiHelp").textContent = bi.length
+    ? `Uses the built-in AI: ${bi[0]}${bi.length > 1 ? `, with ${bi.slice(1).join(" and ")} as backup` : ""}. Nothing to set up. If ${bi.length > 1 ? "both fail" : "it fails"}, open Use your own key below.`
+    : "No built-in AI is set up on this server. Open Use your own key below and paste a key.";
   if(hostKey && !renderRoasts.filled){ renderRoasts.filled = true; fillAIForm(); }
   const list = room.roasts || [];
   const colorOf = n => { const p = Object.values(room.players).find(p=>p.name.toLowerCase()===String(n).toLowerCase()); return p ? colorFor(p.name) : "var(--accent)"; };
