@@ -210,13 +210,13 @@ def builtin_models(provider, key):
     """Up to 3 models to try in order, so one overloaded model doesn't sink the roast."""
     if provider not in _default_models:
         models = list_models(provider, key)
-        prefs = {"gemini": ["flash-latest", "flash", "flash-lite"], "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
+        prefs = {"gemini": ["flash-lite", "flash-latest", "flash"], "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
                  "cerebras": ["gpt-oss", "llama-3.3", "qwen", "llama"]}[provider]
         picks = []
         # newest versions sort last, so search from the end
         for want in prefs:
             for m in reversed(models):
-                if want in m and "preview" not in m and m not in picks and (want == "flash-lite" or "lite" not in m):
+                if want in m and "preview" not in m and m not in picks and (want == "flash-lite" or "lite" not in m):  # lite: fastest, most quota
                     picks.append(m)
                     break
         picks = picks[:3] or models[:1]
@@ -296,7 +296,7 @@ def complete(provider, key, model, system, prompt):
         res = http_json(f"{GEMINI}/models/{urllib.parse.quote(model)}:generateContent", auth(provider, key), {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 1.0, "responseMimeType": "application/json"}}, timeout=60)
+            "generationConfig": {"temperature": 1.0, "responseMimeType": "application/json"}}, timeout=45)
         parts = ((res.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
         text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
     else:
