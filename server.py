@@ -398,6 +398,74 @@ def finish(room):
     room["phase"] = "results"
     room["revealed"] = True
     room["deadline"] = None
+    start_show(room)
+
+
+def start_show(room):
+    """Puts every screen on the Reveal Show and starts the AI roast in the background. Call with lock held."""
+    room["show"] = {"slide": 0, "done": False}
+    anyone_ranked = any(any(p["tiers"].get(t) for t in TIERS) for p in room["players"].values())
+    if anyone_ranked and not room.get("roasts") and (room.get("roastState") or {}).get("status") != "working":
+        room["roastState"] = {"status": "working", "error": None}
+        threading.Thread(target=auto_roast, args=(room["code"],), daemon=True).start()
+
+
+def auto_roast(code):
+    errors = []
+    for provider in BUILTIN_ORDER:
+        try:
+            run_roast(code, provider, "", "", None)
+            return
+        except AIError as e:
+            errors.append(f"{PROVIDER_NAMES[provider]}: {e}")
+    with lock:
+        room = rooms.get(code)
+        if room:
+            room["roastState"] = {"status": "failed", "error": " ".join(errors) or "No built-in AI is set up on this server."}
+            changed(room)
+
+
+def run_roast(code, provider, key, model, spice):
+    """Asks one AI for the roast and saves it to the room. Raises AIError with a readable reason."""
+    if provider not in PROVIDER_NAMES:
+        raise AIError("pick an AI.")
+    if not key:  # no key from the host: use the built-in one from the server's settings
+        key = BUILTIN_KEYS.get(provider)
+        if not key:
+            raise AIError("there's no built-in key for it. Paste your own.")
+        if not builtin_allowed():
+            raise AIError("the built-in AI is busy (too many roasts this hour). Try again soon or use your own key.")
+        model = model or default_model(provider, key)
+    if not model:
+        raise AIError("choose a model first (press Load).")
+    with lock:
+        room = rooms.get(code)
+        if not room:
+            raise AIError("the room is gone.")
+        if not any(any(p["tiers"].get(t) for t in TIERS) for p in room["players"].values()):
+            raise AIError("nobody has ranked anything yet, so there's nothing to roast.")
+        spice = spice or room.get("spice") or "spicy"
+        system, prompt = roast_prompt(room, spice)
+        names = {p["name"].lower(): p["name"] for p in room["players"].values()}
+    out = complete(provider, key, model, system, prompt)  # the key is used here and never stored
+    msgs = [{"to": names.get(str(m.get("to") or "").lower(), str(m.get("to") or "everyone")[:30]),
+             "text": str(m.get("text") or "")[:600]}
+            for m in (out.get("messages") or []) if isinstance(m, dict) and m.get("text")][:40]
+    awards = [{"name": names.get(str(a.get("name", "")).lower(), str(a.get("name", ""))[:30]),
+               "award": str(a.get("award") or "")[:60]}
+              for a in (out.get("awards") or []) if isinstance(a, dict)][:30]
+    if not msgs:
+        raise AIError("it replied with nothing usable. Try again or switch model.")
+    entry = {"id": rid(6), "at": time.time(), "provider": PROVIDER_NAMES[provider], "model": model,
+             "spice": spice, "messages": msgs, "awards": awards}
+    with lock:
+        room = rooms.get(code)
+        if room:
+            room.setdefault("roasts", []).insert(0, entry)
+            del room["roasts"][5:]
+            room["roastState"] = {"status": "done", "error": None}
+            changed(room)
+    return entry
 
 
 def ticker():
@@ -507,6 +575,7 @@ class Handler(BaseHTTPRequestHandler):
                         "mode": mode, "phase": "submit" if mode == "picks" else "ranking",
                         "picksPer": max(1, min(10, int(b.get("picksPer") or 5))),
                         "timerSec": max(30, min(1800, int(b.get("timerSec") or 120))), "deadline": None,
+                        "spice": b.get("spice") if b.get("spice") in SPICE else "spicy", "show": None, "roastState": None,
                         "anime": [], "players": {}, "revealed": False, "tiers": TIERS, "roasts": [],
                         "created": time.time(), "version": 0}
                 rooms[code] = room
@@ -597,6 +666,19 @@ class Handler(BaseHTTPRequestHandler):
                 add_anime(room, b.get("list") or [])
             elif action == "reveal":
                 room["revealed"] = bool(b.get("revealed"))
+                if room["revealed"] and not room.get("show"):
+                    start_show(room)
+            elif action == "slide":
+                if not room.get("show"):
+                    return self.err("The show hasn't started.")
+                room["show"]["slide"] = max(0, int(b.get("to") or 0))
+                room["show"]["done"] = bool(b.get("done"))
+            elif action == "showagain":
+                start_show(room)
+            elif action == "retryroast":
+                if (room.get("roastState") or {}).get("status") != "working":
+                    room["roastState"] = {"status": "working", "error": None}
+                    threading.Thread(target=auto_roast, args=(room["code"],), daemon=True).start()
             elif action == "title":
                 room["title"] = (b.get("title") or room["title"])[:80]
             elif action == "kick":
@@ -643,51 +725,24 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"ok": True})
 
     def roast(self, code, b):
-        provider, key, model = b.get("provider"), (b.get("key") or "").strip(), (b.get("model") or "").strip()
-        if provider not in PROVIDER_NAMES:
-            return self.err("Pick an AI.")
-        if not key:  # no key from the host: use the built-in one from the server's settings
-            key = BUILTIN_KEYS.get(provider)
-            if not key:
-                return self.err(f"There's no built-in {PROVIDER_NAMES[provider]} key. Paste your own.")
-            if not builtin_allowed():
-                return self.err("The built-in AI is busy (too many roasts this hour). Try again soon or use your own key.", 429)
-            if not model:
-                try:
-                    model = default_model(provider, key)
-                except AIError as e:
-                    return self.err(f"{PROVIDER_NAMES[provider]} failed: {e}", 502)
-        if not model:
-            return self.err("Choose a model first (press Load).")
+        provider = b.get("provider")
         with lock:
             room = rooms.get(code)
             if not room:
                 return self.err("Room not found.", 404)
             if b.get("hostKey") != room["hostKey"]:
                 return self.err("Only the host can start the roast.", 403)
-            if not any(any(p["tiers"].get(t) for t in TIERS) for p in room["players"].values()):
-                return self.err("Nobody has ranked anything yet, so there's nothing to roast.")
-            system, prompt = roast_prompt(room, b.get("spice"))
-            names = {p["name"].lower(): p["name"] for p in room["players"].values()}
+            room["roastState"] = {"status": "working", "error": None}
+            changed(room)
         try:
-            out = complete(provider, key, model, system, prompt)  # the key is used here and never stored
+            entry = run_roast(code, provider, (b.get("key") or "").strip(), (b.get("model") or "").strip(), b.get("spice"))
         except AIError as e:
-            return self.err(f"{PROVIDER_NAMES[provider]} failed: {e}", 502)
-        msgs = [{"to": str(m.get("to") or "everyone")[:30], "text": str(m.get("text") or "")[:600]}
-                for m in (out.get("messages") or []) if isinstance(m, dict) and m.get("text")][:40]
-        awards = [{"name": names.get(str(a.get("name", "")).lower(), str(a.get("name", ""))[:30]),
-                   "award": str(a.get("award") or "")[:60]}
-                  for a in (out.get("awards") or []) if isinstance(a, dict)][:30]
-        if not msgs:
-            return self.err(f"{PROVIDER_NAMES[provider]} replied with nothing usable. Try again or switch model.", 502)
-        entry = {"id": rid(6), "at": time.time(), "provider": PROVIDER_NAMES[provider], "model": model,
-                 "spice": b.get("spice") or "spicy", "messages": msgs, "awards": awards}
-        with lock:
-            room = rooms.get(code)
-            if room:
-                room.setdefault("roasts", []).insert(0, entry)
-                del room["roasts"][5:]
-                changed(room)
+            with lock:
+                room = rooms.get(code)
+                if room and (room.get("roastState") or {}).get("status") == "working":
+                    room["roastState"] = {"status": "failed", "error": f"{PROVIDER_NAMES.get(provider, 'The AI')}: {e}"}
+                    changed(room)
+            return self.err(f"{PROVIDER_NAMES.get(provider, 'The AI')} failed: {e}", 502)
         return self.send_json({"ok": True, "provider": entry["provider"]})
 
 
@@ -697,6 +752,8 @@ def main():
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")
         room.setdefault("roasts", [])
+        if (room.get("roastState") or {}).get("status") == "working":  # the server restarted mid-roast
+            room["roastState"] = {"status": "failed", "error": "The server restarted while the AI was writing. Press Try again."}
         for item in room["anime"]:
             if item.get("status") == "searching":
                 lookup_q.put((code, item["id"]))

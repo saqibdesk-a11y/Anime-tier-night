@@ -187,6 +187,40 @@ select option{background:var(--panel-solid)}
 .awards{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .award{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 12px 4px 4px;background:rgba(255,216,77,.1);border:1px solid rgba(255,216,77,.3);font-size:13px;font-weight:700}
 .award small{color:var(--B);font-weight:800}
+/* reveal show: every screen shows the same slide, the host steps through */
+#stage{padding-bottom:110px}
+.slide{margin-top:18px;animation:slidein-up .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes slidein-up{from{opacity:0;transform:translateY(18px)}}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.slide-title{font-size:clamp(30px,5.5vw,54px);line-height:1.05;margin:6px 0 4px}
+.slide-hero{display:grid;gap:18px;justify-items:center;text-align:center;padding:40px 0 10px}
+.slide-hero .chat{width:min(680px,100%);text-align:left}
+.who{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.who .av{width:54px;height:54px;font-size:24px}
+.who .award{font-size:14px}
+.player-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;margin-top:16px;align-items:start}
+@media (max-width:900px){.player-grid{grid-template-columns:1fr}}
+.player-grid .board{margin-top:0}
+.mid{--card-w:62px}
+.mid .row{grid-template-columns:52px 1fr;min-height:calc(var(--card-w)*1.42 + 10px)}
+.mid .row .lab{font-size:22px}
+.mid .row .drop{gap:5px;padding:5px}
+.mid .card{cursor:default}
+.mid .card .cap{font-size:9px;padding:12px 4px 3px}
+.picksrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chat{display:grid;gap:10px}
+.chat .msg{animation-duration:.5s}
+.thinking{display:flex;align-items:center;gap:12px;color:var(--muted);font-weight:600}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.roastfail{border:1px solid rgba(255,90,122,.35);background:rgba(255,90,122,.08);border-radius:16px;padding:14px;display:grid;gap:10px}
+.awards.big .award{font-size:15px;padding:6px 16px 6px 6px}
+.awards.big .award .av{width:30px;height:30px}
+.showbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:rgba(6,10,19,.85);backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.showbar .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;min-width:70px;text-align:center}
+.showbar .btn.primary{padding:11px 28px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -210,6 +244,8 @@ select option{background:var(--panel-solid)}
             <label><input type="radio" name="mode" value="classic"><span><b>Host's list</b><small>You choose every show and everyone ranks the same list</small></span></label>
           </div>
         </div>
+        <div><label for="cSpice">AI roast at the end</label>
+          <select id="cSpice"><option value="wholesome">Wholesome: friendly teasing</option><option value="spicy" selected>Spicy: proper roast</option><option value="unhinged">Unhinged: no mercy</option></select></div>
         <div id="picksOpts" class="opts">
           <div><label for="cPicks">Picks per person</label><input type="number" id="cPicks" min="1" max="10" value="5"></div>
           <div><label for="cTimer">Ranking timer</label>
@@ -254,6 +290,7 @@ select option{background:var(--panel-solid)}
   </div>
   <div class="wrap">
     <div class="players" id="players"></div>
+    <div id="stage" hidden></div>
 
     <div id="tab-mine">
       <form class="panel" id="nameGate" hidden style="max-width:420px;margin-top:14px">
@@ -349,6 +386,7 @@ select option{background:var(--panel-solid)}
   <div style="display:flex;justify-content:flex-end"><button class="btn small" id="removeAnime">Remove this show from the room</button></div>
 </div>
 
+<div class="showbar" id="showbar" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -404,7 +442,7 @@ $("#createForm").onsubmit = async e => {
   $("#cBtn").disabled = true; $("#cErr").textContent = "";
   try{
     const r = await api("/api/rooms", {title: $("#cTitle").value.trim() || "Anime Tier Night", mode, list,
-      picksPer: +$("#cPicks").value || 5, timerSec: +$("#cTimer").value});
+      picksPer: +$("#cPicks").value || 5, timerSec: +$("#cTimer").value, spice: $("#cSpice").value});
     store("atn:"+r.code, {hostKey: r.hostKey, me: null});
     openRoom(r.code);
   }catch(err){ $("#cErr").textContent = err.message; }
@@ -498,6 +536,7 @@ function render(){
   renderPlayers();
   if(!dragging) renderMine();
   renderAll(); renderVerdict(); renderRoasts(); tickTimer(); if(!$("#drawer").hidden) renderHost();
+  renderShow();
 }
 function renderPlayers(){
   const submitting = isPicks() && room.phase === "submit";
@@ -574,8 +613,7 @@ function renderAll(){
   const pickedBy = pid => room.anime.filter(a=>(a.by||[]).includes(pid)).map(a=>a.title);
   el.innerHTML = `<div class="everyone">${Object.entries(room.players).map(([pid,p])=>`<div class="pboard mini"><h3><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}</h3>${isPicks()?`<p class="pickedby">Secretly picked: ${esc(pickedBy(pid).join(", ")||"nothing")}</p>`:""}<div class="board" style="margin-top:0">${boardHTML(p.tiers, byId, false)}</div></div>`).join("")}</div>`;
 }
-function renderVerdict(){
-  const el = $("#tab-verdict");
+function renderVerdict(el = $("#tab-verdict")){
   if(!room.revealed){ el.innerHTML = `<div class="empty"><h2>The verdict unlocks at the reveal</h2><p>Once the host reveals the boards, this tab averages everyone's rankings into one group tier list and shows which shows split the room.</p></div>`; return; }
   const ps = Object.values(room.players); const byId = animeById();
   const stats = room.anime.map(a=>{
@@ -681,7 +719,8 @@ function renderHost(){
   if(!isPicks()) ph.innerHTML = "";
   else if(room.phase === "submit") ph.innerHTML = `<div class="switch"><div><b>Start the ranking</b><div class="muted" style="font-size:13px">${room.poolSize||0} shows in the pool. Picks close when you start.</div></div><div style="display:grid;gap:6px;min-width:120px"><select id="hTimer">${[60,120,180,300,600].map(s=>`<option value="${s}" ${s===room.timerSec?"selected":""}>${fmtTime(s)}</option>`).join("")}</select><button class="btn primary" data-ph="start" ${room.poolSize?"":"disabled"}>Start</button></div></div>`;
   else if(room.phase === "ranking") ph.innerHTML = `<div class="switch"><div><b>Ranking in progress</b><div class="muted" style="font-size:13px">Boards reveal when the timer hits zero.</div></div><div style="display:flex;gap:6px"><button class="btn small" data-ph="addtime">+30s</button><button class="btn small" data-ph="end">End now</button></div></div>`;
-  else ph.innerHTML = `<div class="switch"><div><b>Round finished</b><div class="muted" style="font-size:13px">Boards are revealed. Head to the AI roast tab.</div></div></div>`;
+  else ph.innerHTML = `<div class="switch"><div><b>Round finished</b><div class="muted" style="font-size:13px">Boards are revealed.</div></div><button class="btn small primary" data-show="replay">Replay the show</button></div>`;
+  if(!isPicks() && room.show) ph.innerHTML = `<div class="switch"><div><b>Reveal show</b><div class="muted" style="font-size:13px">Put everyone back on the show screen.</div></div><button class="btn small primary" data-show="replay">Replay the show</button></div>`;
   $("#revealBtn").textContent = room.revealed ? "Hide again" : "Reveal";
   $("#revealBtn").className = "btn" + (room.revealed ? "" : " primary");
   const ps = Object.entries(room.players);
@@ -824,6 +863,89 @@ function renderRoasts(){
   const sig = list.map(r=>r.id).join();
   if(renderRoasts.sig !== sig){ renderRoasts.sig = sig; $("#roasts").innerHTML = html; }
 }
+
+/* ---------- reveal show: one shared slide for every screen, host steps through ---------- */
+const inShow = () => !!(room && room.show && !room.show.done);
+function showPlayers(){ return Object.entries(room.players).sort((a,b)=>a[1].joined-b[1].joined); }
+function showSlides(){ return ["intro", ...showPlayers().map(([pid])=>"p:"+pid), "group", "finale"]; }
+function roastParts(){
+  const r = (room.roasts||[])[0]; if(!r) return null;
+  const names = new Set(Object.values(room.players).map(p=>p.name.toLowerCase()));
+  const toAll = r.messages.filter(m=>!names.has(String(m.to).toLowerCase()));
+  return {r, intro: toAll.slice(0,1), finale: toAll.slice(1),
+    forName: n => r.messages.filter(m=>String(m.to).toLowerCase()===n.toLowerCase()),
+    award: n => r.awards.find(a=>String(a.name).toLowerCase()===n.toLowerCase())};
+}
+function chatHTML(msgs){
+  return `<div class="chat">${msgs.map((m,i)=>`<div class="msg" style="animation-delay:${300+i*700}ms"><span class="bot">AI</span><div class="bubble">${esc(m.text)}</div></div>`).join("")}</div>`;
+}
+function roastStatusHTML(){
+  const st = room.roastState || {};
+  if(st.status === "working") return `<div class="thinking"><span class="dots"><i></i><i></i><i></i></span>The AI is judging everyone's taste…</div>`;
+  if(st.status === "failed") return `<div class="roastfail"><b>The AI roast didn't work.</b><span class="muted" style="font-size:14px">${esc(st.error||"")}</span>${hostKey ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small primary" data-show="retry">Try again</button><button class="btn small" data-show="ownkey">Use my own key</button></div>` : `<span class="muted" style="font-size:14px">The host can try again.</span>`}</div>`;
+  return "";
+}
+function slideHTML(kind){
+  const rp = roastParts(); const byId = animeById(); const status = rp ? "" : roastStatusHTML();
+  if(kind === "intro"){
+    const n = Object.keys(room.players).length;
+    return `<div class="slide slide-hero"><div class="eyebrow">${esc(room.title)}</div><h1 class="slide-title">The results are in</h1><p class="muted" style="margin:0">${n} board${n===1?"":"s"}${isPicks()?`, ${room.anime.length} shows in the pool`:""}. Let's see who has taste.</p>${rp ? chatHTML(rp.intro) : status}</div>`;
+  }
+  if(kind === "group"){
+    const tmp = document.createElement("div"); renderVerdict(tmp);
+    return `<div class="slide"><div class="eyebrow">Everyone together</div><h1 class="slide-title">The group verdict</h1>${tmp.innerHTML}</div>`;
+  }
+  if(kind === "finale"){
+    return `<div class="slide slide-hero"><div class="eyebrow">Final word</div><h1 class="slide-title">And the awards go to…</h1>${rp ? chatHTML(rp.finale) + `<div class="awards big" style="justify-content:center">${rp.r.awards.map((a,i)=>`<span class="award" style="animation:pop .4s ${600+i*250}ms backwards"><span class="av" style="background:${colorFor(a.name||"?")}">${esc((a.name||"?")[0].toUpperCase())}</span>${esc(a.name)} <small>${esc(a.award)}</small></span>`).join("")}</div>` : status}</div>`;
+  }
+  const pid = kind.slice(2), p = room.players[pid];
+  if(!p) return `<div class="slide slide-hero"><h1 class="slide-title">This player left</h1></div>`;
+  const picks = room.anime.filter(a=>(a.by||[]).includes(pid));
+  const award = rp && rp.award(p.name);
+  return `<div class="slide"><div class="who"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><h1 class="slide-title" style="margin:0">${esc(p.name)}</h1>${award?`<span class="award"><small>${esc(award.award)}</small></span>`:""}</div>
+    ${isPicks() ? `<div class="pickedby" style="margin-top:10px">Secretly picked</div><div class="picksrow mid">${picks.map(a=>cardHTML(a)).join("") || '<span class="muted">Nothing</span>'}</div>` : ""}
+    <div class="player-grid"><div class="board mid">${boardHTML(p.tiers, byId, false)}</div>
+    <div>${rp ? chatHTML(rp.forName(p.name)) : status}</div></div></div>`;
+}
+function renderShow(){
+  const on = inShow();
+  $("#stage").hidden = !on; $("#showbar").hidden = !on;
+  document.querySelector(".tabs").hidden = on;
+  for(const t of ["mine","all","verdict","roast"]) $("#tab-"+t).hidden = on || t !== tab;
+  if(!on){
+    // the show just ended: land everyone on the boards instead of a locked editor
+    if(renderShow.was){ renderShow.was = false; renderShow.sig = null; switchTab(renderShow.after || "all"); renderShow.after = null; if(tab==="roast") $("#ownKey").open = true; }
+    return;
+  }
+  renderShow.was = true;
+  const slides = showSlides(); const i = Math.min(room.show.slide, slides.length-1);
+  const rs = room.roastState || {};
+  // redraw only when the slide or roast changes, so animations play once
+  const sig = [slides[i], (room.roasts||[])[0]?.id, rs.status, Object.keys(room.players).length].join("|");
+  if(renderShow.sig !== sig){ renderShow.sig = sig; $("#stage").innerHTML = slideHTML(slides[i]); window.scrollTo({top:0}); }
+  const last = i === slides.length-1;
+  $("#showbar").innerHTML = hostKey
+    ? `<button class="btn" data-show="prev" ${i===0?"disabled":""}>Back</button><span class="count">${i+1} / ${slides.length}</span><button class="btn primary" data-show="${last?"finish":"next"}">${last?"Finish show":"Next"}</button><button class="btn small" data-show="finish" style="margin-left:8px">Skip show</button>`
+    : `<span class="count">${i+1} / ${slides.length}</span><span class="muted" style="font-size:14px">The host moves the show along</span>`;
+}
+async function showAction(a){
+  const i = Math.min(room.show?.slide||0, showSlides().length-1);
+  try{
+    if(a === "next" && i >= showSlides().length-1) a = "finish";
+    if(a === "next") await api(`/api/rooms/${code}/slide`, {hostKey, to:i+1});
+    else if(a === "prev") await api(`/api/rooms/${code}/slide`, {hostKey, to:Math.max(0,i-1)});
+    else if(a === "finish") await api(`/api/rooms/${code}/slide`, {hostKey, to:i, done:true});
+    else if(a === "retry") await api(`/api/rooms/${code}/retryroast`, {hostKey});
+    else if(a === "replay") await api(`/api/rooms/${code}/showagain`, {hostKey});
+    else if(a === "ownkey"){ renderShow.after = "roast"; await api(`/api/rooms/${code}/slide`, {hostKey, to:i, done:true}); }
+  }catch(err){ toast(err.message); }
+}
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-show]"); if(b && hostKey) showAction(b.dataset.show); });
+document.addEventListener("keydown", e=>{
+  if(!inShow() || !hostKey || e.target.closest("input,textarea,select")) return;
+  if(e.key === "ArrowRight" || e.key === " "){ e.preventDefault(); showAction("next"); }
+  if(e.key === "ArrowLeft"){ e.preventDefault(); showAction("prev"); }
+});
 
 boot();
 </script>
