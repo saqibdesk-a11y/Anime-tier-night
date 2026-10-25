@@ -266,7 +266,11 @@ def http_json_once(url, key_headers, body, timeout):
         reason = {401: "the API key was rejected", 403: "the API key isn't allowed to use this",
                   404: "that model wasn't found", 429: "it's out of quota or rate limited"}.get(e.code, f"it returned error {e.code}")
         raise AIError(f"{reason}. {str(detail)[:200]}".strip(), e.code)
+    except TimeoutError:
+        raise AIError(f"took longer than {timeout}s and timed out.", "timeout")
     except Exception as e:
+        if "timed out" in str(e):
+            raise AIError(f"took longer than {timeout}s and timed out.", "timeout")
         raise AIError(f"couldn't reach it ({e.__class__.__name__}).")
 
 
@@ -292,7 +296,7 @@ def complete(provider, key, model, system, prompt):
         res = http_json(f"{GEMINI}/models/{urllib.parse.quote(model)}:generateContent", auth(provider, key), {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 1.0, "responseMimeType": "application/json"}})
+            "generationConfig": {"temperature": 1.0, "responseMimeType": "application/json"}}, timeout=60)
         parts = ((res.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
         text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
     else:
@@ -462,15 +466,16 @@ def run_roast(code, provider, key, model, spice):
         if not builtin_allowed():
             raise AIError("the built-in AI is busy (too many roasts this hour). Try again soon or use your own key.")
         if not model:
-            last = None
+            tried = []
             for m in builtin_models(provider, key):
+                started = time.time()
                 try:
                     return run_roast_with(code, provider, key, m, spice)
                 except AIError as e:
-                    last = e
-                    if e.code not in BUSY + (404,):
-                        raise
-            raise last
+                    tried.append(f"{m} ({int(time.time() - started)}s): {e}")
+                    if e.code not in BUSY + (404, "timeout"):
+                        break
+            raise AIError(" | ".join(tried))
     if not model:
         raise AIError("choose a model first (press Load).")
     return run_roast_with(code, provider, key, model, spice)
