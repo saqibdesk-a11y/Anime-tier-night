@@ -206,25 +206,51 @@ def builtin_allowed(per_hour=40):
         return True
 
 
-def default_model(provider, key):
+def builtin_models(provider, key):
+    """Up to 3 models to try in order, so one overloaded model doesn't sink the roast."""
     if provider not in _default_models:
         models = list_models(provider, key)
-        prefs = {"gemini": ["flash-latest", "flash"], "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
+        prefs = {"gemini": ["flash-latest", "flash", "flash-lite"], "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
                  "cerebras": ["gpt-oss", "llama-3.3", "qwen", "llama"]}[provider]
+        picks = []
         # newest versions sort last, so search from the end
-        pick = next((m for s in prefs for m in reversed(models) if s in m and "lite" not in m and "preview" not in m), None) or (models[0] if models else None)
-        if not pick:
+        for want in prefs:
+            for m in reversed(models):
+                if want in m and "preview" not in m and m not in picks and (want == "flash-lite" or "lite" not in m):
+                    picks.append(m)
+                    break
+        picks = picks[:3] or models[:1]
+        if not picks:
             raise AIError("no usable models were found for this key.")
-        _default_models[provider] = pick
+        _default_models[provider] = picks
+        time.sleep(1.2)  # free tiers allow about one call per second
     return _default_models[provider]
+
+
 GEMINI = "https://generativelanguage.googleapis.com/v1beta"
 
 
 class AIError(Exception):
-    pass
+    def __init__(self, msg, code=None):
+        super().__init__(msg)
+        self.code = code
+
+
+BUSY = (429, 500, 502, 503, 504)
 
 
 def http_json(url, key_headers, body=None, timeout=90):
+    # busy or rate-limited AIs usually answer on a second or third try
+    for wait in (2.5, 6, None):
+        try:
+            return http_json_once(url, key_headers, body, timeout)
+        except AIError as e:
+            if e.code not in BUSY or wait is None:
+                raise
+            time.sleep(wait)
+
+
+def http_json_once(url, key_headers, body, timeout):
     data = json.dumps(body).encode("utf-8") if body is not None else None
     headers = {"Content-Type": "application/json", "User-Agent": "AnimeTierNight/1.0", **key_headers}
     try:
@@ -239,7 +265,7 @@ def http_json(url, key_headers, body=None, timeout=90):
             pass
         reason = {401: "the API key was rejected", 403: "the API key isn't allowed to use this",
                   404: "that model wasn't found", 429: "it's out of quota or rate limited"}.get(e.code, f"it returned error {e.code}")
-        raise AIError(f"{reason}. {str(detail)[:200]}".strip())
+        raise AIError(f"{reason}. {str(detail)[:200]}".strip(), e.code)
     except Exception as e:
         raise AIError(f"couldn't reach it ({e.__class__.__name__}).")
 
@@ -435,9 +461,22 @@ def run_roast(code, provider, key, model, spice):
             raise AIError("there's no built-in key for it. Paste your own.")
         if not builtin_allowed():
             raise AIError("the built-in AI is busy (too many roasts this hour). Try again soon or use your own key.")
-        model = model or default_model(provider, key)
+        if not model:
+            last = None
+            for m in builtin_models(provider, key):
+                try:
+                    return run_roast_with(code, provider, key, m, spice)
+                except AIError as e:
+                    last = e
+                    if e.code not in BUSY + (404,):
+                        raise
+            raise last
     if not model:
         raise AIError("choose a model first (press Load).")
+    return run_roast_with(code, provider, key, model, spice)
+
+
+def run_roast_with(code, provider, key, model, spice):
     with lock:
         room = rooms.get(code)
         if not room:
