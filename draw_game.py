@@ -16,17 +16,37 @@ IMAGES = {}   # image id -> jpeg bytes (kept in memory only; drawings are gone w
 STROKES = {}  # (code, round, team id) -> {"gen": n, "list": [stroke, ...]} for live team canvases
 MAX_IMG = 900_000
 
-FALLBACK_PROMPTS = [
-    "Goku doing his taxes", "Naruto at a job interview", "A ninja cat", "Pikachu stuck in traffic",
-    "Luffy at an all-you-can-eat buffet", "A samurai ordering coffee", "A dragon afraid of the dark",
-    "Saitama grocery shopping", "Totoro at the gym", "A mecha doing yoga", "Sailor Moon on a skateboard",
-    "Levi cleaning a messy bedroom", "A vampire at the beach", "Tanjiro's first day at school",
-    "A ramen bowl with a face", "An isekai truck", "Zoro getting lost in a mall", "A magical girl transformation gone wrong",
-    "Gojo wearing sunglasses at night", "A slime who wants to be a hero", "Light Yagami writing a grocery list",
-    "Ash Ketchum aged 40", "Eren as a kindergarten teacher", "A haunted vending machine", "A shiba inu samurai",
-    "Spike Spiegel cooking dinner", "A cursed toaster", "Mob doing homework", "A cat cafe in space",
-    "Two rivals sharing an umbrella", "All Might at the dentist", "A titan in a tiny car",
-]
+CATEGORIES = {
+    "anime": ("Anime", "anime characters doing funny or unexpected things, and iconic anime moments",
+              ["Goku doing his taxes", "Naruto at a job interview", "Pikachu stuck in traffic", "Luffy at an all-you-can-eat buffet",
+               "Saitama grocery shopping", "Totoro at the gym", "Levi cleaning a messy bedroom", "Zoro getting lost in a mall",
+               "Gojo wearing sunglasses at night", "Light Yagami writing a grocery list", "All Might at the dentist", "A titan in a tiny car"]),
+    "objects": ("Everyday objects", "everyday objects, simple and recognizable, sometimes with a funny twist",
+                ["A toaster", "An umbrella", "A pair of scissors", "A lightbulb", "A rubber duck", "A grandfather clock",
+                 "A shopping cart", "A camera", "Headphones", "A bicycle", "A teapot", "A lamp with a crooked shade"]),
+    "food": ("Food", "foods, dishes and drinks from around the world",
+             ["A slice of pizza", "Sushi", "A burger with everything on it", "A bowl of ramen", "Tacos", "A birthday cake",
+              "Pancakes with syrup", "A pineapple", "Fried chicken", "Ice cream that's melting", "A croissant", "Bubble tea"]),
+    "animals": ("Animals", "animals, sometimes doing something funny",
+                ["A giraffe", "A penguin", "An octopus", "A sleepy sloth", "A cat knocking a glass off a table", "A shark",
+                 "A flamingo on one leg", "A hedgehog", "A kangaroo boxing", "A snail racing", "An owl", "A crab"]),
+    "flags": ("Flags", "national flags of real countries (write each as 'Flag of <country>'), from easy to tricky",
+              ["Flag of Japan", "Flag of Canada", "Flag of Brazil", "Flag of the United Kingdom", "Flag of South Korea", "Flag of Pakistan",
+               "Flag of Italy", "Flag of the USA", "Flag of India", "Flag of Germany", "Flag of Mexico", "Flag of Turkey"]),
+    "places": ("Places and landmarks", "famous landmarks, cities and places people would recognize",
+               ["The Eiffel Tower", "The pyramids of Giza", "The Statue of Liberty", "Mount Fuji", "A lighthouse", "The Great Wall of China",
+                "A desert island", "A haunted house", "The Leaning Tower of Pisa", "A volcano", "A space station", "Big Ben"]),
+    "movies": ("Movies and TV", "famous movies, TV shows and characters people would recognize",
+               ["Titanic", "Shrek", "Spider-Man", "Jaws", "SpongeBob", "Harry Potter", "Darth Vader", "The Simpsons",
+                "Finding Nemo", "Batman", "Frozen", "Pac-Man"]),
+    "funny": ("Funny situations", "funny, absurd everyday situations and actions",
+              ["A dog driving a car", "Someone slipping on a banana", "A cat at a job interview", "A snowman at the beach",
+               "A vampire at the dentist", "A robot falling in love with a toaster", "Grandma on a skateboard", "A ghost doing laundry",
+               "A cow on a trampoline", "A dinosaur at a birthday party", "Pizza delivery in the rain", "A frog proposing"]),
+    "mix": ("Mix of everything", "a random mix: objects, food, animals, places, flags, movies and funny situations",
+            []),
+}
+CATEGORIES["mix"] = (CATEGORIES["mix"][0], CATEGORIES["mix"][1], [p for k, v in CATEGORIES.items() if k != "mix" for p in v[2]])
 SPICE = {
     "wholesome": "Be warm and encouraging: gentle jokes, lots of hype.",
     "spicy": "Roast properly: specific, funny jokes about what you actually see, balanced with real compliments.",
@@ -49,7 +69,8 @@ def create(room, b):
         "rounds": max(1, min(6, int(b.get("rounds") or 3))),
         "drawSec": max(30, min(300, int(b.get("drawSec") or 90))),
         "rateSec": 90,
-        "theme": (b.get("theme") or "").strip()[:80],
+        "category": b.get("category") if b.get("category") in CATEGORIES or b.get("category") == "custom" else "mix",
+        "theme": (b.get("theme") or "").strip()[:200],  # what the host typed for a custom category
         "spice": b.get("spice") if b.get("spice") in SPICE else "spicy",
         "teams": [{"id": "t1", "name": "Team Red"}, {"id": "t2", "name": "Team Blue"}],
         "phase": "lobby", "round": -1, "prompts": [], "deadline": None, "roundData": [], "show": None,
@@ -94,20 +115,30 @@ def on_join(room, pid):
 # ---------- AI ----------
 
 def make_prompts(room):
-    n = room["rounds"]
-    theme = room["theme"] or "anime characters, anime scenes and funny everyday situations"
+    n, cat = room["rounds"], room.get("category", "mix")
+    if cat == "custom" and room.get("theme"):
+        about, backup = f"this, as described by the host: {room['theme']}", CATEGORIES["mix"][2]
+    else:
+        _, about, backup = CATEGORIES.get(cat, CATEGORIES["mix"])
     try:
         out, _, _ = ai.ask_builtin(
-            "You write prompts for a party drawing game played by friends who love anime.",
-            f"Write {n + 2} drawing prompts about: {theme}. Each must be drawable in {room['drawSec']} seconds by an "
-            "average person, funny or surprising, specific (a character or thing doing something), 2-7 words, no two alike. "
+            "You write prompts for a party drawing game played by friends.",
+            f"Write {n + 2} drawing prompts about {about}. Each must be drawable in {room['drawSec']} seconds by an "
+            "average person, recognizable once drawn, 1-7 words, and no two alike. Mix easy ones with a few that are fun to attempt. "
             'Return only JSON: {"prompts": ["...", "..."]}', timeout=25)
         prompts = [str(x).strip()[:80] for x in out.get("prompts", []) if str(x).strip()]
     except ai.AIError:
         prompts = []
+    random.shuffle(prompts)
     if len(prompts) < n:
-        prompts += random.sample(FALLBACK_PROMPTS, n - len(prompts))
+        prompts += random.sample(backup, min(len(backup), n - len(prompts)))
     return prompts[:n]
+
+
+def category_label(room):
+    if room.get("category") == "custom":
+        return room.get("theme") or "Custom"
+    return CATEGORIES.get(room.get("category", "mix"), CATEGORIES["mix"])[0]
 
 
 def judge_round(code, rnd):
@@ -125,7 +156,7 @@ def judge_round(code, rnd):
     else:
         try:
             out, provider, model = ai.ask_builtin(
-                "You are the judge of a party drawing game played by friends who love anime. You look closely at each "
+                "You are the judge of a party drawing game played by friends. You look closely at each "
                 "drawing and say exactly what you see, then joke about it. " + SPICE[spice] +
                 " Keep each comment to 1-2 short sentences, casual like a group chat.",
                 f'Everyone had {room_secs(code)} seconds to draw: "{prompt_word}". There are {len(images)} drawings, '
@@ -269,6 +300,7 @@ def standings(room, upto):
 def public(room, viewer):
     r = {k: v for k, v in room.items() if k not in ("hostKey", "roundData", "prompts")}  # future prompts stay secret
     r["now"] = time.time()
+    r["categoryLabel"] = category_label(room)
     r["visionAI"] = [p for p in ai.BUILTIN_ORDER if p in ("gemini", "mistral")]
     r["players"] = {pid: {k: v for k, v in p.items() if k != "key"} for pid, p in room["players"].items()}
     r["myOwner"] = owner_of(room, viewer) if viewer else None

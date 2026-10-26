@@ -57,6 +57,12 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 .seg small{color:var(--muted);font-weight:500;line-height:1.35}
 .seg input:checked+span{border-color:var(--accent);background:rgba(62,224,255,.08);box-shadow:0 0 0 3px rgba(62,224,255,.1)}
 .seg input:focus-visible+span{outline:2px solid var(--accent)}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.cats label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;font-weight:700;color:var(--fg);cursor:pointer}
+.cats input{position:absolute;opacity:0;pointer-events:none}
+.cats span{display:block;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:rgba(0,0,0,.2);transition:border-color .15s,background .15s}
+.cats input:checked+span{border-color:var(--accent);background:rgba(62,224,255,.12);color:var(--accent)}
+.cats input:focus-visible+span{outline:2px solid var(--accent)}
 .opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media (max-width:560px){.seg,.opts{grid-template-columns:1fr}}
 
@@ -174,7 +180,7 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
     <div class="hero">
       <a class="back" href="/">&larr; All games</a>
       <h1>Draw It</h1>
-      <p>The AI picks what everyone draws. Race the clock alone or with your team, then the AI or your friends score every drawing, roast it, and crown a winner.</p>
+      <p>Pick a category or describe your own, and the AI picks what everyone draws. Race the clock alone or with your team, then the AI or your friends score every drawing, roast it, and crown a winner.</p>
     </div>
     <div class="home-grid">
       <form class="panel" id="createForm">
@@ -195,7 +201,21 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
           <div><label for="cTime">Drawing time</label><select id="cTime"><option value="60">1 minute</option><option value="90" selected>90 seconds</option><option value="120">2 minutes</option><option value="180">3 minutes</option></select></div>
           <div><label for="cSpice">AI tone</label><select id="cSpice"><option value="wholesome">Wholesome</option><option value="spicy" selected>Spicy</option><option value="unhinged">Unhinged</option></select></div>
         </div>
-        <div><label for="cTheme">Theme for the prompts (optional)</label><input type="text" id="cTheme" placeholder="e.g. One Piece, food, or leave empty for anime chaos" maxlength="80"></div>
+        <div><label>What do people draw?</label>
+          <div class="cats" id="cats" role="radiogroup">
+            <label><input type="radio" name="cat" value="mix" checked><span>Mix of everything</span></label>
+            <label><input type="radio" name="cat" value="anime"><span>Anime</span></label>
+            <label><input type="radio" name="cat" value="objects"><span>Everyday objects</span></label>
+            <label><input type="radio" name="cat" value="food"><span>Food</span></label>
+            <label><input type="radio" name="cat" value="animals"><span>Animals</span></label>
+            <label><input type="radio" name="cat" value="flags"><span>Flags</span></label>
+            <label><input type="radio" name="cat" value="places"><span>Places and landmarks</span></label>
+            <label><input type="radio" name="cat" value="movies"><span>Movies and TV</span></label>
+            <label><input type="radio" name="cat" value="funny"><span>Funny situations</span></label>
+            <label><input type="radio" name="cat" value="custom"><span>Custom</span></label>
+          </div></div>
+        <div id="customBox" hidden><label for="cTheme">Tell the AI what to make you draw</label>
+          <textarea id="cTheme" rows="2" maxlength="200" placeholder="e.g. Things you'd find in a Pakistani wedding, or video game bosses, or inside jokes about our friend Ali"></textarea></div>
         <div class="err" id="cErr"></div>
         <button class="btn primary" id="cBtn">Create game</button>
       </form>
@@ -291,12 +311,15 @@ const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}
 const cur = () => room && room.round >= 0 ? room.roundData[room.round] : null;
 
 /* ---------- home ---------- */
+document.querySelectorAll("input[name=cat]").forEach(r=>r.onchange=()=>{ $("#customBox").hidden = seg("cat") !== "custom"; if(seg("cat")==="custom") $("#cTheme").focus(); });
 const seg = n => document.querySelector(`input[name=${n}]:checked`).value;
 $("#createForm").onsubmit = async e=>{
-  e.preventDefault(); $("#cBtn").disabled = true; $("#cErr").textContent = "";
+  e.preventDefault();
+  if(seg("cat") === "custom" && !$("#cTheme").value.trim()){ $("#cErr").textContent = "Describe what you want people to draw, or pick a category."; return; }
+  $("#cBtn").disabled = true; $("#cErr").textContent = "";
   try{
     const r = await api("/api/rooms", {game:"draw", title:$("#cTitle").value.trim() || "Draw It", mode:seg("mode"), judge:seg("judge"),
-      rounds:+$("#cRounds").value, drawSec:+$("#cTime").value, spice:$("#cSpice").value, theme:$("#cTheme").value.trim()});
+      rounds:+$("#cRounds").value, drawSec:+$("#cTime").value, spice:$("#cSpice").value, category:seg("cat"), theme: seg("cat")==="custom" ? $("#cTheme").value.trim() : ""});
     store("draw:"+r.code, {hostKey:r.hostKey}); openRoom(r.code);
   }catch(err){ $("#cErr").textContent = err.message; }
   $("#cBtn").disabled = false;
@@ -414,7 +437,7 @@ function renderLobby(){
     <div><span>Scored by</span><span>${room.judge==="ai"?"The AI, out of 10":"The players, out of 10 with comments"}</span></div>
     <div><span>Rounds</span><span>${room.rounds}</span></div>
     <div><span>Drawing time</span><span>${room.drawSec} seconds</span></div>
-    <div><span>Prompts about</span><span>${esc(room.theme || "Anime chaos")}</span></div></div>
+    <div><span>Drawing</span><span style="text-align:right">${esc(room.categoryLabel)}</span></div></div>
     ${room.visionAI.length ? "" : '<p class="hint" style="color:var(--danger)">No AI that can see pictures is set up on this server, so AI scoring and roasts will not work.</p>'}
     ${hostKey ? `<button class="btn primary" data-h="start">Start the game</button>` : '<p class="hint">Waiting for the host to start.</p>'}</div>`;
   let people;
