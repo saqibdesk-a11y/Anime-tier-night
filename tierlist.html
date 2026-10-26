@@ -39,6 +39,8 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;l
 input[type=text],textarea{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:11px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
 input[type=text]:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(62,224,255,.12)}
 label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.back{color:var(--muted);text-decoration:none;font-weight:700;font-size:14px}
+.back:hover{color:var(--fg)}
 .err{color:var(--danger);font-size:14px;min-height:1.4em}
 
 /* ---------- home ---------- */
@@ -230,6 +232,7 @@ select option{background:var(--panel-solid)}
 <section id="home" hidden>
   <div class="wrap">
     <div class="hero">
+      <a class="back" href="/">&larr; All games</a>
       <h1>Anime Tier Night <span class="tiers"><i style="background:var(--S)">S</i><i style="background:var(--A)">A</i><i style="background:var(--B)">B</i><i style="background:var(--C)">C</i></span></h1>
       <p>Everyone secretly adds their favorites, ranks the whole pool before the timer runs out, and then the boards get revealed and an AI roasts your taste. Or the host picks the list and everyone ranks it.</p>
     </div>
@@ -274,6 +277,7 @@ select option{background:var(--panel-solid)}
 <section id="room" hidden>
   <div class="bar">
     <div class="wrap">
+      <a class="back" href="/" title="All games" aria-label="All games">&larr;</a>
       <h1 id="rTitle"></h1>
       <span class="code" id="rCode" title="Room code"></span>
       <button class="btn small" id="copyLink">Copy invite link</button>

@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Draw It</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: same midnight glass system as the tier list; the canvas is a white sheet on a dark desk, tools in a dock beside it */
+:root{
+  --bg:#060a13; --bg-glow1:rgba(255,77,125,.08); --bg-glow2:rgba(62,224,255,.10);
+  --panel:rgba(255,255,255,.035); --panel-solid:#0d1322; --panel2:rgba(255,255,255,.07); --line:rgba(150,185,255,.12); --line-strong:rgba(150,185,255,.24);
+  --fg:#e8f0ff; --muted:#8a9aba; --accent:#3ee0ff; --accent2:#7c8cff; --accent-ink:#04121a; --danger:#ff5a7a; --gold:#ffd84d; --mint:#4dffb0; --pink:#ff4d7d;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(900px 600px at 10% -10%,var(--bg-glow1),transparent 60%),radial-gradient(900px 700px at 100% 0%,var(--bg-glow2),transparent 60%),var(--bg);background-attachment:fixed;color:var(--fg);font:15px/1.55 var(--body);min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:1200px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 120px max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.back{color:var(--muted);text-decoration:none;font-weight:700;font-size:14px}
+.back:hover{color:var(--fg)}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:9px 16px;font-weight:700;transition:transform .12s,background .15s,box-shadow .15s}
+.btn:hover{background:rgba(255,255,255,.11)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:var(--accent-ink);box-shadow:0 6px 24px -8px rgba(62,224,255,.6)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#1a0610}
+.btn.small{padding:5px 12px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+input[type=text],select,textarea{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px 13px;outline:none;color:var(--fg)}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(62,224,255,.12)}
+select option{background:var(--panel-solid)}
+label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.err{color:var(--danger);font-size:14px;min-height:1.4em}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;display:grid;gap:14px;backdrop-filter:blur(14px)}
+.panel h2{font-size:20px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+
+/* home */
+.hero{padding:30px 0 24px;display:grid;gap:12px}
+.hero h1{font-size:clamp(34px,6.5vw,62px);line-height:1.02;background:linear-gradient(120deg,#fff 30%,var(--pink) 65%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:60ch;margin:0;color:var(--muted);font-size:16px}
+.home-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start}
+@media (max-width:760px){.home-grid{grid-template-columns:1fr}}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg);cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:grid;gap:3px;height:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(0,0,0,.2);transition:border-color .15s,background .15s}
+.seg small{color:var(--muted);font-weight:500;line-height:1.35}
+.seg input:checked+span{border-color:var(--accent);background:rgba(62,224,255,.08);box-shadow:0 0 0 3px rgba(62,224,255,.1)}
+.seg input:focus-visible+span{outline:2px solid var(--accent)}
+.opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:560px){.seg,.opts{grid-template-columns:1fr}}
+
+/* room bar */
+.bar{position:sticky;top:0;z-index:20;background:rgba(6,10,19,.75);backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid var(--line)}
+.bar .wrap{padding-top:12px;padding-bottom:12px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.bar h1{font-size:18px;min-width:0;overflow-wrap:anywhere}
+.code{font-family:var(--display);font-weight:600;font-size:13px;background:rgba(62,224,255,.1);color:var(--accent);border:1px solid rgba(62,224,255,.3);border-radius:999px;padding:3px 12px;letter-spacing:.18em}
+.spacer{flex:1}
+.timer{font-family:var(--display);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:4px 14px;background:rgba(77,255,176,.12);color:var(--mint);border:1px solid rgba(77,255,176,.35)}
+.timer.low{background:rgba(255,77,125,.15);color:var(--pink);border-color:rgba(255,77,125,.45);animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.players{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 3px;font-size:13px;font-weight:600}
+.chip.me{border-color:var(--accent)}
+.chip .ok{color:var(--mint)}
+.av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#0a0d18;flex:none}
+.hoststrip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+
+/* lobby */
+.lobby-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;margin-top:16px;align-items:start}
+@media (max-width:860px){.lobby-grid{grid-template-columns:1fr}}
+.rules{display:grid;gap:8px}
+.rules div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px;font-weight:600}
+.rules div span:first-child{color:var(--muted);font-weight:500}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.team{border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:8px;align-content:start;background:rgba(0,0,0,.18)}
+.team h3{font-size:15px;display:flex;align-items:center;gap:8px}
+.team h3 i{width:12px;height:12px;border-radius:50%}
+.plist{display:grid;gap:6px}
+.plist .li{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;font-weight:600;font-size:14px}
+
+/* drawing */
+.prompt{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:16px 0 12px}
+.prompt .lbl{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+.prompt h2{font-size:clamp(22px,4vw,36px)}
+.studio{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start}
+@media (max-width:860px){.studio{grid-template-columns:1fr}}
+.sheet{position:relative;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -30px rgba(0,0,0,.9);max-width:100%}
+#cv{display:block;width:100%;height:auto;aspect-ratio:4/3;touch-action:none;cursor:crosshair}
+.sheet.locked #cv{cursor:not-allowed}
+.sheet .stamp{position:absolute;inset:auto 12px 12px auto;background:rgba(6,10,19,.8);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:5px 12px}
+.dock{display:grid;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}
+@media (max-width:860px){.dock{grid-template-columns:1fr 1fr}}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.sw{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,.15);padding:0}
+.sw.on{outline:3px solid var(--accent);outline-offset:2px}
+.sizes{display:flex;gap:6px;align-items:center}
+.sz{flex:1;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25);display:grid;place-items:center}
+.sz i{display:block;border-radius:50%;background:var(--fg)}
+.sz.on{border-color:var(--accent);background:rgba(62,224,255,.1)}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tools .btn.on{border-color:var(--accent);background:rgba(62,224,255,.12)}
+.status{font-size:13px;color:var(--muted);font-weight:600}
+
+/* rating */
+.rate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px;margin-top:14px}
+.rcard{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid}
+.rcard img,.thumb img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;display:block}
+.rcard .rb{padding:12px;display:grid;gap:10px}
+.scores{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.scores button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:8px;padding:7px 0;font-weight:800;font-variant-numeric:tabular-nums;font-size:13px}
+.scores button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);border-color:transparent}
+.rcard.mine{opacity:.7}
+.yours{font-weight:800;color:var(--gold);font-size:13px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+.thumb{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.center{display:grid;justify-items:center;text-align:center;gap:12px;padding:30px 0 10px}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* show */
+.slide{margin-top:18px;animation:up .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{opacity:0;transform:translateY(18px)}}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.slide-title{font-size:clamp(28px,5vw,50px);line-height:1.05;margin:6px 0 4px}
+.reveal{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;margin-top:14px;align-items:start}
+@media (max-width:900px){.reveal{grid-template-columns:1fr}}
+.reveal .art{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
+.reveal .art img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain}
+.score{font-family:var(--display);font-weight:700;font-size:56px;line-height:1;background:linear-gradient(135deg,var(--gold),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;animation:pop .5s .5s backwards}
+.score small{font-size:20px;-webkit-text-fill-color:var(--muted)}
+@keyframes pop{from{opacity:0;transform:scale(.6)}}
+.chat{display:grid;gap:10px;margin-top:12px}
+.msg{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;animation:pop2 .4s ease-out backwards}
+@keyframes pop2{from{opacity:0;transform:translateY(6px)}}
+.msg .bot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:11px;color:var(--accent-ink);background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.msg .av{width:34px;height:34px;font-size:14px}
+.bubble{background:var(--panel2);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:9px 13px;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.bubble b{margin-right:6px}
+.bubble .s{font-weight:800;color:var(--gold);margin-left:6px}
+.board{display:grid;gap:8px;margin-top:14px;max-width:720px}
+.brow{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-weight:700;animation:pop2 .4s backwards}
+.brow .rk{font-family:var(--display);font-size:18px;color:var(--muted);text-align:center}
+.brow.first{border-color:rgba(255,216,77,.5);background:rgba(255,216,77,.08)}
+.brow.first .rk{color:var(--gold)}
+.brow .pts{font-family:var(--display);font-variant-numeric:tabular-nums}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:14px}
+.gallery figure{margin:0;border-radius:14px;overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.gallery figcaption{padding:8px 10px;font-size:13px;font-weight:700}
+.gallery figcaption span{display:block;color:var(--muted);font-weight:500}
+.showbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:rgba(6,10,19,.85);backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.showbar .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;min-width:70px;text-align:center}
+.showbar .btn.primary{padding:11px 28px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);font-weight:800;border-radius:999px;padding:10px 20px;z-index:60}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<section id="home" hidden>
+  <div class="wrap">
+    <div class="hero">
+      <a class="back" href="/">&larr; All games</a>
+      <h1>Draw It</h1>
+      <p>The AI picks what everyone draws. Race the clock alone or with your team, then the AI or your friends score every drawing, roast it, and crown a winner.</p>
+    </div>
+    <div class="home-grid">
+      <form class="panel" id="createForm">
+        <h2>Host a game</h2>
+        <div><label for="cTitle">Room name</label><input type="text" id="cTitle" placeholder="Friday draw-off" maxlength="80"></div>
+        <div><label>Play as</label>
+          <div class="seg">
+            <label><input type="radio" name="mode" value="solo" checked><span><b>Solo</b><small>Everyone draws their own picture</small></span></label>
+            <label><input type="radio" name="mode" value="team"><span><b>Teams</b><small>Teammates draw on one shared canvas, live</small></span></label>
+          </div></div>
+        <div><label>Who scores the drawings</label>
+          <div class="seg">
+            <label><input type="radio" name="judge" value="ai" checked><span><b>The AI</b><small>It looks at every drawing, scores it out of 10 and roasts it</small></span></label>
+            <label><input type="radio" name="judge" value="players"><span><b>The players</b><small>Everyone rates the others out of 10 and leaves a comment. The AI still adds a roast.</small></span></label>
+          </div></div>
+        <div class="opts">
+          <div><label for="cRounds">Rounds</label><select id="cRounds"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+          <div><label for="cTime">Drawing time</label><select id="cTime"><option value="60">1 minute</option><option value="90" selected>90 seconds</option><option value="120">2 minutes</option><option value="180">3 minutes</option></select></div>
+          <div><label for="cSpice">AI tone</label><select id="cSpice"><option value="wholesome">Wholesome</option><option value="spicy" selected>Spicy</option><option value="unhinged">Unhinged</option></select></div>
+        </div>
+        <div><label for="cTheme">Theme for the prompts (optional)</label><input type="text" id="cTheme" placeholder="e.g. One Piece, food, or leave empty for anime chaos" maxlength="80"></div>
+        <div class="err" id="cErr"></div>
+        <button class="btn primary" id="cBtn">Create game</button>
+      </form>
+      <form class="panel" id="joinForm">
+        <h2>Join a game</h2>
+        <div><label for="jCode">Room code</label><input type="text" id="jCode" placeholder="e.g. K7QX" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="jErr"></div>
+        <button class="btn primary">Join</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section id="room" hidden>
+  <div class="bar"><div class="wrap">
+    <a class="back" href="/" aria-label="All games">&larr;</a>
+    <h1 id="rTitle"></h1><span class="code" id="rCode"></span>
+    <button class="btn small" id="copyLink">Copy invite link</button>
+    <span class="timer" id="timer" hidden></span>
+    <span class="spacer"></span>
+    <span class="muted" id="roundLbl" style="font-weight:700;font-size:14px"></span>
+  </div></div>
+  <div class="wrap">
+    <div class="players" id="players"></div>
+    <div class="hoststrip" id="hostStrip" hidden></div>
+
+    <form class="panel" id="gate" hidden style="max-width:420px;margin-top:14px">
+      <h2>Pick your name</h2>
+      <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname">
+      <div class="err" id="gErr"></div>
+      <button class="btn primary">Join game</button>
+    </form>
+
+    <div id="vLobby" hidden></div>
+
+    <div id="vStarting" hidden><div class="center"><span class="dots"><i></i><i></i><i></i></span><h2>The AI is picking what you'll draw…</h2></div></div>
+
+    <div id="vDraw" hidden>
+      <div class="prompt"><span class="lbl" id="drawLbl">Draw this</span><h2 id="promptText"></h2></div>
+      <div class="studio">
+        <div class="sheet" id="sheet"><canvas id="cv" width="800" height="600"></canvas><span class="stamp" id="stamp" hidden></span></div>
+        <div class="dock">
+          <div><label>Color</label><div class="swatches" id="swatches"></div></div>
+          <div><label>Brush</label><div class="sizes" id="sizes"></div></div>
+          <div class="tools">
+            <button class="btn small" id="toolEraser" type="button">Eraser</button>
+            <button class="btn small" id="toolUndo" type="button">Undo</button>
+            <button class="btn small" id="toolClear" type="button" style="grid-column:span 2">Clear canvas</button>
+          </div>
+          <div style="display:grid;gap:8px">
+            <button class="btn primary" id="submitBtn" type="button">I'm done</button>
+            <span class="status" id="drawStatus"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="vRate" hidden>
+      <div class="prompt"><span class="lbl">Rate the drawings</span><h2 id="ratePrompt"></h2></div>
+      <p class="hint">Give each drawing a score out of 10. Leave a comment if you want: a roast or a compliment. Names stay hidden until the reveal.</p>
+      <div class="rate-grid" id="rateGrid"></div>
+    </div>
+
+    <div id="vJudge" hidden></div>
+    <div id="vShow" hidden></div>
+    <div id="vFinal" hidden></div>
+  </div>
+</section>
+
+<div class="showbar" id="showbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const colorFor = name => { let h=0; for(const c of String(name)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 85% 72%)`; };
+const TEAM_COLORS = {t1:"#ff4d7d", t2:"#4dc3ff", t3:"#4dffb0", t4:"#ffd84d"};
+const avatar = n => `<span class="av" style="background:${colorFor(n)}">${esc(String(n||"?")[0].toUpperCase())}</span>`;
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2400); }
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+const cur = () => room && room.round >= 0 ? room.roundData[room.round] : null;
+
+/* ---------- home ---------- */
+const seg = n => document.querySelector(`input[name=${n}]:checked`).value;
+$("#createForm").onsubmit = async e=>{
+  e.preventDefault(); $("#cBtn").disabled = true; $("#cErr").textContent = "";
+  try{
+    const r = await api("/api/rooms", {game:"draw", title:$("#cTitle").value.trim() || "Draw It", mode:seg("mode"), judge:seg("judge"),
+      rounds:+$("#cRounds").value, drawSec:+$("#cTime").value, spice:$("#cSpice").value, theme:$("#cTheme").value.trim()});
+    store("draw:"+r.code, {hostKey:r.hostKey}); openRoom(r.code);
+  }catch(err){ $("#cErr").textContent = err.message; }
+  $("#cBtn").disabled = false;
+};
+$("#joinForm").onsubmit = async e=>{
+  e.preventDefault();
+  const c = $("#jCode").value.trim().toUpperCase(), name = $("#jName").value.trim();
+  if(!c || !name){ $("#jErr").textContent = "Enter the room code and your name."; return; }
+  try{ const r = await api(`/api/rooms/${c}/join`, {name}); store("draw:"+c, {...(store("draw:"+c)||{}), me:r}); openRoom(c); }
+  catch(err){ $("#jErr").textContent = err.message; }
+};
+$("#gate").onsubmit = async e=>{
+  e.preventDefault(); const name = $("#gName").value.trim(); if(!name) return;
+  try{ me = await api(`/api/rooms/${code}/join`, {name}); store("draw:"+code, {me, hostKey}); poll(++pollGen, -1); }
+  catch(err){ $("#gErr").textContent = err.message; }
+};
+$("#copyLink").onclick = async ()=>{ const l = location.origin+"/draw?room="+code; try{ await navigator.clipboard.writeText(l); toast("Invite link copied"); }catch(e){ toast(l); } };
+
+function openRoom(c){
+  code = c; const s = store("draw:"+c) || {};
+  me = s.me || null; hostKey = s.hostKey || null;
+  $("#home").hidden = true; $("#room").hidden = false;
+  history.replaceState(null, "", "/draw?room="+c);
+  poll(++pollGen, -1);
+}
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
+      if(r.status === 404){ $("#room").hidden = true; $("#home").hidden = false; $("#jErr").textContent = "That game doesn't exist anymore."; history.replaceState(null,"","/draw"); return; }
+      const data = await r.json(); if(gen !== pollGen) return;
+      clockOffset = data.now - Date.now()/1000;
+      const prev = room; room = data; v = data.version;
+      if(me && !room.players[me.pid]){ me = null; store("draw:"+code, {hostKey}); toast("You were removed from this game"); }
+      onChange(prev); render();
+    }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+/* ---------- phase changes ---------- */
+function onChange(prev){
+  const roundChanged = !prev || prev.round !== room.round;
+  if(room.phase === "drawing" && (roundChanged || prev.phase !== "drawing")){ resetCanvas(); submitted = false; if(prev) toast("Go! Start drawing"); }
+  if(room.mode === "team" && room.phase === "drawing" && me) startStrokePoll();
+}
+
+/* ---------- render ---------- */
+const VIEWS = ["vLobby","vStarting","vDraw","vRate","vJudge","vShow","vFinal"];
+function show(id){ for(const v of VIEWS) $("#"+v).hidden = v !== id; }
+function render(){
+  document.title = room.title === "Draw It" ? "Draw It" : room.title + " · Draw It";
+  $("#rTitle").textContent = room.title; $("#rCode").textContent = room.code;
+  $("#roundLbl").textContent = room.round >= 0 && room.phase !== "final" ? `Round ${room.round+1} of ${room.rounds}` : "";
+  renderPlayers(); renderHostStrip(); tickTimer();
+  const joined = me && room.players[me.pid];
+  $("#gate").hidden = !!joined;
+  $("#showbar").hidden = true;
+  if(!joined){ show(null); return; }
+  const ph = room.phase;
+  if(ph === "lobby") { show("vLobby"); renderLobby(); }
+  else if(ph === "starting") show("vStarting");
+  else if(ph === "drawing") { show("vDraw"); renderDraw(); }
+  else if(ph === "rating") { show("vRate"); renderRate(); }
+  else if(ph === "judging") { show("vJudge"); renderJudge(); }
+  else if(ph === "show") { show("vShow"); renderShow(); }
+  else if(ph === "final") { show("vFinal"); renderFinal(); }
+}
+function renderPlayers(){
+  const rd = cur();
+  $("#players").innerHTML = Object.entries(room.players).map(([pid,p])=>{
+    let st = "";
+    const owner = room.mode === "solo" ? pid : p.team;
+    if(room.phase === "drawing" && rd && (rd.done||[]).includes(owner)) st = '<span class="ok" title="Done">✓</span>';
+    if(room.phase === "rating" && rd && rd.raters){ const need = (rd.entries||[]).length - 1; st = (rd.raters[pid]||0) >= need ? '<span class="ok" title="Done rating">✓</span>' : `<span class="muted">${rd.raters[pid]||0}/${need}</span>`; }
+    const team = room.mode === "team" && p.team ? `<i style="width:8px;height:8px;border-radius:50%;background:${TEAM_COLORS[p.team]}"></i>` : "";
+    return `<span class="chip ${me&&me.pid===pid?"me":""}">${avatar(p.name)}${esc(p.name)}${me&&me.pid===pid?" (you)":""}${team}${st}</span>`;
+  }).join("") || '<span class="muted">Nobody here yet. Share the invite link.</span>';
+}
+function renderHostStrip(){
+  const el = $("#hostStrip");
+  const btns = [];
+  if(hostKey && (room.phase === "drawing" || room.phase === "rating")) btns.push(`<button class="btn small" data-h="addtime">+30s</button><button class="btn small" data-h="end">${room.phase==="drawing"?"End drawing now":"End rating now"}</button>`);
+  el.hidden = !btns.length; el.innerHTML = btns.length ? `<span class="muted" style="font-size:13px;font-weight:700">Host:</span>${btns.join("")}` : "";
+}
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("[data-h]"); if(!b) return;
+  const a = b.dataset.h; const extra = {};
+  if(a === "addtime") extra.sec = 30;
+  if(a === "teams") extra.n = +b.dataset.n;
+  if(a === "kick"){ if(b.dataset.confirm !== "1"){ b.dataset.confirm = "1"; b.textContent = "Confirm"; b.classList.add("danger"); return; } extra.pid = b.dataset.pid; }
+  if(a === "team") extra.team = b.dataset.team;
+  try{ await act(a, extra); if(a==="addtime") toast("Added 30 seconds"); }catch(err){ toast(err.message); }
+});
+
+/* timer */
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !room.deadline || !["drawing","rating"].includes(room.phase)){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.hidden = false; el.textContent = left > 0 ? `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}` : "Time's up";
+  el.classList.toggle("low", left <= 10);
+  if(room.phase === "drawing" && left === 0 && !autoSent){ autoSent = true; submitDrawing(true); }
+  if(left > 0) autoSent = false;
+  if(room.phase === "drawing") $("#sheet").classList.toggle("locked", left === 0);
+}
+let autoSent = false;
+setInterval(tickTimer, 250);
+
+/* ---------- lobby ---------- */
+function renderLobby(){
+  const ps = Object.entries(room.players);
+  const rules = `<div class="panel"><h2>How this game works</h2><div class="rules">
+    <div><span>Play as</span><span>${room.mode==="team"?"Teams, shared canvas":"Solo"}</span></div>
+    <div><span>Scored by</span><span>${room.judge==="ai"?"The AI, out of 10":"The players, out of 10 with comments"}</span></div>
+    <div><span>Rounds</span><span>${room.rounds}</span></div>
+    <div><span>Drawing time</span><span>${room.drawSec} seconds</span></div>
+    <div><span>Prompts about</span><span>${esc(room.theme || "Anime chaos")}</span></div></div>
+    ${room.visionAI.length ? "" : '<p class="hint" style="color:var(--danger)">No AI that can see pictures is set up on this server, so AI scoring and roasts will not work.</p>'}
+    ${hostKey ? `<button class="btn primary" data-h="start">Start the game</button>` : '<p class="hint">Waiting for the host to start.</p>'}</div>`;
+  let people;
+  if(room.mode === "team"){
+    people = `<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>Teams</h2>${hostKey?`<div style="display:flex;gap:6px;flex-wrap:wrap">${[2,3,4].map(n=>`<button class="btn small ${room.teams.length===n?"primary":""}" data-h="teams" data-n="${n}">${n} teams</button>`).join("")}<button class="btn small" data-h="shuffle">Shuffle</button></div>`:""}</div>
+      <div class="teams">${room.teams.map(t=>{ const mem = ps.filter(([,p])=>p.team===t.id);
+        return `<div class="team"><h3><i style="background:${TEAM_COLORS[t.id]}"></i>${esc(t.name)}</h3><div class="plist">${mem.map(([pid,p])=>`<div class="li">${avatar(p.name)}<span>${esc(p.name)}</span>${hostKey&&me&&pid!==me.pid?`<button class="btn small" data-h="kick" data-pid="${pid}">Kick</button>`:"<span></span>"}</div>`).join("") || '<span class="muted" style="font-size:13px">Empty</span>'}</div>
+        ${me && room.players[me.pid]?.team !== t.id ? `<button class="btn small" data-h="team" data-team="${t.id}">Join ${esc(t.name)}</button>` : ""}</div>`; }).join("")}</div></div>`;
+  } else {
+    people = `<div class="panel"><h2>Players · ${ps.length}</h2><div class="plist">${ps.map(([pid,p])=>`<div class="li">${avatar(p.name)}<span>${esc(p.name)}${me&&me.pid===pid?" (you)":""}</span>${hostKey&&me&&pid!==me.pid?`<button class="btn small" data-h="kick" data-pid="${pid}">Kick</button>`:"<span></span>"}</div>`).join("")}</div><p class="hint">Share the code <b>${room.code}</b> or the invite link.</p></div>`;
+  }
+  $("#vLobby").innerHTML = `<div class="lobby-grid">${rules}${people}</div>`;
+}
+
+/* ---------- drawing ---------- */
+const COLORS = ["#111111","#ffffff","#7a7a7a","#e53935","#ff7043","#ffb300","#fdd835","#7cb342","#2e7d32","#26c6da","#1e88e5","#3949ab","#8e24aa","#ec407a","#8d6e63","#f5c6a5"];
+const SIZES = [3,7,14,26];
+let color = "#111111", size = 7, eraser = false;
+let strokes = [], pending = [], curStroke = null, submitted = false, clearArmed = false;
+let strokeGen = 0, strokeTotal = 0, strokePollOn = false;
+const cv = $("#cv"), ctx = cv.getContext("2d");
+$("#swatches").innerHTML = COLORS.map(c=>`<button class="sw" type="button" data-c="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join("");
+$("#sizes").innerHTML = SIZES.map(s=>`<button class="sz" type="button" data-s="${s}" aria-label="Brush ${s}"><i style="width:${Math.max(4,s*.8)}px;height:${Math.max(4,s*.8)}px"></i></button>`).join("");
+function paintTools(){
+  document.querySelectorAll(".sw").forEach(b=>b.classList.toggle("on", !eraser && b.dataset.c === color));
+  document.querySelectorAll(".sz").forEach(b=>b.classList.toggle("on", +b.dataset.s === size));
+  $("#toolEraser").classList.toggle("on", eraser);
+}
+$("#swatches").onclick = e=>{ const b = e.target.closest(".sw"); if(b){ color = b.dataset.c; eraser = false; paintTools(); } };
+$("#sizes").onclick = e=>{ const b = e.target.closest(".sz"); if(b){ size = +b.dataset.s; paintTools(); } };
+$("#toolEraser").onclick = ()=>{ eraser = !eraser; paintTools(); };
+paintTools();
+
+function drawStroke(s){
+  ctx.strokeStyle = s.c; ctx.fillStyle = s.c; ctx.lineWidth = s.w; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const p = s.p;
+  if(p.length === 1){ ctx.beginPath(); ctx.arc(p[0][0], p[0][1], s.w/2, 0, Math.PI*2); ctx.fill(); return; }
+  ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]);
+  for(let i=1;i<p.length;i++) ctx.lineTo(p[i][0], p[i][1]);
+  ctx.stroke();
+}
+function redraw(){
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,cv.width,cv.height);
+  for(const s of strokes) drawStroke(s);
+  for(const s of pending) drawStroke(s);
+  if(curStroke) drawStroke(curStroke);
+}
+function resetCanvas(){ strokes = []; pending = []; curStroke = null; strokeGen = 0; strokeTotal = 0; redraw(); }
+const canDraw = () => room && room.phase === "drawing" && room.deadline && serverNow() < room.deadline + 1 && me && room.myOwner;
+function pos(e){ const r = cv.getBoundingClientRect(); return [Math.round((e.clientX-r.left)/r.width*cv.width), Math.round((e.clientY-r.top)/r.height*cv.height)]; }
+cv.addEventListener("pointerdown", e=>{
+  if(!canDraw()) return;
+  try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+  curStroke = {c: eraser ? "#ffffff" : color, w: eraser ? Math.max(size, 14) : size, p:[pos(e)]};
+  drawStroke(curStroke);
+});
+cv.addEventListener("pointermove", e=>{
+  if(!curStroke) return;
+  const co = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+  const pts = co.length ? co : [e];
+  for(const pe of pts){ const pt = pos(pe); const last = curStroke.p[curStroke.p.length-1];
+    if(Math.abs(pt[0]-last[0]) + Math.abs(pt[1]-last[1]) < 2) continue;
+    ctx.strokeStyle = curStroke.c; ctx.lineWidth = curStroke.w; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(pt[0], pt[1]); ctx.stroke();
+    curStroke.p.push(pt); }
+});
+function endStroke(){
+  if(!curStroke) return;
+  const s = curStroke; curStroke = null;
+  if(room.mode === "team"){ pending.push(s); act("stroke", {strokes:[s]}).catch(err=>toast(err.message)); }
+  else strokes.push(s);
+}
+cv.addEventListener("pointerup", endStroke); cv.addEventListener("pointercancel", endStroke);
+$("#toolUndo").onclick = ()=>{
+  if(!canDraw()) return;
+  if(room.mode === "team") act("undo").catch(err=>toast(err.message));
+  else { strokes.pop(); redraw(); }
+};
+$("#toolClear").onclick = ()=>{
+  if(!canDraw()) return;
+  if(!clearArmed){ clearArmed = true; $("#toolClear").textContent = "Tap again to clear"; $("#toolClear").classList.add("danger"); setTimeout(()=>{ clearArmed = false; $("#toolClear").textContent = "Clear canvas"; $("#toolClear").classList.remove("danger"); }, 3000); return; }
+  clearArmed = false; $("#toolClear").textContent = "Clear canvas"; $("#toolClear").classList.remove("danger");
+  if(room.mode === "team") act("clearcanvas").catch(err=>toast(err.message));
+  else { strokes = []; redraw(); }
+};
+async function submitDrawing(auto){
+  if(!me || !room.myOwner || room.phase !== "drawing") return;
+  if(auto && !strokes.length && !pending.length) return;
+  try{ await act("submit", {img: cv.toDataURL("image/jpeg", 0.8)}); submitted = true; if(!auto) toast(room.mode==="team" ? "Your team's drawing is in" : "Drawing submitted"); renderDraw(); }
+  catch(err){ if(!auto) toast(err.message); }
+}
+$("#submitBtn").onclick = ()=>submitDrawing(false);
+
+// team canvases: pull everyone's finished strokes as they land
+async function startStrokePoll(){
+  if(strokePollOn) return; strokePollOn = true;
+  const rnd = room.round;
+  while(room && room.phase === "drawing" && room.round === rnd && room.mode === "team" && me){
+    try{
+      const r = await api(`/api/draw/${code}/strokes?pid=${me.pid}&key=${me.key}&since=${strokeTotal}&gen=${strokeGen}`);
+      if(r.reset){ strokes = r.strokes; } else strokes.push(...r.strokes);
+      strokeGen = r.gen; strokeTotal = r.total;
+      // drop our own strokes once the server has echoed them back
+      pending = pending.filter(ps=>!strokes.some(s=>s.by===me.pid && s.p[0][0]===ps.p[0][0] && s.p[0][1]===ps.p[0][1] && s.p.length===ps.p.length));
+      redraw();
+    }catch(e){ await new Promise(r=>setTimeout(r,1500)); }
+  }
+  strokePollOn = false;
+}
+
+function renderDraw(){
+  const rd = cur();
+  $("#promptText").textContent = rd ? rd.prompt : "";
+  const team = room.mode === "team" ? room.teams.find(t=>t.id===room.myOwner) : null;
+  $("#drawLbl").textContent = team ? `${team.name}, draw this` : "Draw this";
+  const done = rd && (rd.done||[]).includes(room.myOwner);
+  if(!room.myOwner){ $("#drawStatus").textContent = "You're not on a team this round. Watch and get ready for the next one."; $("#submitBtn").disabled = true; return; }
+  $("#submitBtn").disabled = false;
+  $("#submitBtn").textContent = done ? "Update my drawing" : (room.mode==="team" ? "We're done" : "I'm done");
+  const owners = room.mode === "solo" ? Object.keys(room.players).length : new Set(Object.values(room.players).map(p=>p.team).filter(Boolean)).size;
+  $("#drawStatus").textContent = (done ? "Submitted. You can keep drawing and update it until time's up. " : "") + `${(rd.done||[]).length} of ${owners} done.`;
+  $("#stamp").hidden = !done; $("#stamp").textContent = "Submitted";
+}
+
+/* ---------- rating ---------- */
+let rateSig = "";
+function renderRate(){
+  const rd = cur(); $("#ratePrompt").textContent = rd.prompt;
+  const sig = rd.entries.map(e=>e.eid).join();
+  if(sig !== rateSig){
+    rateSig = sig;
+    $("#rateGrid").innerHTML = rd.entries.map((e,i)=>`<div class="rcard ${e.mine?"mine":""}" data-eid="${e.eid}"><img src="/api/img/${e.img}" alt="Drawing ${i+1}">
+      <div class="rb">${e.mine ? '<span class="yours">This is yours. Sit tight.</span>' : `<div class="scores">${Array.from({length:10},(_,k)=>`<button type="button" data-s="${k+1}">${k+1}</button>`).join("")}</div>
+      <input type="text" maxlength="140" placeholder="Leave a roast or a compliment (optional)" data-c>`}</div></div>`).join("");
+  }
+  // reflect my saved ratings without wiping what I'm typing
+  for(const card of document.querySelectorAll(".rcard")){
+    const r = rd.myRatings[card.dataset.eid] || {};
+    card.querySelectorAll(".scores button").forEach(b=>b.classList.toggle("on", +b.dataset.s === (localScores[card.dataset.eid] ?? r.s)));
+    const inp = card.querySelector("[data-c]"); if(inp && document.activeElement !== inp && inp.value === "" && r.c) inp.value = r.c;
+  }
+}
+const localScores = {};
+async function saveRating(card){
+  const eid = card.dataset.eid, s = localScores[eid];
+  if(!s) return toast("Pick a score first");
+  try{ await act("rate", {eid, s, c: card.querySelector("[data-c]").value.trim()}); }catch(err){ toast(err.message); }
+}
+$("#rateGrid").addEventListener("click", e=>{
+  const b = e.target.closest(".scores button"); if(!b) return;
+  const card = b.closest(".rcard"); localScores[card.dataset.eid] = +b.dataset.s;
+  card.querySelectorAll(".scores button").forEach(x=>x.classList.toggle("on", x===b));
+  saveRating(card);
+});
+let commentTimers = {};
+$("#rateGrid").addEventListener("input", e=>{
+  const card = e.target.closest(".rcard"); if(!card || !e.target.matches("[data-c]")) return;
+  clearTimeout(commentTimers[card.dataset.eid]);
+  commentTimers[card.dataset.eid] = setTimeout(()=>{ if(localScores[card.dataset.eid]) saveRating(card); }, 700);
+});
+
+/* ---------- AI judging (AI-scored games) ---------- */
+function renderJudge(){
+  const rd = cur();
+  $("#vJudge").innerHTML = `<div class="center"><span class="dots"><i></i><i></i><i></i></span><h2>The AI is judging your masterpieces…</h2><p class="muted" style="margin:0">"${esc(rd.prompt)}"</p></div>
+    <div class="thumbs">${(rd.entries||[]).map(e=>`<div class="thumb"><img src="/api/img/${e.img}" alt=""></div>`).join("")}</div>`;
+}
+
+/* ---------- show ---------- */
+let showSig = "";
+function slides(){ const rd = cur(); return [...rd.entries.map(e=>({kind:"entry", e})), {kind:"board"}]; }
+function aiBlock(rd, e){
+  if(e.ai && e.ai.comment) return `<div class="msg" style="animation-delay:.9s"><span class="bot">AI</span><div class="bubble">${esc(e.ai.comment)}</div></div>`;
+  if(rd.aiStatus === "working") return `<div class="msg"><span class="bot">AI</span><div class="bubble"><span class="dots"><i></i><i></i><i></i></span></div></div>`;
+  if(rd.aiStatus === "failed" && room.judge === "ai") return `<div class="bubble" style="border-color:rgba(255,90,122,.4)">The AI couldn't judge this round. ${esc(cap(rd.aiError||""))} ${hostKey?'<button class="btn small" data-h="rejudge" style="margin-left:6px">Try again</button>':""}</div>`;
+  return "";
+}
+function renderShow(){
+  const rd = cur(), ss = slides(), i = Math.min(room.show?.slide||0, ss.length-1), sl = ss[i];
+  const sig = [room.round, i, rd.aiStatus, JSON.stringify(sl.e ? [sl.e.ai, sl.e.comments.length] : room.standings)].join("|");
+  if(sig !== showSig){
+    showSig = sig;
+    if(sl.kind === "entry"){
+      const e = sl.e, rank = rd.entries.length - 1 - i;  // shown lowest first, so the last one is the winner
+      const who = room.mode === "team" ? `${esc(e.name)}<div class="muted" style="font-size:15px;font-family:var(--body);font-weight:600;margin-top:6px">${esc(e.members.join(", "))}</div>` : esc(e.name);
+      const scoreTxt = e.score == null ? '<div class="muted" style="font-weight:700">No score</div>' : `<div class="score">${room.judge==="ai" ? e.score : e.score.toFixed(1)}<small> /10${room.judge==="players"?" avg":""}</small></div>`;
+      $("#vShow").innerHTML = `<div class="slide"><div class="eyebrow">Round ${room.round+1} · "${esc(rd.prompt)}" · ${rank===0?"Top drawing":`#${rank+1}`}</div>
+        <div class="reveal"><div class="art"><img src="/api/img/${e.img}" alt="Drawing by ${esc(e.name)}"></div>
+        <div><h1 class="slide-title">${who}</h1>${scoreTxt}
+          <div class="chat">${aiBlock(rd, e)}${e.comments.map((c,k)=>`<div class="msg" style="animation-delay:${1.4+k*.5}s">${avatar(c.name)}<div class="bubble"><b>${esc(c.name)}</b>${c.c?esc(c.c):'<span class="muted">no comment</span>'}<span class="s">${c.s}/10</span></div></div>`).join("")}</div>
+        </div></div></div>`;
+    } else {
+      const st = room.standings || [];
+      $("#vShow").innerHTML = `<div class="slide"><div class="eyebrow">After round ${room.round+1} of ${room.rounds}</div><h1 class="slide-title">Leaderboard</h1>
+        <div class="board">${st.map((s,k)=>`<div class="brow ${k===0?"first":""}" style="animation-delay:${k*.15}s"><span class="rk">${k+1}</span><span>${esc(s.name)}</span><span class="pts">${s.points} pts</span></div>`).join("")}</div></div>`;
+    }
+    window.scrollTo({top:0});
+  }
+  const last = i === ss.length-1;
+  const bar = $("#showbar"); bar.hidden = false;
+  bar.innerHTML = hostKey
+    ? `<button class="btn" data-s="prev" ${i===0?"disabled":""}>Back</button><span class="count">${i+1} / ${ss.length}</span>${last ? `<button class="btn primary" data-h="nextround">${room.round+1 < room.rounds ? "Next round" : "Final results"}</button>` : '<button class="btn primary" data-s="next">Next</button>'}`
+    : `<span class="count">${i+1} / ${ss.length}</span><span class="muted" style="font-size:14px">The host moves the show along</span>`;
+}
+async function slideTo(n){ try{ await act("slide", {to:n}); }catch(err){ toast(err.message); } }
+$("#showbar").addEventListener("click", e=>{
+  const b = e.target.closest("[data-s]"); if(!b || !hostKey) return;
+  const i = room.show?.slide || 0;
+  slideTo(b.dataset.s === "next" ? i+1 : Math.max(0, i-1));
+});
+document.addEventListener("keydown", e=>{
+  if(!hostKey || !room || room.phase !== "show" || e.target.closest("input,textarea,select")) return;
+  const i = room.show?.slide || 0, n = slides().length;
+  if((e.key === "ArrowRight" || e.key === " ") && i < n-1){ e.preventDefault(); slideTo(i+1); }
+  if(e.key === "ArrowLeft" && i > 0){ e.preventDefault(); slideTo(i-1); }
+});
+
+/* ---------- final ---------- */
+function renderFinal(){
+  const st = room.standings || [];
+  const all = room.roundData.flatMap((rd,r)=>(rd.entries||[]).map(e=>({...e, prompt: rd.prompt, r})));
+  $("#vFinal").innerHTML = `<div class="slide"><div class="eyebrow">Game over</div><h1 class="slide-title">${st[0] ? `${esc(st[0].name)} wins` : "Game over"}</h1>
+    <div class="board">${st.map((s,k)=>`<div class="brow ${k===0?"first":""}" style="animation-delay:${k*.15}s"><span class="rk">${k+1}</span><span>${esc(s.name)}</span><span class="pts">${s.points} pts</span></div>`).join("")}</div>
+    <h2 style="font-size:20px;margin-top:30px">Every drawing</h2>
+    <div class="gallery">${all.map(e=>`<figure><img src="/api/img/${e.img}" alt="" style="width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;display:block"><figcaption>${esc(e.name)}${e.score!=null?` · ${e.score}/10`:""}<span>${esc(e.prompt)}</span></figcaption></figure>`).join("")}</div>
+    ${hostKey ? '<div style="margin-top:20px"><button class="btn primary" data-h="playagain">Play again</button></div>' : ""}</div>`;
+}
+
+/* ---------- boot ---------- */
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else $("#home").hidden = false;
+redraw();
+</script>
+</body>
+</html>

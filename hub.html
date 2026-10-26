@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anime Game Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: arcade cabinet grid. Each game is a tile with its own key art, playable tiles first, "soon" tiles dimmed */
+:root{
+  --bg:#060a13; --bg-glow1:rgba(62,224,255,.10); --bg-glow2:rgba(124,140,255,.12);
+  --panel:rgba(255,255,255,.035); --panel2:rgba(255,255,255,.07); --line:rgba(150,185,255,.12); --line-strong:rgba(150,185,255,.24);
+  --fg:#e8f0ff; --muted:#8a9aba; --accent:#3ee0ff; --accent2:#7c8cff; --accent-ink:#04121a; --danger:#ff5a7a;
+  --S:#ff4d7d; --A:#ff9d4d; --B:#ffd84d; --C:#4dffb0; --D:#4dc3ff; --F:#a78bff;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(900px 600px at 10% -10%,var(--bg-glow1),transparent 60%),radial-gradient(900px 700px at 100% 0%,var(--bg-glow2),transparent 60%),var(--bg);background-attachment:fixed;color:var(--fg);font:15px/1.55 var(--body);min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:1200px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 60px max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.top{display:flex;flex-wrap:wrap;gap:20px;align-items:end;justify-content:space-between;padding:20px 0 30px}
+.top h1{font-size:clamp(34px,6.5vw,64px);line-height:1;background:linear-gradient(120deg,#fff 30%,var(--accent) 70%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.top p{color:var(--muted);margin:10px 0 0;max-width:52ch;font-size:16px}
+.join{display:flex;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px;backdrop-filter:blur(12px)}
+.join input{width:150px;background:none;border:0;outline:none;padding:6px 12px;text-transform:uppercase;letter-spacing:.2em;font-family:var(--display);font-weight:600}
+.join input::placeholder{letter-spacing:.05em;font-family:var(--body);font-weight:500;text-transform:none;color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:9px 18px;font-weight:700;cursor:pointer;transition:transform .12s,filter .15s}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:var(--accent-ink)}
+.btn:active{transform:scale(.97)}
+.err{color:var(--danger);font-size:14px;min-height:1.4em;margin-top:6px;text-align:right}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:18px}
+.tile{position:relative;display:grid;grid-template-rows:170px auto;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:var(--panel);color:inherit;text-decoration:none;transition:transform .2s,border-color .2s,box-shadow .2s}
+a.tile:hover{transform:translateY(-4px);border-color:var(--line-strong);box-shadow:0 24px 60px -24px rgba(62,224,255,.35)}
+.art{position:relative;overflow:hidden}
+.tile .body{padding:18px 20px 20px;display:grid;gap:10px;align-content:start}
+.tile h2{font-size:21px}
+.tile p{margin:0;color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--panel2);border:1px solid var(--line)}
+.play{justify-self:start;margin-top:4px;font-weight:800;color:var(--accent)}
+.soon{opacity:.55}
+.soon .play{color:var(--muted)}
+.badge{position:absolute;top:14px;left:14px;z-index:2;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:4px 10px;background:rgba(6,10,19,.75);border:1px solid var(--line-strong)}
+/* key art, drawn with CSS so it loads instantly */
+.art-tier{background:linear-gradient(160deg,#141b2e,#0a0f1c);display:grid;gap:5px;padding:20px 22px;align-content:center}
+.art-tier .r{display:grid;grid-template-columns:30px 1fr;gap:6px;height:26px}
+.art-tier .r b{border-radius:6px;display:grid;place-items:center;font-family:var(--display);font-size:13px;color:#0a0d18}
+.art-tier .r span{display:flex;gap:5px}
+.art-tier .r i{width:19px;border-radius:4px;background:rgba(255,255,255,.14)}
+.art-draw{background:radial-gradient(circle at 70% 30%,rgba(255,77,125,.35),transparent 55%),radial-gradient(circle at 25% 75%,rgba(77,255,176,.25),transparent 55%),#121828}
+.art-draw svg{position:absolute;inset:0;width:100%;height:100%}
+.art-imp{background:repeating-linear-gradient(135deg,#121828 0 18px,#151d31 18px 36px)}
+.art-wolf{background:radial-gradient(circle at 70% 35%,#e8f0ff 0 26px,transparent 27px),linear-gradient(#0b1020,#1a1440)}
+.art-code{background:#0f1526;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:22px}
+.art-code i{border-radius:5px;background:rgba(255,255,255,.08)}
+.art-code i:nth-child(3n){background:rgba(255,77,125,.45)}.art-code i:nth-child(4n){background:rgba(77,195,255,.45)}
+.big{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:64px;color:rgba(255,255,255,.12)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Anime Game Night</h1>
+      <p>Party games for you and your friends. Pick a game, share the code, and let the AI judge, roast and hype everyone.</p>
+    </div>
+    <div>
+      <form class="join" id="joinForm"><input id="code" maxlength="6" placeholder="Room code" autocomplete="off" aria-label="Room code"><button class="btn primary">Join</button></form>
+      <div class="err" id="err"></div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <a class="tile" href="/tierlist">
+      <div class="art art-tier" aria-hidden="true">
+        <div class="r"><b style="background:var(--S)">S</b><span><i></i><i></i><i></i></span></div>
+        <div class="r"><b style="background:var(--A)">A</b><span><i></i><i></i></span></div>
+        <div class="r"><b style="background:var(--B)">B</b><span><i></i><i></i><i></i><i></i></span></div>
+        <div class="r"><b style="background:var(--C)">C</b><span><i></i></span></div>
+      </div>
+      <div class="body">
+        <h2>Anime Tier List</h2>
+        <p>Everyone secretly adds their favorites, ranks the pool against the clock, then the AI roasts your taste.</p>
+        <div class="chips"><span class="chip">Secret picks</span><span class="chip">Host's list</span><span class="chip">AI roast</span></div>
+        <span class="play">Play</span>
+      </div>
+    </a>
+    <a class="tile" href="/draw">
+      <div class="art art-draw" aria-hidden="true">
+        <svg viewBox="0 0 340 170" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M40 120 C 80 40, 130 150, 170 80 S 260 40, 300 110" stroke="#3ee0ff" stroke-width="7"/>
+          <path d="M60 60 q 30 -25 60 0" stroke="#ff4d7d" stroke-width="6"/>
+          <circle cx="250" cy="60" r="22" stroke="#ffd84d" stroke-width="6"/>
+          <path d="M120 135 l 30 -8 l 25 10" stroke="#4dffb0" stroke-width="6"/>
+        </svg>
+      </div>
+      <div class="body">
+        <h2>Draw It</h2>
+        <p>The AI picks what you draw. Race the timer alone or as a team, then get scored and roasted.</p>
+        <div class="chips"><span class="chip">AI judged</span><span class="chip">Players rate and comment</span><span class="chip">Teams</span></div>
+        <span class="play">Play</span>
+      </div>
+    </a>
+    <div class="tile soon"><span class="badge">Coming soon</span><div class="art art-imp" aria-hidden="true"><div class="big">?</div></div>
+      <div class="body"><h2>Imposter</h2><p>Everyone gets the same secret word except one. The AI picks words that are close enough to be sneaky.</p><span class="play">Soon</span></div></div>
+    <div class="tile soon"><span class="badge">Coming soon</span><div class="art art-wolf" aria-hidden="true"></div>
+      <div class="body"><h2>Werewolf</h2><p>Night falls, someone gets eaten, and the AI narrates the chaos.</p><span class="play">Soon</span></div></div>
+    <div class="tile soon"><span class="badge">Coming soon</span><div class="art art-code" aria-hidden="true"></div>
+      <div class="body"><h2>Codenames</h2><p>Two teams, one grid of words, and AI-made boards themed around anime.</p><span class="play">Soon</span></div></div>
+  </main>
+</div>
+<script>
+document.querySelector(".art-code").innerHTML = "<i></i>".repeat(15);
+async function go(code){
+  const r = await fetch("/api/rooms/" + code + "?v=-1").catch(()=>null);
+  if(!r || !r.ok){ document.querySelector("#err").textContent = "No room with that code. Check it and try again."; return; }
+  const room = await r.json();
+  location.href = `/${room.game || "tierlist"}?room=${code}`;
+}
+document.querySelector("#joinForm").onsubmit = e=>{
+  e.preventDefault();
+  const code = document.querySelector("#code").value.trim().toUpperCase();
+  if(code) go(code);
+};
+// old invite links pointed at /?room=CODE: send them to the right game
+const q = new URLSearchParams(location.search).get("room");
+if(q) go(q.toUpperCase());
+</script>
+</body>
+</html>

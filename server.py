@@ -14,6 +14,8 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import draw_game
+
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(HERE, "rooms.json")
@@ -184,133 +186,10 @@ def lookup_worker():
             changed(room)
 
 
-# ---------- AI roast (Gemini, Cerebras, Mistral) ----------
+# ---------- AI (shared with every game, see ai.py) ----------
 
-OPENAI_STYLE = {"cerebras": "https://api.cerebras.ai/v1", "mistral": "https://api.mistral.ai/v1"}
-PROVIDER_NAMES = {"gemini": "Gemini", "cerebras": "Cerebras", "mistral": "Mistral"}
-# built-in keys come from the host's environment (Render > Environment), never from the code
-BUILTIN_KEYS = {p: os.environ.get(p.upper() + "_API_KEY", "").strip() for p in PROVIDER_NAMES}
-BUILTIN_ORDER = [p for p in ("gemini", "mistral", "cerebras") if BUILTIN_KEYS[p]]
-_builtin_calls = []
-_default_models = {}
-
-
-def builtin_allowed(per_hour=40):
-    """Caps roasts on the built-in keys so one busy room can't burn the whole quota."""
-    now = time.time()
-    with _api_lock:
-        _builtin_calls[:] = [t for t in _builtin_calls if now - t < 3600]
-        if len(_builtin_calls) >= per_hour:
-            return False
-        _builtin_calls.append(now)
-        return True
-
-
-def builtin_models(provider, key):
-    """Up to 3 models to try in order, so one overloaded model doesn't sink the roast."""
-    if provider not in _default_models:
-        models = list_models(provider, key)
-        prefs = {"gemini": ["flash-lite", "flash-latest", "flash"], "mistral": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
-                 "cerebras": ["gpt-oss", "llama-3.3", "qwen", "llama"]}[provider]
-        picks = []
-        # newest versions sort last, so search from the end
-        for want in prefs:
-            for m in reversed(models):
-                if want in m and "preview" not in m and m not in picks and (want == "flash-lite" or "lite" not in m):  # lite: fastest, most quota
-                    picks.append(m)
-                    break
-        picks = picks[:3] or models[:1]
-        if not picks:
-            raise AIError("no usable models were found for this key.")
-        _default_models[provider] = picks
-        time.sleep(1.2)  # free tiers allow about one call per second
-    return _default_models[provider]
-
-
-GEMINI = "https://generativelanguage.googleapis.com/v1beta"
-
-
-class AIError(Exception):
-    def __init__(self, msg, code=None):
-        super().__init__(msg)
-        self.code = code
-
-
-BUSY = (429, 500, 502, 503, 504)
-
-
-def http_json(url, key_headers, body=None, timeout=90):
-    # busy or rate-limited AIs usually answer on a second or third try
-    for wait in (2.5, 6, None):
-        try:
-            return http_json_once(url, key_headers, body, timeout)
-        except AIError as e:
-            if e.code not in BUSY or wait is None:
-                raise
-            time.sleep(wait)
-
-
-def http_json_once(url, key_headers, body, timeout):
-    data = json.dumps(body).encode("utf-8") if body is not None else None
-    headers = {"Content-Type": "application/json", "User-Agent": "AnimeTierNight/1.0", **key_headers}
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=headers), timeout=timeout) as r:
-            return json.loads(r.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", "replace")
-        try:
-            j = json.loads(detail)
-            detail = (j.get("error") or {}).get("message") if isinstance(j.get("error"), dict) else (j.get("message") or j.get("detail") or j.get("error") or detail)
-        except ValueError:
-            pass
-        reason = {401: "the API key was rejected", 403: "the API key isn't allowed to use this",
-                  404: "that model wasn't found", 429: "it's out of quota or rate limited"}.get(e.code, f"it returned error {e.code}")
-        raise AIError(f"{reason}. {str(detail)[:200]}".strip(), e.code)
-    except TimeoutError:
-        raise AIError(f"took longer than {timeout}s and timed out.", "timeout")
-    except Exception as e:
-        if "timed out" in str(e):
-            raise AIError(f"took longer than {timeout}s and timed out.", "timeout")
-        raise AIError(f"couldn't reach it ({e.__class__.__name__}).")
-
-
-def auth(provider, key):
-    return {"x-goog-api-key": key} if provider == "gemini" else {"Authorization": "Bearer " + key}
-
-
-def list_models(provider, key):
-    if provider == "gemini":
-        res = http_json(GEMINI + "/models?pageSize=200", auth(provider, key), timeout=20)
-        ids = [m["name"].split("/", 1)[-1] for m in res.get("models", [])
-               if "generateContent" in (m.get("supportedGenerationMethods") or [])]
-        ids = [i for i in ids if not any(s in i for s in ("embedding", "aqa", "imagen", "tts", "image", "live", "veo"))]
-    else:
-        res = http_json(OPENAI_STYLE[provider] + "/models", auth(provider, key), timeout=20)
-        ids = [m["id"] for m in res.get("data", [])
-               if not any(s in m["id"] for s in ("embed", "moderation", "ocr", "transcribe", "voxtral"))]
-    return sorted(set(ids))
-
-
-def complete(provider, key, model, system, prompt):
-    if provider == "gemini":
-        res = http_json(f"{GEMINI}/models/{urllib.parse.quote(model)}:generateContent", auth(provider, key), {
-            "systemInstruction": {"parts": [{"text": system}]},
-            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 1.0, "responseMimeType": "application/json"}}, timeout=45)
-        parts = ((res.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
-        text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
-    else:
-        res = http_json(OPENAI_STYLE[provider] + "/chat/completions", auth(provider, key), {
-            "model": model, "temperature": 0.95,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]})
-        text = ((res.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
-    start, end = text.find("{"), text.rfind("}")
-    if start < 0 or end < start:
-        raise AIError("it answered, but not in the expected format. Try again or switch model.")
-    try:
-        return json.loads(text[start:end + 1])
-    except ValueError:
-        raise AIError("it answered, but the reply was cut off or malformed. Try again or switch model.")
+from ai import (AIError, BUILTIN_KEYS, BUILTIN_ORDER, BUSY, PROVIDER_NAMES, builtin_allowed,
+                builtin_models, complete, list_models)
 
 
 SPICE = {
@@ -518,6 +397,10 @@ def ticker():
         time.sleep(1)
         with lock:
             for room in rooms.values():
+                if room.get("game") == "draw":
+                    if draw_game.tick(room):
+                        changed(room)
+                    continue
                 if room.get("phase") == "ranking" and room.get("deadline") and time.time() > room["deadline"] + 2:
                     finish(room)
                     changed(room)
@@ -545,12 +428,20 @@ class Handler(BaseHTTPRequestHandler):
 
     def body(self):
         n = int(self.headers.get("Content-Length") or 0)
-        if n > 200_000:
+        if n > 1_500_000:  # drawings are uploaded as images
             return {}
         try:
             return json.loads(self.rfile.read(n) or b"{}")
         except ValueError:
             return {}
+
+    def send_bytes(self, data, ctype, cache):
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Cache-Control", cache)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def do_HEAD(self):
         self.send_response(200)
@@ -561,16 +452,32 @@ class Handler(BaseHTTPRequestHandler):
         parts = [p for p in u.path.split("/") if p]
         qs = urllib.parse.parse_qs(u.query)
 
-        if u.path in ("/", "/index.html"):
-            with open(os.path.join(HERE, "index.html"), "rb") as f:
-                data = f.read()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-            return
+        if u.path in PAGES:
+            with open(os.path.join(HERE, PAGES[u.path]), "rb") as f:
+                return self.send_bytes(f.read(), "text/html; charset=utf-8", "no-store")
+
+        if parts[:2] == ["api", "img"] and len(parts) == 3:
+            raw = draw_game.IMAGES.get(parts[2])
+            if raw is None:
+                return self.err("That drawing is gone.", 404)
+            return self.send_bytes(raw, "image/jpeg", "public, max-age=86400, immutable")
+
+        # team canvas: long-poll for strokes after index `since`
+        if len(parts) == 4 and parts[:2] == ["api", "draw"] and parts[3] == "strokes":
+            code, q = parts[2].upper(), lambda k, d="": (qs.get(k) or [d])[0]
+            deadline = time.time() + 20
+            with lock:
+                room = rooms.get(code)
+                p = room and room["players"].get(q("pid"))
+                if not room or not p or p["key"] != q("key"):
+                    return self.err("You're not in this room.", 403)
+                rnd, team, since, gen = room["round"], p.get("team"), int(q("since", "0")), int(q("gen", "0"))
+                while time.time() < deadline:
+                    out = draw_game.strokes_since(code, rnd, team, since, gen)
+                    if out["reset"] or out["strokes"] or rooms.get(code, {}).get("round") != rnd:
+                        break
+                    lock.wait(timeout=deadline - time.time())
+                return self.send_json(out)
 
         if parts[:2] == ["api", "search"]:
             q = (qs.get("q") or [""])[0].strip()
@@ -592,7 +499,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not room:
                     return self.err("Room not found. Check the code.", 404)
                 p = room["players"].get(pid)
-                return self.send_json(public(room, pid if p and p["key"] == key else None))
+                viewer = pid if p and p["key"] == key else None
+                return self.send_json(draw_game.public(room, viewer) if room.get("game") == "draw" else public(room, viewer))
 
         self.err("Not found", 404)
 
@@ -614,6 +522,13 @@ class Handler(BaseHTTPRequestHandler):
                 code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
                 while code in rooms:
                     code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+                if b.get("game") == "draw":
+                    room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Draw Night")[:80],
+                            "players": {}, "created": time.time(), "version": 0}
+                    draw_game.create(room, b)
+                    rooms[code] = room
+                    changed(room)
+                    return self.send_json({"code": code, "hostKey": room["hostKey"]})
                 mode = "picks" if b.get("mode") == "picks" else "classic"
                 room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Anime Tier Night")[:80],
                         "mode": mode, "phase": "submit" if mode == "picks" else "ranking",
@@ -657,8 +572,28 @@ class Handler(BaseHTTPRequestHandler):
                 pid = rid(8)
                 room["players"][pid] = {"name": name, "key": rid(16), "tiers": {t: [] for t in TIERS},
                                         "joined": time.time(), "done": False}
+                if room.get("game") == "draw":
+                    draw_game.on_join(room, pid)
                 changed(room)
                 return self.send_json({"pid": pid, "key": room["players"][pid]["key"]})
+
+            if room.get("game") == "draw":
+                try:
+                    if is_host and action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "rejudge", "playagain", "kick"):
+                        touched = draw_game.host_action(room, action, b)
+                    elif action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "rejudge", "playagain", "kick"):
+                        return self.err("Only the host can do that.", 403)
+                    elif not player:
+                        return self.err("You're not in this room. Rejoin with your name.", 403)
+                    else:
+                        touched = draw_game.player_action(room, action, b, b.get("pid"))
+                except draw_game.Refuse as e:
+                    return self.err(str(e), e.status)
+                except (ValueError, TypeError):
+                    return self.err("That request didn't make sense.")
+                if touched:
+                    changed(room)
+                return self.send_json({"ok": True})
 
             if action in ("rank", "pick", "unpick") and not player:
                 return self.err("You're not in this room. Rejoin with your name.", 403)
@@ -790,15 +725,19 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_json({"ok": True, "provider": entry["provider"]})
 
 
+PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html"}
+
+
 def main():
     load()
+    draw_game.setup(rooms, lock, changed, rid)
     for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")
         room.setdefault("roasts", [])
         if (room.get("roastState") or {}).get("status") == "working":  # the server restarted mid-roast
             room["roastState"] = {"status": "failed", "error": "The server restarted while the AI was writing. Press Try again."}
-        for item in room["anime"]:
+        for item in room.get("anime", []):
             if item.get("status") == "searching":
                 lookup_q.put((code, item["id"]))
     threading.Thread(target=saver, daemon=True).start()
