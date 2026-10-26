@@ -579,9 +579,9 @@ class Handler(BaseHTTPRequestHandler):
 
             if room.get("game") == "draw":
                 try:
-                    if is_host and action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "rejudge", "playagain", "kick"):
+                    if is_host and action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "finish", "rejudge", "playagain", "kick"):
                         touched = draw_game.host_action(room, action, b)
-                    elif action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "rejudge", "playagain", "kick"):
+                    elif action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "finish", "rejudge", "playagain", "kick"):
                         return self.err("Only the host can do that.", 403)
                     elif not player:
                         return self.err("You're not in this room. Rejoin with your name.", 403)

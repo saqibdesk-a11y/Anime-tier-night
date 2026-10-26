@@ -141,60 +141,57 @@ def category_label(room):
     return CATEGORIES.get(room.get("category", "mix"), CATEGORIES["mix"])[0]
 
 
-def judge_round(code, rnd):
+def judge_all(code, batch_size=16):
+    """Judges every drawing of the game in as few AI calls as possible (one for most games)."""
     with lock:
         room = rooms.get(code)
         if not room:
             return
-        rd = room["roundData"][rnd]
-        entries = [(eid, e) for eid, e in rd["entries"].items() if e.get("img") in IMAGES]
-        images = [("image/jpeg", IMAGES[e["img"]]) for _, e in entries]
-        scoring = room["judge"] == "ai"
-        spice, prompt_word = room["spice"], rd["prompt"]
-    if not entries:
-        result = {"status": "failed", "error": "No drawings were submitted."}
-    else:
+        items = [(i, eid, e, rd["prompt"]) for i, rd in enumerate(room["roundData"])
+                 for eid, e in rd["entries"].items() if e.get("img") in IMAGES]
+        imgs = {eid: IMAGES[e["img"]] for _, eid, e, _ in items}
+        scoring, spice, secs = room["judge"] == "ai", room["spice"], room["drawSec"]
+    results, errors, by = {}, [], None
+    for start in range(0, len(items), batch_size):
+        batch = items[start:start + batch_size]
+        listing = "\n".join(f'Drawing {k + 1}: the prompt was "{prompt}"' for k, (_, _, _, prompt) in enumerate(batch))
         try:
-            out, provider, model = ai.ask_builtin(
+            out, provider, _ = ai.ask_builtin(
                 "You are the judge of a party drawing game played by friends. You look closely at each "
                 "drawing and say exactly what you see, then joke about it. " + SPICE[spice] +
                 " Keep each comment to 1-2 short sentences, casual like a group chat.",
-                f'Everyone had {room_secs(code)} seconds to draw: "{prompt_word}". There are {len(images)} drawings, '
-                "attached in order as Drawing 1, Drawing 2, and so on. "
-                + ("Score each from 1 to 10 for how well it shows the prompt plus effort and creativity (use the whole range). " if scoring else "")
+                f"Each player had {secs} seconds per drawing. There are {len(batch)} drawings attached in this order:\n{listing}\n"
+                + ("Score each from 1 to 10 for how well it shows its prompt plus effort and creativity (use the whole range). " if scoring else "")
                 + "Return only JSON: "
                 + ('{"results":[{"n":1,"score":7,"comment":"..."}]}' if scoring else '{"results":[{"n":1,"comment":"..."}]}'),
-                images=images, timeout=60)
-            res = {}
+                images=[("image/jpeg", imgs[eid]) for _, eid, _, _ in batch], timeout=90)
+            by = provider
             for r in out.get("results", []):
                 try:
-                    i = int(r.get("n")) - 1
+                    k = int(r.get("n")) - 1
                 except (TypeError, ValueError):
                     continue
-                if 0 <= i < len(entries):
-                    score = r.get("score")
+                if 0 <= k < len(batch):
                     try:
-                        score = max(1, min(10, round(float(score)))) if scoring else None
+                        score = max(1, min(10, round(float(r.get("score"))))) if scoring else None
                     except (TypeError, ValueError):
                         score = None
-                    res[entries[i][0]] = {"score": score, "comment": str(r.get("comment") or "")[:400]}
-            result = {"status": "done" if res else "failed", "by": f"{provider}", "results": res,
-                      "error": None if res else "The AI replied without usable results."}
+                    results[batch[k][1]] = {"score": score, "comment": str(r.get("comment") or "")[:400]}
         except ai.AIError as e:
-            result = {"status": "failed", "error": str(e)[:500]}
+            errors.append(str(e)[:400])
     with lock:
         room = rooms.get(code)
-        if not room or rnd >= len(room["roundData"]):
+        if not room:
             return
-        room["roundData"][rnd]["ai"] = result
-        if room["phase"] == "judging" and rnd == room["round"]:
+        status = "done" if results else "failed"
+        error = None if results else (" ".join(errors) or ("No drawings were submitted." if not items else "The AI replied without usable results."))
+        for rd in room["roundData"]:
+            mine = {eid: v for eid, v in results.items() if eid in rd["entries"]}
+            rd["ai"] = {"status": status, "results": mine, "by": by, "error": error}
+        room["aiAll"] = {"status": status, "by": by, "error": error}
+        if room["phase"] == "judging":
             begin_show(room)
         changed(room)
-
-
-def room_secs(code):
-    room = rooms.get(code)
-    return room["drawSec"] if room else 90
 
 
 # ---------- phases ----------
@@ -226,19 +223,32 @@ def start_round(room, rnd):
 
 
 def end_drawing(room):
-    rd = room["roundData"][room["round"]]
     room["deadline"] = None
-    if not rd["entries"]:
-        rd["ai"] = {"status": "failed", "error": "Nobody submitted a drawing."}
+    if room["round"] + 1 < room["rounds"]:
+        # no results between rounds: a short breather, then straight into the next prompt
+        room["phase"] = "between"
+        room["deadline"] = time.time() + 6
+    else:
+        finish_drawing(room)
+
+
+def finish_drawing(room):
+    """All rounds drawn: one AI call judges everything, players rate everything, then one showcase."""
+    total = sum(len(rd["entries"]) for rd in room["roundData"])
+    room["deadline"] = None
+    if not total:
+        room["aiAll"] = {"status": "failed", "error": "Nobody submitted a drawing."}
         begin_show(room)
         return
-    rd["ai"] = {"status": "working"}
-    threading.Thread(target=judge_round, args=(room["code"], room["round"]), daemon=True).start()
-    if room["judge"] == "players" and len(rd["entries"]) > 1:
+    room["aiAll"] = {"status": "working"}
+    for rd in room["roundData"]:
+        rd["ai"] = {"status": "working"}
+    threading.Thread(target=judge_all, args=(room["code"],), daemon=True).start()
+    if room["judge"] == "players" and len(owners(room)) > 1:
         room["phase"] = "rating"
-        room["deadline"] = time.time() + room["rateSec"]
+        room["deadline"] = time.time() + max(60, min(300, 30 + 30 * room["rounds"]))
     elif room["judge"] == "players":
-        begin_show(room)  # nothing to rate against
+        begin_show(room)  # nobody else to rate against
     else:
         room["phase"] = "judging"
 
@@ -258,20 +268,23 @@ def tick(room):
         if now > room["deadline"] + 6 or (all_in and now > room["deadline"] - room["drawSec"] + 2):
             end_drawing(room)
             return True
+    if room["phase"] == "between" and room["deadline"] and now > room["deadline"]:
+        start_round(room, room["round"] + 1)
+        return True
     if room["phase"] == "rating" and room["deadline"] and (now > room["deadline"] + 1 or everyone_rated(room)):
         begin_show(room)
         return True
     return False
 
 
+def to_rate(room, pid):
+    """Every drawing this player should rate: all rounds, minus their own."""
+    mine = owner_of(room, pid)
+    return [(rd, eid) for rd in room["roundData"] for eid, e in rd["entries"].items() if e["owner"] != mine]
+
+
 def everyone_rated(room):
-    rd = room["roundData"][room["round"]]
-    for pid in room["players"]:
-        mine = owner_of(room, pid)
-        need = [eid for eid, e in rd["entries"].items() if e["owner"] != mine]
-        if any(eid not in rd["ratings"].get(pid, {}) for eid in need):
-            return False
-    return True
+    return all(eid in rd["ratings"].get(pid, {}) for pid in room["players"] for rd, eid in to_rate(room, pid))
 
 
 # ---------- scores ----------
@@ -284,9 +297,9 @@ def entry_score(room, rd, eid):
     return round(sum(vals) / len(vals), 1) if vals else None
 
 
-def standings(room, upto):
+def standings(room):
     tot = {}
-    for rd in room["roundData"][:upto + 1]:
+    for rd in room["roundData"]:
         for eid, e in rd["entries"].items():
             s = entry_score(room, rd, eid) or 0
             t = tot.setdefault(e["owner"], {"owner": e["owner"], "name": owner_name(room, e["owner"]), "points": 0, "drawings": 0})
@@ -304,23 +317,23 @@ def public(room, viewer):
     r["visionAI"] = [p for p in ai.BUILTIN_ORDER if p in ("gemini", "mistral")]
     r["players"] = {pid: {k: v for k, v in p.items() if k != "key"} for pid, p in room["players"].items()}
     r["myOwner"] = owner_of(room, viewer) if viewer else None
+    phase, mine = room["phase"], r["myOwner"]
+    names = {pid: p["name"] for pid, p in room["players"].items()}
     rounds = []
     for i, rd in enumerate(room["roundData"]):
-        live = i == room["round"] and room["phase"] in ("drawing", "rating", "judging")
         out = {"prompt": rd["prompt"], "aiStatus": (rd.get("ai") or {}).get("status"),
                "aiError": (rd.get("ai") or {}).get("error"), "aiBy": (rd.get("ai") or {}).get("by")}
-        if live and room["phase"] == "drawing":
-            out["done"] = sorted({e["owner"] for e in rd["entries"].values()})
-        elif live:
+        if phase in ("drawing", "between"):
+            # drawings stay hidden until every round is done
+            if i == room["round"]:
+                out["done"] = sorted({e["owner"] for e in rd["entries"].values()})
+        elif phase in ("rating", "judging"):
             # anonymous while people judge: no names, and you only see your own ratings
-            mine = r["myOwner"]
             out["entries"] = [{"eid": eid, "img": e["img"], "mine": e["owner"] == mine} for eid, e in rd["entries"].items()]
             random.Random(room["code"] + str(i) + str(viewer)).shuffle(out["entries"])
             out["myRatings"] = rd["ratings"].get(viewer, {}) if viewer else {}
-            out["raters"] = {pid: len(v) for pid, v in rd["ratings"].items()}
         else:
             ai_res = (rd.get("ai") or {}).get("results", {})
-            names = {pid: p["name"] for pid, p in room["players"].items()}
             ents = []
             for eid, e in rd["entries"].items():
                 ents.append({"eid": eid, "img": e["img"], "owner": e["owner"], "name": owner_name(room, e["owner"]),
@@ -328,13 +341,16 @@ def public(room, viewer):
                              "score": entry_score(room, rd, eid), "ai": ai_res.get(eid),
                              "comments": [{"name": names.get(rp, "Someone"), "s": rr[eid].get("s"), "c": rr[eid].get("c", "")}
                                           for rp, rr in rd["ratings"].items() if eid in rr]})
-            # reveal from the lowest score up, so the winner comes last
+            # reveal from the lowest score up, so each prompt's best drawing comes last
             ents.sort(key=lambda x: (x["score"] is not None, x["score"] or 0))
             out["entries"] = ents
         rounds.append(out)
     r["roundData"] = rounds
-    if room["round"] >= 0 and room["phase"] in ("show", "final"):
-        r["standings"] = standings(room, room["round"])
+    if phase == "rating":
+        r["rateProgress"] = {pid: [sum(1 for rd, eid in to_rate(room, pid) if eid in rd["ratings"].get(pid, {})),
+                                   len(to_rate(room, pid))] for pid in room["players"]}
+    if phase in ("show", "final"):
+        r["standings"] = standings(room)
     return r
 
 
@@ -356,8 +372,8 @@ class Refuse(Exception):
 def player_action(room, action, b, pid):
     rnd = room["round"]
     if action == "team":
-        if room["phase"] not in ("lobby", "show") or room["mode"] != "team":
-            raise Refuse("You can only switch teams between rounds.")
+        if room["phase"] != "lobby" or room["mode"] != "team":
+            raise Refuse("You can only switch teams before the game starts.")
         if b.get("team") not in {t["id"] for t in room["teams"]}:
             raise Refuse("That team doesn't exist.")
         room["players"][pid]["team"] = b["team"]
@@ -407,8 +423,8 @@ def player_action(room, action, b, pid):
     if action == "rate":
         if room["phase"] != "rating":
             raise Refuse("Rating is closed.", 409)
-        rd = room["roundData"][rnd]
-        e = rd["entries"].get(b.get("eid"))
+        rd = next((x for x in room["roundData"] if b.get("eid") in x["entries"]), None)
+        e = rd and rd["entries"][b["eid"]]
         if not e:
             raise Refuse("That drawing isn't here anymore.")
         if e["owner"] == owner_of(room, pid):
@@ -434,8 +450,8 @@ def host_action(room, action, b):
         room["phase"] = "starting"
         threading.Thread(target=begin_game, args=(room["code"],), daemon=True).start()
     elif action == "shuffle":
-        if room["mode"] != "team" or room["phase"] not in ("lobby", "show"):
-            raise Refuse("Teams can only be shuffled between rounds.")
+        if room["mode"] != "team" or room["phase"] != "lobby":
+            raise Refuse("Teams can only be shuffled before the game starts.")
         pids = list(room["players"])
         random.shuffle(pids)
         for i, pid in enumerate(pids):
@@ -455,6 +471,8 @@ def host_action(room, action, b):
     elif action == "end":
         if room["phase"] == "drawing":
             room["deadline"] = time.time() - 4  # leaves a 2s grace for the last uploads, then the ticker moves on
+        elif room["phase"] == "between":
+            start_round(room, room["round"] + 1)
         elif room["phase"] == "rating":
             begin_show(room)
         else:
@@ -463,24 +481,22 @@ def host_action(room, action, b):
         if room["phase"] != "show" or not room.get("show"):
             raise Refuse("The show isn't on.")
         room["show"]["slide"] = max(0, int(b.get("to") or 0))
-    elif action == "nextround":
+    elif action in ("finish", "nextround"):
         if room["phase"] != "show":
             raise Refuse("Finish the show first.")
-        if room["round"] + 1 < room["rounds"]:
-            start_round(room, room["round"] + 1)
-        else:
-            room["phase"] = "final"
+        room["phase"] = "final"
     elif action == "rejudge":
-        rd = room["roundData"][room["round"]] if room["round"] >= 0 else None
-        if not rd or (rd.get("ai") or {}).get("status") == "working":
+        if not room["roundData"] or (room.get("aiAll") or {}).get("status") == "working":
             raise Refuse("The AI is already working on it.")
-        rd["ai"] = {"status": "working"}
-        threading.Thread(target=judge_round, args=(room["code"], room["round"]), daemon=True).start()
+        room["aiAll"] = {"status": "working"}
+        for rd in room["roundData"]:
+            rd["ai"] = {"status": "working"}
+        threading.Thread(target=judge_all, args=(room["code"],), daemon=True).start()
     elif action == "playagain":
         for rd in room["roundData"]:
             for e in rd["entries"].values():
                 IMAGES.pop(e.get("img"), None)
-        room.update({"phase": "lobby", "round": -1, "prompts": [], "deadline": None, "roundData": [], "show": None})
+        room.update({"phase": "lobby", "round": -1, "prompts": [], "deadline": None, "roundData": [], "show": None, "aiAll": None})
     elif action == "kick":
         room["players"].pop(b.get("pid"), None)
     else:

@@ -120,6 +120,9 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 
 /* rating */
 .rate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px;margin-top:14px}
+.rate-round{margin-top:22px}
+.rate-round h3{font-size:18px}
+.rate-round h3 span{color:var(--pink)}
 .rcard{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid}
 .rcard img,.thumb img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;display:block}
 .rcard .rb{padding:12px;display:grid;gap:10px}
@@ -252,6 +255,8 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 
     <div id="vLobby" hidden></div>
 
+    <div id="vBetween" hidden><div class="center"><div class="eyebrow" id="betweenLbl"></div><h2 id="betweenCount" style="font-size:clamp(28px,5vw,46px)"></h2><p class="muted" style="margin:0">Results come at the end, after every round.</p></div></div>
+
     <div id="vStarting" hidden><div class="center"><span class="dots"><i></i><i></i><i></i></span><h2>The AI is picking what you'll draw…</h2></div></div>
 
     <div id="vDraw" hidden>
@@ -275,9 +280,9 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
     </div>
 
     <div id="vRate" hidden>
-      <div class="prompt"><span class="lbl">Rate the drawings</span><h2 id="ratePrompt"></h2></div>
-      <p class="hint">Give each drawing a score out of 10. Leave a comment if you want: a roast or a compliment. Names stay hidden until the reveal.</p>
-      <div class="rate-grid" id="rateGrid"></div>
+      <div class="prompt"><span class="lbl">Rate every drawing</span><h2 id="ratePrompt"></h2></div>
+      <p class="hint">All rounds are done. Give each drawing a score out of 10. Leave a comment if you want: a roast or a compliment. Names stay hidden until the reveal.</p>
+      <div id="rateGrid"></div>
     </div>
 
     <div id="vJudge" hidden></div>
@@ -368,12 +373,12 @@ function onChange(prev){
 }
 
 /* ---------- render ---------- */
-const VIEWS = ["vLobby","vStarting","vDraw","vRate","vJudge","vShow","vFinal"];
+const VIEWS = ["vLobby","vStarting","vBetween","vDraw","vRate","vJudge","vShow","vFinal"];
 function show(id){ for(const v of VIEWS) $("#"+v).hidden = v !== id; }
 function render(){
   document.title = room.title === "Draw It" ? "Draw It" : room.title + " · Draw It";
   $("#rTitle").textContent = room.title; $("#rCode").textContent = room.code;
-  $("#roundLbl").textContent = room.round >= 0 && room.phase !== "final" ? `Round ${room.round+1} of ${room.rounds}` : "";
+  $("#roundLbl").textContent = ["drawing","between"].includes(room.phase) ? `Round ${room.round+1} of ${room.rounds}` : "";
   renderPlayers(); renderHostStrip(); tickTimer();
   const joined = me && room.players[me.pid];
   $("#gate").hidden = !!joined;
@@ -383,6 +388,7 @@ function render(){
   if(ph === "lobby") { show("vLobby"); renderLobby(); }
   else if(ph === "starting") show("vStarting");
   else if(ph === "drawing") { show("vDraw"); renderDraw(); }
+  else if(ph === "between") { show("vBetween"); }
   else if(ph === "rating") { show("vRate"); renderRate(); }
   else if(ph === "judging") { show("vJudge"); renderJudge(); }
   else if(ph === "show") { show("vShow"); renderShow(); }
@@ -394,7 +400,7 @@ function renderPlayers(){
     let st = "";
     const owner = room.mode === "solo" ? pid : p.team;
     if(room.phase === "drawing" && rd && (rd.done||[]).includes(owner)) st = '<span class="ok" title="Done">✓</span>';
-    if(room.phase === "rating" && rd && rd.raters){ const need = (rd.entries||[]).length - 1; st = (rd.raters[pid]||0) >= need ? '<span class="ok" title="Done rating">✓</span>' : `<span class="muted">${rd.raters[pid]||0}/${need}</span>`; }
+    if(room.phase === "rating" && room.rateProgress && room.rateProgress[pid]){ const [got, need] = room.rateProgress[pid]; st = got >= need ? '<span class="ok" title="Done rating">✓</span>' : `<span class="muted">${got}/${need}</span>`; }
     const team = room.mode === "team" && p.team ? `<i style="width:8px;height:8px;border-radius:50%;background:${TEAM_COLORS[p.team]}"></i>` : "";
     return `<span class="chip ${me&&me.pid===pid?"me":""}">${avatar(p.name)}${esc(p.name)}${me&&me.pid===pid?" (you)":""}${team}${st}</span>`;
   }).join("") || '<span class="muted">Nobody here yet. Share the invite link.</span>';
@@ -402,6 +408,7 @@ function renderPlayers(){
 function renderHostStrip(){
   const el = $("#hostStrip");
   const btns = [];
+  if(hostKey && room.phase === "between") btns.push('<button class="btn small" data-h="end">Start next round now</button>');
   if(hostKey && (room.phase === "drawing" || room.phase === "rating")) btns.push(`<button class="btn small" data-h="addtime">+30s</button><button class="btn small" data-h="end">${room.phase==="drawing"?"End drawing now":"End rating now"}</button>`);
   el.hidden = !btns.length; el.innerHTML = btns.length ? `<span class="muted" style="font-size:13px;font-weight:700">Host:</span>${btns.join("")}` : "";
 }
@@ -418,6 +425,11 @@ document.addEventListener("click", async e=>{
 /* timer */
 function tickTimer(){
   const el = $("#timer");
+  if(room && room.phase === "between" && room.deadline){
+    const n = Math.max(0, Math.ceil(room.deadline - serverNow()));
+    $("#betweenLbl").textContent = `Round ${room.round+1} of ${room.rounds} done`;
+    $("#betweenCount").textContent = n > 0 ? `Round ${room.round+2} starts in ${n}` : "Here it comes…";
+  }
   if(!room || !room.deadline || !["drawing","rating"].includes(room.phase)){ el.hidden = true; return; }
   const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
   el.hidden = false; el.textContent = left > 0 ? `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}` : "Time's up";
@@ -564,18 +576,19 @@ function renderDraw(){
 
 /* ---------- rating ---------- */
 let rateSig = "";
+function myRating(eid){ for(const rd of room.roundData){ if(rd.myRatings && rd.myRatings[eid]) return rd.myRatings[eid]; } return {}; }
 function renderRate(){
-  const rd = cur(); $("#ratePrompt").textContent = rd.prompt;
-  const sig = rd.entries.map(e=>e.eid).join();
+  $("#ratePrompt").textContent = room.rounds > 1 ? `${room.roundData.length} rounds` : (room.roundData[0]||{}).prompt || "";
+  const sig = room.roundData.map(rd=>(rd.entries||[]).map(e=>e.eid).join()).join("|");
   if(sig !== rateSig){
     rateSig = sig;
-    $("#rateGrid").innerHTML = rd.entries.map((e,i)=>`<div class="rcard ${e.mine?"mine":""}" data-eid="${e.eid}"><img src="/api/img/${e.img}" alt="Drawing ${i+1}">
+    $("#rateGrid").innerHTML = room.roundData.map((rd,r)=>`<div class="rate-round"><h3>Round ${r+1}: <span>"${esc(rd.prompt)}"</span></h3><div class="rate-grid">${(rd.entries||[]).map((e,i)=>`<div class="rcard ${e.mine?"mine":""}" data-eid="${e.eid}"><img src="/api/img/${e.img}" alt="Drawing ${i+1} for ${esc(rd.prompt)}">
       <div class="rb">${e.mine ? '<span class="yours">This is yours. Sit tight.</span>' : `<div class="scores">${Array.from({length:10},(_,k)=>`<button type="button" data-s="${k+1}">${k+1}</button>`).join("")}</div>
-      <input type="text" maxlength="140" placeholder="Leave a roast or a compliment (optional)" data-c>`}</div></div>`).join("");
+      <input type="text" maxlength="140" placeholder="Leave a roast or a compliment (optional)" data-c>`}</div></div>`).join("") || '<p class="muted">No drawings this round.</p>'}</div></div>`).join("");
   }
   // reflect my saved ratings without wiping what I'm typing
   for(const card of document.querySelectorAll(".rcard")){
-    const r = rd.myRatings[card.dataset.eid] || {};
+    const r = myRating(card.dataset.eid);
     card.querySelectorAll(".scores button").forEach(b=>b.classList.toggle("on", +b.dataset.s === (localScores[card.dataset.eid] ?? r.s)));
     const inp = card.querySelector("[data-c]"); if(inp && document.activeElement !== inp && inp.value === "" && r.c) inp.value = r.c;
   }
@@ -601,37 +614,44 @@ $("#rateGrid").addEventListener("input", e=>{
 
 /* ---------- AI judging (AI-scored games) ---------- */
 function renderJudge(){
-  const rd = cur();
-  $("#vJudge").innerHTML = `<div class="center"><span class="dots"><i></i><i></i><i></i></span><h2>The AI is judging your masterpieces…</h2><p class="muted" style="margin:0">"${esc(rd.prompt)}"</p></div>
-    <div class="thumbs">${(rd.entries||[]).map(e=>`<div class="thumb"><img src="/api/img/${e.img}" alt=""></div>`).join("")}</div>`;
+  const all = room.roundData.flatMap(rd=>rd.entries||[]);
+  $("#vJudge").innerHTML = `<div class="center"><span class="dots"><i></i><i></i><i></i></span><h2>The AI is judging all ${all.length} drawings…</h2><p class="muted" style="margin:0">Then the showcase starts.</p></div>
+    <div class="thumbs">${all.map(e=>`<div class="thumb"><img src="/api/img/${e.img}" alt=""></div>`).join("")}</div>`;
 }
 
 /* ---------- show ---------- */
 let showSig = "";
-function slides(){ const rd = cur(); return [...rd.entries.map(e=>({kind:"entry", e})), {kind:"board"}]; }
+function slides(){
+  const out = [];
+  room.roundData.forEach((rd, r)=>(rd.entries||[]).forEach((e, k)=>out.push({kind:"entry", e, r, k, n: rd.entries.length})));
+  out.push({kind:"board"});
+  return out;
+}
 function aiBlock(rd, e){
   if(e.ai && e.ai.comment) return `<div class="msg" style="animation-delay:.9s"><span class="bot">AI</span><div class="bubble">${esc(e.ai.comment)}</div></div>`;
   if(rd.aiStatus === "working") return `<div class="msg"><span class="bot">AI</span><div class="bubble"><span class="dots"><i></i><i></i><i></i></span></div></div>`;
-  if(rd.aiStatus === "failed" && room.judge === "ai") return `<div class="bubble" style="border-color:rgba(255,90,122,.4)">The AI couldn't judge this round. ${esc(cap(rd.aiError||""))} ${hostKey?'<button class="btn small" data-h="rejudge" style="margin-left:6px">Try again</button>':""}</div>`;
+  if(rd.aiStatus === "failed" && (room.judge === "ai" || e === firstEntry())) return `<div class="bubble" style="border-color:rgba(255,90,122,.4)">The AI couldn't judge this round. ${esc(cap(rd.aiError||""))} ${hostKey?'<button class="btn small" data-h="rejudge" style="margin-left:6px">Try again</button>':""}</div>`;
   return "";
 }
+const firstEntry = () => room.roundData.flatMap(rd=>rd.entries||[])[0];
 function renderShow(){
-  const rd = cur(), ss = slides(), i = Math.min(room.show?.slide||0, ss.length-1), sl = ss[i];
-  const sig = [room.round, i, rd.aiStatus, JSON.stringify(sl.e ? [sl.e.ai, sl.e.comments.length] : room.standings)].join("|");
+  const ss = slides(), i = Math.min(room.show?.slide||0, ss.length-1), sl = ss[i];
+  const rd = sl.kind === "entry" ? room.roundData[sl.r] : null;
+  const sig = [i, (room.aiAll||{}).status, JSON.stringify(sl.e ? [sl.e.ai, sl.e.comments.length] : room.standings)].join("|");
   if(sig !== showSig){
     showSig = sig;
     if(sl.kind === "entry"){
-      const e = sl.e, rank = rd.entries.length - 1 - i;  // shown lowest first, so the last one is the winner
+      const e = sl.e, rank = sl.n - 1 - sl.k;  // each prompt's drawings go lowest first, so its best comes last
       const who = room.mode === "team" ? `${esc(e.name)}<div class="muted" style="font-size:15px;font-family:var(--body);font-weight:600;margin-top:6px">${esc(e.members.join(", "))}</div>` : esc(e.name);
       const scoreTxt = e.score == null ? '<div class="muted" style="font-weight:700">No score</div>' : `<div class="score">${room.judge==="ai" ? e.score : e.score.toFixed(1)}<small> /10${room.judge==="players"?" avg":""}</small></div>`;
-      $("#vShow").innerHTML = `<div class="slide"><div class="eyebrow">Round ${room.round+1} · "${esc(rd.prompt)}" · ${rank===0?"Top drawing":`#${rank+1}`}</div>
+      $("#vShow").innerHTML = `<div class="slide"><div class="eyebrow">Round ${sl.r+1} · "${esc(rd.prompt)}" · ${rank===0?"Best of this round":`#${rank+1}`}</div>
         <div class="reveal"><div class="art"><img src="/api/img/${e.img}" alt="Drawing by ${esc(e.name)}"></div>
         <div><h1 class="slide-title">${who}</h1>${scoreTxt}
           <div class="chat">${aiBlock(rd, e)}${e.comments.map((c,k)=>`<div class="msg" style="animation-delay:${1.4+k*.5}s">${avatar(c.name)}<div class="bubble"><b>${esc(c.name)}</b>${c.c?esc(c.c):'<span class="muted">no comment</span>'}<span class="s">${c.s}/10</span></div></div>`).join("")}</div>
         </div></div></div>`;
     } else {
       const st = room.standings || [];
-      $("#vShow").innerHTML = `<div class="slide"><div class="eyebrow">After round ${room.round+1} of ${room.rounds}</div><h1 class="slide-title">Leaderboard</h1>
+      $("#vShow").innerHTML = `<div class="slide"><div class="eyebrow">All ${room.roundData.length} rounds</div><h1 class="slide-title">Final leaderboard</h1>
         <div class="board">${st.map((s,k)=>`<div class="brow ${k===0?"first":""}" style="animation-delay:${k*.15}s"><span class="rk">${k+1}</span><span>${esc(s.name)}</span><span class="pts">${s.points} pts</span></div>`).join("")}</div></div>`;
     }
     window.scrollTo({top:0});
@@ -639,7 +659,7 @@ function renderShow(){
   const last = i === ss.length-1;
   const bar = $("#showbar"); bar.hidden = false;
   bar.innerHTML = hostKey
-    ? `<button class="btn" data-s="prev" ${i===0?"disabled":""}>Back</button><span class="count">${i+1} / ${ss.length}</span>${last ? `<button class="btn primary" data-h="nextround">${room.round+1 < room.rounds ? "Next round" : "Final results"}</button>` : '<button class="btn primary" data-s="next">Next</button>'}`
+    ? `<button class="btn" data-s="prev" ${i===0?"disabled":""}>Back</button><span class="count">${i+1} / ${ss.length}</span>${last ? '<button class="btn primary" data-h="finish">Crown the winner</button>' : '<button class="btn primary" data-s="next">Next</button>'}`
     : `<span class="count">${i+1} / ${ss.length}</span><span class="muted" style="font-size:14px">The host moves the show along</span>`;
 }
 async function slideTo(n){ try{ await act("slide", {to:n}); }catch(err){ toast(err.message); } }
