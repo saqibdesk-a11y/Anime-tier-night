@@ -127,7 +127,8 @@ def narrate(code, key, system, prompt, fallback, cid):
             return
         if key == "epilogue":
             room["epilogue"] = {"text": text, "awards": clean_awards(room, awards)}
-        elif (room.get("current") or {}).get("id") == cid:  # the host may already have moved on
+        elif (room.get("current") or {}).get("id") == cid and not room["current"].get("story"):
+            # only if the host hasn't moved on and the fallback line didn't already go up
             room["current"]["story"] = text
         changed(room)
 
@@ -145,12 +146,29 @@ def narrator_system(room):
     return ("You are the narrator of a Werewolf party game played by friends on their phones, read aloud to the group. "
             f"The story takes place in {setting_text(room)}. {SPICE[room['settings']['spice']]} "
             "Write vivid, short, punchy narration (2-4 sentences). Never reveal anyone's secret role unless told it is revealed. "
+            "Only use the facts you are given. Refer to players by name and never guess anyone's gender (no he/she; use their name or they). "
             'Return only JSON: {"story": "..."}')
 
 
 def start_narration(room, key, prompt, fallback):
     cid = (room.get("current") or {}).get("id")
     threading.Thread(target=narrate, args=(room["code"], key, narrator_system(room), prompt, fallback, cid), daemon=True).start()
+    # never leave the table waiting on a slow AI: after a few seconds the built-in line goes up
+    threading.Timer(20 if key == "epilogue" else 12, use_fallback, args=(room["code"], key, fallback, cid)).start()
+
+
+def use_fallback(code, key, fallback, cid):
+    with lock:
+        room = rooms.get(code)
+        if not room:
+            return
+        if key == "epilogue":
+            if room.get("phase") == "final" and not room.get("epilogue"):
+                room["epilogue"] = {"text": fallback, "awards": []}  # a late AI ending can still replace this
+                changed(room)
+        elif (room.get("current") or {}).get("id") == cid and not room["current"].get("story"):
+            room["current"]["story"] = fallback
+            changed(room)
 
 
 # ---------- phases ----------
