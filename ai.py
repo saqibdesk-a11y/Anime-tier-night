@@ -55,10 +55,12 @@ def builtin_models(provider, key, vision=False):
     return _default_models[cache]
 
 
-def ask_builtin(system, prompt, images=None, timeout=60):
+def ask_builtin(system, prompt, images=None, timeout=60, text_first=False):
     """Tries every built-in AI and model in turn. Returns (json_reply, provider_name, model).
     images: list of (mime_type, raw_bytes); only Gemini and Mistral can see them."""
     providers = [p for p in BUILTIN_ORDER if not images or p in ("gemini", "mistral")]
+    if text_first and "cerebras" in providers:  # fast text AI first, saving Gemini for pictures
+        providers = ["cerebras"] + [p for p in providers if p != "cerebras"]
     if not providers:
         raise AIError("no built-in AI is set up on this server" + (" that can see pictures." if images else "."))
     if not builtin_allowed():

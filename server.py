@@ -15,6 +15,10 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import draw_game
+import media
+import werewolf_game
+
+GAMES = {"draw": draw_game, "werewolf": werewolf_game}  # every game module has the same hooks
 
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -397,8 +401,8 @@ def ticker():
         time.sleep(1)
         with lock:
             for room in rooms.values():
-                if room.get("game") == "draw":
-                    if draw_game.tick(room):
+                if room.get("game") in GAMES:
+                    if GAMES[room["game"]].tick(room):
                         changed(room)
                     continue
                 if room.get("phase") == "ranking" and room.get("deadline") and time.time() > room["deadline"] + 2:
@@ -457,7 +461,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_bytes(f.read(), "text/html; charset=utf-8", "no-store")
 
         if parts[:2] == ["api", "img"] and len(parts) == 3:
-            raw = draw_game.IMAGES.get(parts[2])
+            raw = media.IMAGES.get(parts[2])
             if raw is None:
                 return self.err("That drawing is gone.", 404)
             return self.send_bytes(raw, "image/jpeg", "public, max-age=86400, immutable")
@@ -500,7 +504,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.err("Room not found. Check the code.", 404)
                 p = room["players"].get(pid)
                 viewer = pid if p and p["key"] == key else None
-                return self.send_json(draw_game.public(room, viewer) if room.get("game") == "draw" else public(room, viewer))
+                game = GAMES.get(room.get("game"))
+                return self.send_json(game.public(room, viewer) if game else public(room, viewer))
 
         self.err("Not found", 404)
 
@@ -522,10 +527,10 @@ class Handler(BaseHTTPRequestHandler):
                 code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
                 while code in rooms:
                     code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
-                if b.get("game") == "draw":
-                    room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Draw Night")[:80],
+                if b.get("game") in GAMES:
+                    room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Game Night")[:80],
                             "players": {}, "created": time.time(), "version": 0}
-                    draw_game.create(room, b)
+                    GAMES[b["game"]].create(room, b)
                     rooms[code] = room
                     changed(room)
                     return self.send_json({"code": code, "hostKey": room["hostKey"]})
@@ -572,22 +577,23 @@ class Handler(BaseHTTPRequestHandler):
                 pid = rid(8)
                 room["players"][pid] = {"name": name, "key": rid(16), "tiers": {t: [] for t in TIERS},
                                         "joined": time.time(), "done": False}
-                if room.get("game") == "draw":
-                    draw_game.on_join(room, pid)
+                if room.get("game") in GAMES:
+                    GAMES[room["game"]].on_join(room, pid)
                 changed(room)
                 return self.send_json({"pid": pid, "key": room["players"][pid]["key"]})
 
-            if room.get("game") == "draw":
+            if room.get("game") in GAMES:
+                game = GAMES[room["game"]]
                 try:
-                    if is_host and action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "finish", "rejudge", "playagain", "kick"):
-                        touched = draw_game.host_action(room, action, b)
-                    elif action in ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "finish", "rejudge", "playagain", "kick"):
-                        return self.err("Only the host can do that.", 403)
+                    if action in game.HOST_ACTIONS:
+                        if not is_host:
+                            return self.err("Only the host can do that.", 403)
+                        touched = game.host_action(room, action, b)
                     elif not player:
                         return self.err("You're not in this room. Rejoin with your name.", 403)
                     else:
-                        touched = draw_game.player_action(room, action, b, b.get("pid"))
-                except draw_game.Refuse as e:
+                        touched = game.player_action(room, action, b, b.get("pid"))
+                except media.Refuse as e:
                     return self.err(str(e), e.status)
                 except (ValueError, TypeError):
                     return self.err("That request didn't make sense.")
@@ -725,12 +731,13 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_json({"ok": True, "provider": entry["provider"]})
 
 
-PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html"}
+PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html"}
 
 
 def main():
     load()
-    draw_game.setup(rooms, lock, changed, rid)
+    for game in GAMES.values():
+        game.setup(rooms, lock, changed, rid)
     for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")

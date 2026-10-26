@@ -8,11 +8,11 @@ import threading
 import time
 
 import ai
+from media import IMAGES, Refuse
 
 # set by server.setup_games()
 rooms = lock = changed = rid = None
 
-IMAGES = {}   # image id -> jpeg bytes (kept in memory only; drawings are gone when the server restarts)
 STROKES = {}  # (code, round, team id) -> {"gen": n, "list": [stroke, ...]} for live team canvases
 MAX_IMG = 900_000
 
@@ -363,10 +363,7 @@ def strokes_since(code, rnd, team, since, gen):
 
 # ---------- actions (lock held) ----------
 
-class Refuse(Exception):
-    def __init__(self, msg, status=400):
-        super().__init__(msg)
-        self.status = status
+HOST_ACTIONS = ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "finish", "rejudge", "playagain", "kick")
 
 
 def player_action(room, action, b, pid):
