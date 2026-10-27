@@ -5,19 +5,17 @@ Two modes: "undercover" (the imposter gets a similar decoy word and doesn't know
 imposter) and "clueless" (the imposter knows, and only sees the category).
 
 server.py owns rooms, the lock and HTTP; this module owns the game's rules."""
-import base64
 import random
 import re
 import threading
 import time
 
 import ai
-from media import IMAGES, Refuse
+from media import Refuse
 
 rooms = lock = changed = rid = None
 
 HOST_ACTIONS = ("start", "next", "skip", "addtime", "kick", "playagain", "settings")
-MAX_PHOTO = 350_000
 CATEGORIES = {
     "mix": ("Mix of everything", "anything: food, animals, places, objects, jobs, movies, anime"),
     "anime": ("Anime", "anime characters, shows, places and things from anime"),
@@ -74,7 +72,7 @@ def create(room, b):
 
 
 def on_join(room, pid):
-    room["players"][pid].update({"photo": None, "ready": False, "sitout": room["phase"] != "lobby"})
+    room["players"][pid].update({"ready": False, "sitout": room["phase"] != "lobby"})
     room["scores"].setdefault(pid, 0)
 
 
@@ -377,17 +375,6 @@ def public(room, viewer):
 
 def player_action(room, action, b, pid):
     p, rd = room["players"][pid], cur(room)
-    if action == "photo":
-        img = str(b.get("img") or "")
-        if not img.startswith("data:image/jpeg;base64,"):
-            raise Refuse("That photo didn't upload. Try another one.")
-        raw = base64.b64decode(img.split(",", 1)[1])
-        if len(raw) > MAX_PHOTO:
-            raise Refuse("That photo is too big.")
-        IMAGES.pop(p.get("photo"), None)
-        p["photo"] = rid(12)
-        IMAGES[p["photo"]] = raw
-        return True
     if action == "ready":
         if room["phase"] != "reveal":
             raise Refuse("Not now.")

@@ -79,7 +79,10 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 .chip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 3px;font-size:13px;font-weight:600}
 .chip.me{border-color:var(--accent)}
 .chip .ok{color:var(--mint)}
-.av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#0a0d18;flex:none}
+.av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#0a0d18;flex:none;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover;object-position:top}
+.me-row{display:flex;align-items:center;gap:12px}
+.me-row .av{width:52px;height:52px;font-size:20px}
 .hoststrip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
 
 /* lobby */
@@ -294,13 +297,17 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 <div class="showbar" id="showbar" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="/avatars.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const colorFor = name => { let h=0; for(const c of String(name)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 85% 72%)`; };
 const TEAM_COLORS = {t1:"#ff4d7d", t2:"#4dc3ff", t3:"#4dffb0", t4:"#ffd84d"};
-const avatar = n => `<span class="av" style="background:${colorFor(n)}">${esc(String(n||"?")[0].toUpperCase())}</span>`;
+const avatar = n => {
+  const p = room && Object.values(room.players).find(x=>x.name === n), src = Avatars.src(p);
+  return `<span class="av" style="background:${colorFor(n)}">${src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : esc(String(n||"?")[0].toUpperCase())}</span>`;
+};
 function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2400); }
 async function api(path, body){
@@ -451,6 +458,7 @@ function renderLobby(){
     <div><span>Drawing time</span><span>${room.drawSec} seconds</span></div>
     <div><span>Drawing</span><span style="text-align:right">${esc(room.categoryLabel)}</span></div></div>
     ${room.visionAI.length ? "" : '<p class="hint" style="color:var(--danger)">No AI that can see pictures is set up on this server, so AI scoring and roasts will not work.</p>'}
+    <div class="me-row">${avatar(room.players[me.pid].name)}<div><b>${esc(room.players[me.pid].name)}</b><div><button class="btn small" id="avBtn" type="button">${Avatars.src(room.players[me.pid]) ? "Change avatar" : "Choose your avatar"}</button></div></div></div>
     ${hostKey ? `<button class="btn primary" data-h="start">Start the game</button>` : '<p class="hint">Waiting for the host to start.</p>'}</div>`;
   let people;
   if(room.mode === "team"){
@@ -462,6 +470,7 @@ function renderLobby(){
     people = `<div class="panel"><h2>Players · ${ps.length}</h2><div class="plist">${ps.map(([pid,p])=>`<div class="li">${avatar(p.name)}<span>${esc(p.name)}${me&&me.pid===pid?" (you)":""}</span>${hostKey&&me&&pid!==me.pid?`<button class="btn small" data-h="kick" data-pid="${pid}">Kick</button>`:"<span></span>"}</div>`).join("")}</div><p class="hint">Share the code <b>${room.code}</b> or the invite link.</p></div>`;
   }
   $("#vLobby").innerHTML = `<div class="lobby-grid">${rules}${people}</div>`;
+  $("#avBtn").onclick = ()=>Avatars.open(act);
 }
 
 /* ---------- drawing ---------- */

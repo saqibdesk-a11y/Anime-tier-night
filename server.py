@@ -2,6 +2,7 @@
 
 Run:  python server.py  (then open http://localhost:8000)
 """
+import base64
 import json
 import os
 import queue
@@ -141,6 +142,38 @@ def to_option(a):
         "img": cover.get("extraLarge") or cover.get("large"),
         "url": a.get("siteUrl"),
     }
+
+
+CHAR_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { characters(sort: [FAVOURITES_DESC]) {
+  name { full } image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } } } } } }"""
+_avatars = {"list": None, "at": 0}
+_avatars_lock = threading.Lock()
+AVATAR_HOST = "https://s4.anilist.co/"
+
+
+def avatar_gallery():
+    """The 100 most-loved anime characters on AniList, cached for a day."""
+    with _avatars_lock:
+        if _avatars["list"] and time.time() - _avatars["at"] < 86400:
+            return _avatars["list"]
+        out = []
+        for page in (1, 2):
+            body = json.dumps({"query": CHAR_QUERY, "variables": {"p": page}}).encode("utf-8")
+            try:
+                req = urllib.request.Request("https://graphql.anilist.co", data=body, headers={
+                    "Content-Type": "application/json", "Accept": "application/json", "User-Agent": "AnimeTierNight/1.0"})
+                with urllib.request.urlopen(req, timeout=15) as r:
+                    chars = json.loads(r.read().decode("utf-8"))["data"]["Page"]["characters"]
+            except Exception:
+                break
+            for c in chars:
+                img = (c.get("image") or {}).get("large") or ""
+                show = ((((c.get("media") or {}).get("nodes") or [{}])[0] or {}).get("title") or {})
+                if img.startswith(AVATAR_HOST) and "default" not in img:
+                    out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img})
+        if out:
+            _avatars.update(list=out, at=time.time())
+        return out
 
 
 def search(q, limit=12):
@@ -484,6 +517,13 @@ class Handler(BaseHTTPRequestHandler):
                     lock.wait(timeout=deadline - time.time())
                 return self.send_json(out)
 
+        if parts == ["api", "avatars"]:
+            return self.send_json({"avatars": avatar_gallery()})
+
+        if u.path == "/avatars.js":
+            with open(os.path.join(HERE, "avatars.js"), "rb") as f:
+                return self.send_bytes(f.read(), "text/javascript; charset=utf-8", "no-store")
+
         if parts[:2] == ["api", "search"]:
             q = (qs.get("q") or [""])[0].strip()
             return self.send_json({"results": search(q) if q else []})
@@ -582,6 +622,29 @@ class Handler(BaseHTTPRequestHandler):
                     GAMES[room["game"]].on_join(room, pid)
                 changed(room)
                 return self.send_json({"pid": pid, "key": room["players"][pid]["key"]})
+
+            if room.get("game") in GAMES and action in ("photo", "avatar"):
+                if not player:
+                    return self.err("You're not in this room. Rejoin with your name.", 403)
+                if action == "avatar":
+                    url = str(b.get("url") or "")
+                    if not url.startswith(media.AVATAR_HOST):
+                        return self.err("Pick one of the characters.")
+                    media.IMAGES.pop(player.get("photo"), None)
+                    player.update(avatar=url[:300], photo=None)
+                else:
+                    img = str(b.get("img") or "")
+                    if not img.startswith("data:image/jpeg;base64,"):
+                        return self.err("That picture didn't upload. Try another one.")
+                    raw = base64.b64decode(img.split(",", 1)[1])
+                    if len(raw) > 400_000:
+                        return self.err("That picture is too big.")
+                    media.IMAGES.pop(player.get("photo"), None)
+                    pic = rid(12)
+                    media.IMAGES[pic] = raw
+                    player.update(photo=pic, avatar=None)
+                changed(room)
+                return self.send_json({"ok": True})
 
             if room.get("game") in GAMES:
                 game = GAMES[room["game"]]

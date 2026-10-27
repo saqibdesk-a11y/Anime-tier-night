@@ -1,6 +1,7 @@
 """Bits every game module shares: uploaded pictures (drawings, player photos) and the
 error a game raises to refuse a move."""
 
+AVATAR_HOST = "https://s4.anilist.co/"  # character avatars must come from AniList's image server
 IMAGES = {}  # image id -> jpeg bytes, kept in memory only (gone when the server restarts)
 
 

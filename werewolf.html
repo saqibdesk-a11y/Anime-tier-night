@@ -8,83 +8,76 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: one living backdrop (sky, moon, sun, fog) that changes with the game phase; a single centered stage
-   column on top, built for phones held in a circle of friends. Cards flip in 3D; the dead go grey. */
+/* Layout: the whole game happens around one round table under the night sky. You always sit at the
+   bottom seat; the table's center shows the phase, the clock and what just happened. Votes are arrows
+   across the table. Role cards flip in 3D for the big reveals. */
 :root{
   --ink:#05060f; --night1:#070a1c; --night2:#141238; --fg:#efeaf7; --muted:#9a95b4; --line:rgba(205,195,255,.14); --line2:rgba(205,195,255,.28);
-  --glass:rgba(16,14,40,.62); --glass2:rgba(255,255,255,.07);
+  --glass:rgba(16,14,40,.66); --glass2:rgba(255,255,255,.07);
   --moon:#ffe9b0; --blood:#e3264b; --blood2:#7d0f2a; --gold:#f2c35b; --mint:#53e3a6; --violet:#9d7bff;
   --wolf1:#7d0f2a; --wolf2:#e3264b; --seer1:#3b1d86; --seer2:#9d7bff; --doc1:#0d5c45; --doc2:#53e3a6;
   --hunt1:#7a4a07; --hunt2:#f2a33a; --vill1:#1f3557; --vill2:#6fa8ff;
+  --wood1:#3a2516; --wood2:#1d120a;
   --display:"Cinzel","Times New Roman",serif; --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{background:var(--ink);color:var(--fg);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-button,input,select,textarea{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--moon);outline-offset:3px}
 [hidden]{display:none!important}
 h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.02em}
 .muted{color:var(--muted)}
 
-/* ---------- the living backdrop ---------- */
+/* ---------- sky ---------- */
 .scene{position:fixed;inset:0;z-index:0;overflow:hidden;background:linear-gradient(180deg,var(--night1),var(--night2) 70%,#1d1440);transition:background 2.5s ease}
-.scene .stars{position:absolute;inset:0;opacity:1;transition:opacity 2.5s}
+.scene .stars{position:absolute;inset:0;transition:opacity 2.5s}
 .scene .stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:twinkle 3s infinite ease-in-out}
 @keyframes twinkle{50%{opacity:.25}}
-.moon{position:absolute;right:5%;top:3%;width:min(20vw,130px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 55%,#e0bf73);box-shadow:0 0 60px 20px rgba(255,233,176,.25),0 0 160px 60px rgba(255,233,176,.08);transition:transform 2.5s ease,opacity 2.5s}
-.moon::after{content:"";position:absolute;inset:18% 50% 50% 22%;border-radius:50%;background:rgba(160,130,70,.18);box-shadow:30px 34px 0 -4px rgba(160,130,70,.14),48px 8px 0 -10px rgba(160,130,70,.12)}
+.moon{position:absolute;right:5%;top:3%;width:min(18vw,120px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 55%,#e0bf73);box-shadow:0 0 60px 20px rgba(255,233,176,.22);transition:transform 2.5s ease,opacity 2.5s}
 .sun{position:absolute;left:50%;bottom:-40%;width:min(46vw,300px);aspect-ratio:1;border-radius:50%;transform:translateX(-50%);background:radial-gradient(circle,#fff3c4,#ffb347 60%,#ff7a3d);box-shadow:0 0 120px 50px rgba(255,150,70,.35);opacity:0;transition:bottom 3s cubic-bezier(.2,.7,.2,1),opacity 2s}
-.hills{position:absolute;left:-5%;right:-5%;bottom:-2px;height:28vh;background:radial-gradient(120% 100% at 20% 100%,#05060f 60%,transparent 61%),radial-gradient(120% 110% at 80% 100%,#080a1a 58%,transparent 59%)}
-.trees{position:absolute;left:0;right:0;bottom:0;height:22vh;opacity:.9}
+.trees{position:absolute;left:0;right:0;bottom:0;height:20vh;opacity:.9}
 .fog{position:absolute;left:-50%;width:200%;height:30vh;bottom:4vh;background:radial-gradient(closest-side,rgba(180,170,230,.10),transparent);filter:blur(10px);animation:drift 40s linear infinite}
-.fog.f2{bottom:12vh;animation-duration:65s;animation-direction:reverse;opacity:.7}
 @keyframes drift{from{transform:translateX(0)}to{transform:translateX(25%)}}
 body.s-dawn .scene{background:linear-gradient(180deg,#2a1f5c,#b4527a 55%,#f39a5d)}
-body.s-dawn .sun{bottom:2%;opacity:1}
-body.s-dawn .moon{transform:translateY(-140%);opacity:0}
-body.s-dawn .stars{opacity:0}
+body.s-dawn .sun{bottom:4%;opacity:1}
+body.s-dawn .moon,body.s-day .moon{transform:translateY(-140%);opacity:0}
+body.s-dawn .stars,body.s-day .stars{opacity:0}
 body.s-day .scene{background:linear-gradient(180deg,#22305c,#4a5f96 55%,#8d7aa8)}
-body.s-day .sun{bottom:58%;opacity:.9;left:20%}
-body.s-day .moon,body.s-day .stars{opacity:0}
+body.s-day .sun{bottom:62%;opacity:.85;left:16%}
 body.s-vote .scene{background:linear-gradient(180deg,#1a0716,#4a0f26 60%,#8a1f3a)}
-body.s-vote .moon{opacity:.25;filter:hue-rotate(-30deg) saturate(2)}
+body.s-vote .moon{opacity:.2}
 body.s-vote .stars{opacity:.3}
-body.s-night .moon{animation:moonpulse 6s ease-in-out infinite}
-@keyframes moonpulse{50%{box-shadow:0 0 80px 30px rgba(255,233,176,.32),0 0 200px 80px rgba(255,233,176,.1)}}
 body.s-wolves .scene{background:linear-gradient(180deg,#12020a,#3d0618 60%,#7d0f2a)}
 body.s-wolves .moon{background:radial-gradient(circle at 35% 35%,#ffd6d6,#ff5470 60%,#9a1030);box-shadow:0 0 80px 30px rgba(227,38,75,.35)}
 body.s-village .scene{background:linear-gradient(180deg,#1d2b55,#6e5fa0 50%,#f0b15f)}
 body.s-village .sun{bottom:30%;opacity:1}
 body.s-village .moon{opacity:0}
 
-/* ---------- stage ---------- */
-.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
-.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(5,6,15,.85),rgba(5,6,15,0))}
+/* ---------- frame ---------- */
+.app{position:relative;z-index:1;min-height:100vh}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(5,6,15,.85),rgba(5,6,15,0))}
 .top a{color:var(--muted);text-decoration:none;font-weight:700}
-.top h1{font-size:18px;font-weight:800}
+.top h1{font-size:17px;font-weight:800}
 .code{font-family:var(--display);font-weight:800;letter-spacing:.2em;font-size:13px;border:1px solid var(--line2);border-radius:999px;padding:3px 12px;background:var(--glass)}
 .spacer{flex:1}
-.timer{font-family:var(--display);font-weight:800;font-variant-numeric:tabular-nums;border-radius:999px;padding:4px 14px;background:var(--glass);border:1px solid var(--line2)}
-.timer.low{color:var(--blood);border-color:var(--blood);animation:beat 1s infinite}
-@keyframes beat{50%{transform:scale(1.08)}}
-.stage{width:min(760px,100%);margin:0 auto;padding:6px max(16px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));flex:1}
-.panel{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;gap:14px}
-.title{font-size:clamp(30px,8vw,52px);font-weight:900;line-height:1.05;text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.stage{width:min(720px,100%);margin:0 auto;padding:0 max(14px,env(safe-area-inset-left,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;gap:12px}
+.title{font-size:clamp(28px,7.5vw,48px);font-weight:900;line-height:1.05;text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6)}
 .sub{text-align:center;color:var(--muted);margin:6px 0 0}
 .eyebrow{text-align:center;font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--moon)}
-.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:800;transition:transform .12s,background .2s,box-shadow .2s}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:800;transition:transform .12s,background .2s}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.primary{background:linear-gradient(135deg,var(--moon),var(--gold));color:#2a1a00;border-color:transparent;box-shadow:0 10px 30px -10px rgba(242,195,91,.7)}
-.btn.blood{background:linear-gradient(135deg,var(--blood),var(--blood2));border-color:transparent;color:#fff;box-shadow:0 10px 30px -10px rgba(227,38,75,.7)}
+.btn.blood{background:linear-gradient(135deg,var(--blood),var(--blood2));border-color:transparent;color:#fff}
 .btn.small{padding:6px 13px;font-size:13px}
 .btn.wide{width:100%}
 label{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-input[type=text],select,textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:11px 14px;outline:none;color:var(--fg)}
-input[type=text]:focus,select:focus,textarea:focus{border-color:var(--moon);box-shadow:0 0 0 4px rgba(255,233,176,.12)}
+input[type=text],select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:11px 14px;outline:none;color:var(--fg)}
+input[type=text]:focus,select:focus{border-color:var(--moon)}
 select option{background:#14122e}
 .err{color:#ff8fa3;font-size:14px;min-height:1.4em}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -96,31 +89,55 @@ select option{background:#14122e}
 .tg i{width:10px;height:10px;border-radius:50%}
 .hint{font-size:13px;color:var(--muted);margin:0}
 
-/* ---------- player tokens ---------- */
-.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;margin-top:16px}
-.tok{position:relative;display:grid;justify-items:center;gap:6px;border:0;background:none;padding:6px 2px;border-radius:18px;transition:transform .15s,background .2s}
-.tok .face{position:relative;width:74px;height:74px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.18);background:#221d48;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:28px;color:#0b0820;box-shadow:0 10px 26px -10px rgba(0,0,0,.9)}
-.tok .face img{width:100%;height:100%;object-fit:cover;display:block}
-.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tok.pick{cursor:pointer}
-.tok.pick:hover{transform:translateY(-3px)}
-.tok.sel .face{border-color:var(--moon);box-shadow:0 0 0 4px rgba(255,233,176,.25),0 0 30px rgba(255,233,176,.4)}
-.tok.wolfsel .face{border-color:var(--blood);box-shadow:0 0 0 4px rgba(227,38,75,.3),0 0 30px rgba(227,38,75,.5)}
-.tok.dead{opacity:.55}
-.tok.dead .face{filter:grayscale(1) brightness(.6)}
-.tok.dead .face::after{content:"";position:absolute;inset:0;background:linear-gradient(45deg,transparent 46%,var(--blood) 46% 54%,transparent 54%)}
-.tok.off{opacity:.35;cursor:not-allowed}
-.badge{position:absolute;top:0;right:8px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 7px;background:var(--ink);border:1px solid var(--line2)}
-.rolechip{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:2px 8px}
-.voters{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;min-height:20px}
-.voters span{width:18px;height:18px;border-radius:50%;overflow:hidden;border:1.5px solid var(--ink);display:grid;place-items:center;font-size:9px;font-weight:900;color:#0b0820;animation:drop .35s cubic-bezier(.3,1.6,.5,1) backwards}
-.voters span img{width:100%;height:100%;object-fit:cover}
-@keyframes drop{from{transform:translateY(-14px) scale(.4);opacity:0}}
-.count{font-family:var(--display);font-weight:900;font-size:15px;color:var(--blood)}
+/* ---------- the round table ---------- */
+.tablewrap{position:relative;width:min(100%,600px);aspect-ratio:1;margin:22px auto 0}
+.tabletop{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle at 50% 42%,rgba(255,200,120,.22),transparent 55%),radial-gradient(circle,var(--wood1),var(--wood2) 75%);box-shadow:0 0 0 6px rgba(255,220,170,.08),0 0 0 14px rgba(0,0,0,.35),0 30px 80px -10px rgba(0,0,0,.9),inset 0 0 50px rgba(0,0,0,.7);display:grid;place-items:center;text-align:center;padding:12%}
+.tabletop::after{content:"";position:absolute;inset:9%;border-radius:50%;border:1px solid rgba(255,220,170,.12)}
+.center{position:relative;z-index:1;display:grid;gap:4px;justify-items:center}
+.center .ico{width:clamp(34px,10vw,58px);aspect-ratio:1;border-radius:50%}
+.center .ico.moonico{background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 60%,#c99d47);box-shadow:0 0 30px rgba(255,233,176,.6);animation:glow 3s ease-in-out infinite}
+.center .ico.sunico{background:radial-gradient(circle,#fff3c4,#ffb347 60%,#ff7a3d);box-shadow:0 0 30px rgba(255,150,70,.6)}
+.center .ico.voteico{background:radial-gradient(circle,#ff8aa0,var(--blood) 60%,var(--blood2));box-shadow:0 0 30px rgba(227,38,75,.6);animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.08)}}
+.center h2{font-size:clamp(14px,4.2vw,24px);font-weight:900;line-height:1.1}
+.center .clock{font-family:var(--display);font-weight:900;font-size:clamp(18px,5.5vw,30px);font-variant-numeric:tabular-nums;color:var(--moon)}
+.center .clock.low{color:var(--blood);animation:glow 1s infinite}
+.center .small{font-size:clamp(10px,2.8vw,13px);color:var(--muted);font-weight:700}
+.seat{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;width:var(--sz);border:0;background:none;padding:0;transition:transform .2s,filter .4s;z-index:2}
+.seat .av{width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.22);background:#221d48;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:calc(var(--sz)*.38);color:#0b0820;box-shadow:0 10px 24px -8px rgba(0,0,0,.95);position:relative}
+.seat .av img{width:100%;height:100%;object-fit:cover;object-position:top}
+.seat .nm{font-weight:800;font-size:12px;max-width:calc(var(--sz) + 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 6px #000;background:rgba(5,6,15,.55);border-radius:999px;padding:0 7px}
+.seat.me .av{border-color:var(--moon)}
+.seat.pick{cursor:pointer}
+.seat.pick:hover{transform:translate(-50%,-50%) scale(1.07)}
+.seat.sel .av{border-color:var(--moon);box-shadow:0 0 0 4px rgba(255,233,176,.3),0 0 26px rgba(255,233,176,.55)}
+.seat.redsel .av{border-color:var(--blood);box-shadow:0 0 0 4px rgba(227,38,75,.35),0 0 26px rgba(227,38,75,.6)}
+.seat.off{cursor:not-allowed}
+.seat.dead .av{filter:grayscale(1) brightness(.55)}
+.seat.dead .av::after{content:"";position:absolute;inset:0;background:linear-gradient(45deg,transparent 46%,var(--blood) 46% 54%,transparent 54%)}
+.seat.dying{animation:shake .5s 3}
+@keyframes shake{25%{transform:translate(-53%,-50%)}75%{transform:translate(-47%,-50%)}}
+.seat .tag{position:absolute;top:-6px;right:-8px;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 6px;color:#fff;background:var(--c1,#333);border:1px solid var(--c2,#666);white-space:nowrap}
+.seat .cnt{position:absolute;top:-4px;left:-6px;min-width:22px;height:22px;border-radius:999px;background:var(--blood);color:#fff;font-weight:900;font-size:12px;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 12px rgba(227,38,75,.7);animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.3)}}
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+.lines path{fill:none;stroke-width:.7;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:0}
+.lines path.new{animation:draw .6s ease-out}
+@keyframes draw{from{stroke-dashoffset:200}}
+.r-wolf{--c1:var(--wolf1);--c2:var(--wolf2)} .r-seer{--c1:var(--seer1);--c2:var(--seer2)} .r-doctor{--c1:var(--doc1);--c2:var(--doc2)}
+.r-hunter{--c1:var(--hunt1);--c2:var(--hunt2)} .r-villager{--c1:var(--vill1);--c2:var(--vill2)}
 
-/* ---------- role cards ---------- */
-.cardwrap{perspective:1400px;display:grid;justify-items:center;margin:20px 0 10px}
-.card{position:relative;width:min(300px,78vw);aspect-ratio:5/7.4;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.3,1.25,.4,1);cursor:pointer}
+/* under the table */
+.info{margin-top:8px;display:grid;gap:10px}
+.say{font-family:var(--display);font-weight:600;font-size:clamp(15px,4vw,19px);line-height:1.5;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.7);padding:0 6px}
+.myrole{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px;border:1px solid var(--line2);background:var(--glass)}
+.chip.role{background:var(--c1);border-color:var(--c2)}
+.chip svg{width:18px;height:18px}
+
+/* ---------- cards ---------- */
+.cardwrap{perspective:1400px;display:grid;justify-items:center;margin:16px 0 8px}
+.card{position:relative;width:min(280px,74vw);aspect-ratio:5/7.4;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.3,1.25,.4,1);cursor:pointer}
 .card.flip{transform:rotateY(180deg)}
 .card .side{position:absolute;inset:0;border-radius:22px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 30px 70px -20px rgba(0,0,0,.95),inset 0 0 0 2px rgba(255,236,190,.35)}
 .card .back{background:radial-gradient(circle at 50% 38%,rgba(255,233,176,.25),transparent 40%),repeating-linear-gradient(45deg,#16123a 0 14px,#1b1646 14px 28px);display:grid;place-items:center}
@@ -128,93 +145,66 @@ select option{background:#14122e}
 .card .back .mn{width:42%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 60%,#c99d47);box-shadow:0 0 50px rgba(255,233,176,.5)}
 .card .back .tap{position:absolute;bottom:14%;font-family:var(--display);font-weight:800;letter-spacing:.2em;font-size:13px;color:var(--moon);animation:breathe 2s infinite}
 @keyframes breathe{50%{opacity:.4}}
-.card .front{transform:rotateY(180deg);display:grid;grid-template-rows:auto 1fr auto;padding:18px;text-align:center;background:linear-gradient(165deg,var(--c1),#0b0820 85%)}
+.card .front{transform:rotateY(180deg);display:grid;grid-template-rows:auto auto 1fr auto;justify-items:center;gap:4px;padding:18px;text-align:center;background:linear-gradient(165deg,var(--c1),#0b0820 85%)}
 .card .front::before{content:"";position:absolute;inset:10px;border:2px solid rgba(255,236,190,.4);border-radius:15px;pointer-events:none}
-.card .front .rname{font-family:var(--display);font-weight:900;font-size:28px;letter-spacing:.06em;color:#fff;text-shadow:0 2px 12px var(--c2)}
-.card .front .team{font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--c2)}
-.card .front svg{width:62%;margin:auto;filter:drop-shadow(0 0 22px var(--c2))}
+.card .front .owner{width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;font-weight:900;color:#0b0820;background:#333}
+.card .front .owner img{width:100%;height:100%;object-fit:cover;object-position:top}
+.card .front .rname{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.06em;color:#fff;text-shadow:0 2px 12px var(--c2)}
+.card .front svg{width:58%;margin:auto;filter:drop-shadow(0 0 22px var(--c2))}
 .card .front .desc{font-size:13px;line-height:1.45;color:#e7e1f5}
-.card .front .owner{position:absolute;top:16px;left:16px;width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;font-weight:900;color:#0b0820}
-.card .front .owner img{width:100%;height:100%;object-fit:cover}
-.r-wolf{--c1:var(--wolf1);--c2:var(--wolf2)} .r-seer{--c1:var(--seer1);--c2:var(--seer2)} .r-doctor{--c1:var(--doc1);--c2:var(--doc2)}
-.r-hunter{--c1:var(--hunt1);--c2:var(--hunt2)} .r-villager{--c1:var(--vill1);--c2:var(--vill2)}
-.minicards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-top:16px;perspective:1000px}
-.minicards .card{width:100%;cursor:default}
-.minicards .card .front{padding:12px 10px 10px;grid-template-rows:auto auto 1fr auto auto;gap:2px;justify-items:center}
-.minicards .card .front .team{display:none}
-.minicards .card .front .rname{font-size:15px}
-.minicards .card .front svg{width:56%}
-.minicards .card .front .desc{font-size:12px;font-weight:800}
-.minicards .card .front .owner{position:relative;top:auto;left:auto;width:38px;height:38px;font-size:13px}
-.minicards .card.dead .front{filter:saturate(.5)}
-.minicards .card .stamp2{position:static;transform:none;font-size:10px!important;font-family:var(--display);font-weight:900;font-size:11px;letter-spacing:.14em;border:2px solid currentColor;border-radius:6px;padding:1px 8px;color:var(--mint)}
-.minicards .card.dead .stamp2{color:var(--blood)}
-
-/* ---------- narration, reveals ---------- */
-.story{font-family:var(--display);font-weight:600;font-size:clamp(17px,4.4vw,21px);line-height:1.6;text-align:center;min-height:3.2em;text-shadow:0 2px 14px rgba(0,0,0,.7)}
-.story .caret{display:inline-block;width:2px;height:1em;background:var(--moon);vertical-align:-2px;margin-left:2px;animation:breathe 1s infinite}
-.thinking{display:flex;justify-content:center;gap:6px;padding:10px}
-.thinking i{width:9px;height:9px;border-radius:50%;background:var(--moon);animation:breathe 1.2s infinite}
-.thinking i:nth-child(2){animation-delay:.2s}.thinking i:nth-child(3){animation-delay:.4s}
-.stamp{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4);opacity:0;font-family:var(--display);font-weight:900;font-size:24px;letter-spacing:.12em;color:var(--blood);border:4px solid var(--blood);border-radius:10px;padding:4px 14px;background:rgba(10,0,6,.55);z-index:3;animation:slam .5s 1.6s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
+.card .stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4);opacity:0;font-family:var(--display);font-weight:900;font-size:20px;letter-spacing:.12em;color:var(--blood);border:4px solid var(--blood);border-radius:10px;padding:4px 12px;background:rgba(10,0,6,.6);white-space:nowrap;animation:slam .5s 1.4s cubic-bezier(.2,1.6,.4,1) forwards;backface-visibility:hidden}
 @keyframes slam{to{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}}
-.shield{width:140px;margin:16px auto;filter:drop-shadow(0 0 30px rgba(83,227,166,.7));animation:shieldin 1.2s cubic-bezier(.2,1.5,.4,1) backwards}
-@keyframes shieldin{from{transform:scale(.2) rotate(-30deg);opacity:0}}
-.fadeup{animation:fadeup .7s cubic-bezier(.2,.8,.2,1) backwards}
-@keyframes fadeup{from{opacity:0;transform:translateY(18px)}}
-.drum{font-family:var(--display);font-weight:900;font-size:clamp(28px,7vw,44px);text-align:center;animation:drum .5s ease-in-out 3}
-@keyframes drum{50%{transform:scale(1.08)}}
-.vision{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(5,4,20,.88);backdrop-filter:blur(6px);padding:20px;animation:fadeup .4s}
-.vision .orb{width:150px;aspect-ratio:1;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 40% 35%,#fff,var(--violet) 45%,#2a1060);box-shadow:0 0 80px 20px rgba(157,123,255,.5);animation:orb 2.4s ease-in-out infinite}
-@keyframes orb{50%{box-shadow:0 0 120px 40px rgba(157,123,255,.7);transform:scale(1.04)}}
-.banner{font-family:var(--display);font-weight:900;font-size:clamp(34px,10vw,72px);text-align:center;line-height:1;letter-spacing:.04em;margin-top:30px;animation:rise 1.4s cubic-bezier(.2,.8,.2,1) backwards}
+.reveal-pop{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(5,4,15,.55);backdrop-filter:blur(3px);animation:fadein .4s;pointer-events:none}
+@keyframes fadein{from{opacity:0}}
+.reveal-pop .card{width:min(230px,62vw)}
+.minicards{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:14px;perspective:1000px}
+.minicards .card{width:100%;cursor:default}
+.minicards .card .front{padding:10px;grid-template-rows:auto auto 1fr auto auto;gap:2px}
+.minicards .card .front .owner{width:36px;height:36px;font-size:13px}
+.minicards .card .front .rname{font-size:14px}
+.minicards .card .front svg{width:52%}
+.minicards .card .front .desc{font-size:12px;font-weight:800}
+.minicards .card .st{font-family:var(--display);font-weight:900;font-size:10px;letter-spacing:.14em;border:2px solid currentColor;border-radius:6px;padding:0 6px;color:var(--mint)}
+.minicards .card.dead .st{color:var(--blood)}
+.banner{font-family:var(--display);font-weight:900;font-size:clamp(32px,9.5vw,68px);text-align:center;line-height:1;letter-spacing:.04em;margin-top:10px;animation:rise 1.4s cubic-bezier(.2,.8,.2,1) backwards}
 @keyframes rise{from{opacity:0;transform:translateY(30px) scale(.9);letter-spacing:.3em}}
 .banner.wolves{color:#ff5a78;text-shadow:0 0 40px rgba(227,38,75,.8)}
 .banner.village{color:var(--gold);text-shadow:0 0 40px rgba(242,195,91,.7)}
-.awards{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.award{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 14px 4px 4px;background:rgba(242,195,91,.1);border:1px solid rgba(242,195,91,.35);font-weight:800;font-size:13px}
-.award .av{width:26px;height:26px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-size:11px;color:#0b0820}
-.award .av img{width:100%;height:100%;object-fit:cover}
-.award small{color:var(--gold);font-weight:900}
-.ghost{border:1px dashed var(--line2);border-radius:16px;padding:10px 14px;text-align:center;font-size:13px;color:var(--muted);margin-top:12px}
-.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(0deg,rgba(5,6,15,.95),rgba(5,6,15,.6));border-top:1px solid var(--line)}
-.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;background:var(--moon);color:#2a1a00;font-weight:800;border-radius:999px;padding:10px 20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-.photo-pick{display:flex;align-items:center;gap:14px}
-.photo-pick .face{width:72px;height:72px;border-radius:50%;overflow:hidden;border:3px dashed var(--line2);display:grid;place-items:center;background:rgba(0,0,0,.3);flex:none;font-size:12px;color:var(--muted);text-align:center}
-.photo-pick .face img{width:100%;height:100%;object-fit:cover}
+.timeline{display:grid;gap:6px;margin-top:6px}
+.timeline div{display:flex;gap:10px;align-items:center;font-size:14px}
+.timeline b{font-family:var(--display);min-width:64px;color:var(--moon)}
+.vision{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(5,4,20,.9);backdrop-filter:blur(6px);padding:20px;animation:fadein .4s}
+.vision .orb{width:140px;aspect-ratio:1;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 40% 35%,#fff,var(--violet) 45%,#2a1060);box-shadow:0 0 80px 20px rgba(157,123,255,.5);animation:glow 2.4s ease-in-out infinite}
+.drum{font-family:var(--display);font-weight:900;font-size:clamp(26px,7vw,40px);text-align:center}
+.fadeup{animation:fadeup .7s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(18px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(0deg,rgba(5,6,15,.95),rgba(5,6,15,.6));border-top:1px solid var(--line)}
+.hostbar .lbl{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:50;background:var(--moon);color:#2a1a00;font-weight:800;border-radius:999px;padding:10px 20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.me-pic{display:flex;align-items:center;gap:14px}
+.me-pic button{width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px dashed var(--line2);display:grid;place-items:center;background:rgba(0,0,0,.3);flex:none;font-size:12px;color:var(--muted);padding:0}
+.me-pic button img{width:100%;height:100%;object-fit:cover;object-position:top}
 details summary{cursor:pointer;font-weight:800}
 .rolelist{display:grid;gap:8px;margin-top:10px}
-.rolelist div{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;font-size:14px}
-.rolelist svg{width:36px;filter:drop-shadow(0 0 8px var(--c2))}
+.rolelist div{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center;font-size:14px}
+.rolelist svg{width:34px;filter:drop-shadow(0 0 8px var(--c2))}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body class="s-night">
 <div class="scene" aria-hidden="true">
-  <div class="stars" id="stars"></div>
-  <div class="moon"></div>
-  <div class="sun"></div>
-  <div class="fog"></div><div class="fog f2"></div>
+  <div class="stars" id="stars"></div><div class="moon"></div><div class="sun"></div><div class="fog"></div>
   <svg class="trees" viewBox="0 0 1200 200" preserveAspectRatio="none"><path fill="#04050c" d="M0 200 L0 140 L30 90 L45 130 L70 60 L95 130 L110 100 L130 140 L160 70 L190 140 L220 110 L240 150 L270 80 L300 150 L340 120 L360 150 L400 90 L430 150 L470 130 L500 160 L540 100 L570 160 L620 140 L650 170 L700 110 L730 160 L770 130 L800 165 L840 90 L870 160 L900 120 L930 160 L970 70 L1000 150 L1030 120 L1060 160 L1100 80 L1130 150 L1160 110 L1200 140 L1200 200 Z"/></svg>
 </div>
-
 <div class="app">
-  <header class="top">
-    <a href="/" aria-label="All games">&larr;</a>
-    <h1 id="hTitle">Werewolf</h1>
-    <span class="code" id="hCode" hidden></span>
-    <span class="spacer"></span>
-    <span class="timer" id="timer" hidden></span>
-  </header>
+  <header class="top"><a href="/" aria-label="All games">&larr;</a><h1>Werewolf</h1><span class="code" id="hCode" hidden></span><span class="spacer"></span></header>
   <main class="stage" id="stage"></main>
 </div>
 <div class="hostbar" id="hostbar" hidden></div>
 <div class="toast" id="toast" hidden></div>
 <div id="overlay"></div>
-<input type="file" id="photoInput" accept="image/*" capture="user" hidden>
-
+<script src="/avatars.js"></script>
 <script>
-/* ---------- basics ---------- */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 80% 72%)`; };
@@ -227,16 +217,15 @@ async function api(path, body){
   if(!r.ok) throw new Error(j.error || "Something went wrong");
   return j;
 }
-// stars
-$("#stars").innerHTML = Array.from({length:90},()=>`<i style="left:${Math.random()*100}%;top:${Math.random()*62}%;animation-delay:${(Math.random()*3).toFixed(2)}s;opacity:${(.3+Math.random()*.7).toFixed(2)};transform:scale(${(.6+Math.random()*1.1).toFixed(2)})"></i>`).join("");
+$("#stars").innerHTML = Array.from({length:90},()=>`<i style="left:${Math.random()*100}%;top:${Math.random()*62}%;animation-delay:${(Math.random()*3).toFixed(2)}s;opacity:${(.3+Math.random()*.7).toFixed(2)}"></i>`).join("");
 
 /* ---------- role art ---------- */
 const ART = {
   wolf: `<svg viewBox="0 0 120 120"><path fill="#14030a" stroke="#ff8aa0" stroke-width="2" d="M18 30 L36 6 L50 34 L70 34 L84 6 L102 30 L98 62 L84 88 L60 112 L36 88 L22 62 Z"/><path fill="#2a0612" d="M42 74 L60 104 L78 74 L60 82 Z"/><path fill="#ffd34d" d="M36 52 L52 56 L42 62 Z M84 52 L68 56 L78 62 Z"/><circle cx="60" cy="86" r="4" fill="#ff8aa0"/></svg>`,
   seer: `<svg viewBox="0 0 120 120"><path d="M8 60 Q60 14 112 60 Q60 106 8 60 Z" fill="#160a38" stroke="#cdb8ff" stroke-width="3"/><circle cx="60" cy="60" r="20" fill="#9d7bff"/><circle cx="60" cy="60" r="9" fill="#0b0820"/><circle cx="54" cy="54" r="4" fill="#fff"/><g stroke="#cdb8ff" stroke-width="3" stroke-linecap="round"><path d="M60 8 V20 M30 16 L36 27 M90 16 L84 27 M60 112 V100"/></g></svg>`,
   doctor: `<svg viewBox="0 0 120 120"><path d="M60 8 L102 22 V56 C102 84 84 102 60 112 C36 102 18 84 18 56 V22 Z" fill="#06291f" stroke="#9cf5cf" stroke-width="3"/><path d="M52 36 H68 V52 H84 V68 H68 V84 H52 V68 H36 V52 H52 Z" fill="#53e3a6"/></svg>`,
-  hunter: `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="#f2a33a" stroke-width="4"/><circle cx="60" cy="60" r="28" fill="none" stroke="#f2a33a" stroke-width="3" opacity=".7"/><circle cx="60" cy="60" r="8" fill="#f2a33a"/><g stroke="#ffd8a0" stroke-width="3" stroke-linecap="round"><path d="M60 4 V24 M60 96 V116 M4 60 H24 M96 60 H116"/></g><path d="M86 34 L64 56" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M86 34 L94 30 L90 38 Z" fill="#fff"/></svg>`,
-  villager: `<svg viewBox="0 0 120 120"><path d="M14 58 L60 18 L106 58 Z" fill="#203a63" stroke="#a9c8ff" stroke-width="3" stroke-linejoin="round"/><rect x="24" y="56" width="72" height="50" rx="3" fill="#152a4a" stroke="#a9c8ff" stroke-width="3"/><rect x="50" y="78" width="20" height="28" rx="2" fill="#6fa8ff"/><rect x="32" y="66" width="14" height="14" rx="2" fill="#ffe9b0"/><rect x="74" y="66" width="14" height="14" rx="2" fill="#ffe9b0"/><path d="M82 30 V16 H92 V38" fill="#203a63" stroke="#a9c8ff" stroke-width="3"/></svg>`,
+  hunter: `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="#f2a33a" stroke-width="4"/><circle cx="60" cy="60" r="28" fill="none" stroke="#f2a33a" stroke-width="3" opacity=".7"/><circle cx="60" cy="60" r="8" fill="#f2a33a"/><g stroke="#ffd8a0" stroke-width="3" stroke-linecap="round"><path d="M60 4 V24 M60 96 V116 M4 60 H24 M96 60 H116"/></g></svg>`,
+  villager: `<svg viewBox="0 0 120 120"><path d="M14 58 L60 18 L106 58 Z" fill="#203a63" stroke="#a9c8ff" stroke-width="3" stroke-linejoin="round"/><rect x="24" y="56" width="72" height="50" rx="3" fill="#152a4a" stroke="#a9c8ff" stroke-width="3"/><rect x="50" y="78" width="20" height="28" rx="2" fill="#6fa8ff"/><rect x="32" y="66" width="14" height="14" rx="2" fill="#ffe9b0"/><rect x="74" y="66" width="14" height="14" rx="2" fill="#ffe9b0"/></svg>`,
 };
 const DESC = {
   wolf: "Each night, agree with your pack on someone to eliminate. By day, blend in and lie.",
@@ -245,48 +234,36 @@ const DESC = {
   hunter: "If you die, you take one last shot and drag someone down with you.",
   villager: "No powers, just instincts. Find the wolves and vote them out by day.",
 };
-const TEAM = r => r === "wolf" ? "Team Wolves" : "Team Village";
 const rname = r => room?.roleInfo?.[r]?.name || r;
 
 /* ---------- state ---------- */
-let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, revealed=false, lastLines=new Set();
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
-const P = pid => room.players[pid];
-const face = (pid, cls="") => { const p = P(pid) || {name:"?"}; return `<span class="${cls}" style="background:${hue(p.name)}">${p.photo ? `<img src="/api/img/${p.photo}" alt="">` : esc(p.name[0].toUpperCase())}</span>`; };
-const alivePids = () => Object.keys(room.players).filter(pid=>room.players[pid].alive && !room.players[pid].spectator);
+const P = pid => room.players[pid] || {name:"?"};
+const pic = (pid, cls="") => { const p = P(pid), src = Avatars.src(p); return `<span class="${cls}" style="background:${hue(p.name)}">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:esc(p.name[0].toUpperCase())}</span>`; };
+const inGame = () => Object.keys(room.players).filter(pid=>!P(pid).spectator);  // late joiners watch from outside the table
+const alivePids = () => inGame().filter(pid=>P(pid).alive);
 
-/* ---------- boot, join ---------- */
+/* ---------- home and join ---------- */
 function home(){
   document.body.className = "s-night";
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:6vh">
-    <div class="eyebrow">A party game of lies</div><h1 class="title" style="font-size:clamp(46px,13vw,90px)">Werewolf</h1>
-    <p class="sub" style="max-width:46ch;margin:10px auto 0">Secret roles, an AI narrator and a village that trusts nobody. Put your face on your card and find the wolves before they find you.</p></div>
-    <div style="display:grid;gap:16px;margin-top:28px">
-    <form class="panel" id="createForm"><h2 style="font-size:22px">Host a game</h2>
-      <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
-      <div class="err" id="cErr"></div><button class="btn primary wide">Create a village</button>
-      <p class="hint">You'll set the roles, timers and story setting in the lobby.</p></form>
-    <form class="panel" id="joinForm"><h2 style="font-size:22px">Join a game</h2>
-      <div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
-      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div>
-      <div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
-  $("#createForm").onsubmit = async e=>{
-    e.preventDefault(); const name = $("#cName").value.trim();
-    if(!name){ $("#cErr").textContent = "Enter your name."; return; }
-    try{ const r = await api("/api/rooms", {game:"werewolf", title:"Werewolf"}); const m = await api(`/api/rooms/${r.code}/join`, {name});
-      store("ww:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; }
-  };
-  $("#joinForm").onsubmit = async e=>{
-    e.preventDefault(); const c = $("#jCode").value.trim().toUpperCase(), name = $("#jName").value.trim();
-    if(!c || !name){ $("#jErr").textContent = "Enter the room code and your name."; return; }
-    try{ const m = await api(`/api/rooms/${c}/join`, {name}); store("ww:"+c, {...(store("ww:"+c)||{}), me:m}); openRoom(c); }catch(err){ $("#jErr").textContent = err.message; }
-  };
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:6vh"><div class="eyebrow">A party game of lies</div><h1 class="title" style="font-size:clamp(46px,13vw,90px)">Werewolf</h1>
+    <p class="sub" style="max-width:46ch;margin:10px auto 0">Take a seat at the table. Someone here is a wolf. Find them before they find you.</p></div>
+    <div style="display:grid;gap:16px;margin-top:26px">
+    <form class="panel" id="createForm"><h2 style="font-size:22px">Host a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+      <div class="err" id="cErr"></div><button class="btn primary wide">Set the table</button></form>
+    <form class="panel" id="joinForm"><h2 style="font-size:22px">Join a game</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div><div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
+  $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
+    try{ const r = await api("/api/rooms", {game:"werewolf", title:"Werewolf"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("ww:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
+  $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
+    if(!c || !n){ $("#jErr").textContent = "Enter the room code and your name."; return; }
+    try{ const m = await api(`/api/rooms/${c}/join`, {name:n}); store("ww:"+c, {...(store("ww:"+c)||{}), me:m}); openRoom(c); }catch(err){ $("#jErr").textContent = err.message; } };
 }
 function openRoom(c){
   code = c; const s = store("ww:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
-  history.replaceState(null, "", "/werewolf?room="+c);
-  $("#hCode").hidden = false; $("#hCode").textContent = c;
+  history.replaceState(null, "", "/werewolf?room="+c); $("#hCode").hidden = false; $("#hCode").textContent = c;
   poll(++pollGen, -1);
 }
 async function poll(gen, v){
@@ -299,278 +276,266 @@ async function poll(gen, v){
       clockOffset = d.now - Date.now()/1000;
       const prev = room; room = d; v = d.version;
       if(me && !room.players[me.pid]){ me = null; store("ww:"+code, {hostKey}); toast("You were removed from this game"); }
-      reactTo(prev); render();
+      if(prev && prev.phase !== room.phase){
+        if(room.phase === "roles" || room.phase === "lobby") revealed = false;
+        if(room.phase === "roles") buzz([60,40,60]);
+        if(room.phase === "night") buzz(120);
+        if(room.current?.dead?.includes(me?.pid)) buzz([300,100,300]);
+        lastLines = new Set();
+      }
+      render();
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
-}
-function reactTo(prev){
-  if(!prev || prev.phase === room.phase) return;
-  if(room.phase === "roles" || room.phase === "lobby") revealed = false;  // a fresh deal starts face down
-  if(room.phase === "roles") buzz([60,40,60]);
-  if(room.phase === "night") buzz(120);
-  if(["dawn","verdict","shot"].includes(room.phase) && room.current?.dead?.includes(me?.pid)) buzz([300,100,300]);
-  window.scrollTo({top:0, behavior:"smooth"});
 }
 
 /* ---------- render ---------- */
 let lastSig = "";
 function render(){
   const ph = room.phase;
-  const sceneFor = {lobby:"s-night", roles:"s-night", night:"s-night", dawn:"s-dawn", day:"s-day", vote:"s-vote", verdict:"s-vote", hunter:"s-vote", shot:"s-vote",
-    final: room.winner === "wolves" ? "s-wolves" : "s-village"};
-  document.body.className = sceneFor[ph] || "s-night";
-  renderHostbar(); tickTimer();
-  const joined = me && room.players[me.pid];
-  if(!joined){ return gate(); }
-  const views = {lobby, roles:rolesView, night, dawn:reveal, verdict:reveal, shot:reveal, day, vote, hunter, final};
-  // only redraw when something on screen changed, so animations play once
-  const sig = JSON.stringify([ph, room.day, room.players, room.current?.id, room.current?.story, room.votes, room.myNight, room.seerLog, room.settings, room.epilogue, room.me]);
+  const scene = {dawn:"s-dawn", day:"s-day", vote:"s-vote", verdict:"s-vote", hunter:"s-vote", shot:"s-vote", final: room.winner==="wolves"?"s-wolves":"s-village"}[ph] || "s-night";
+  document.body.className = scene;
+  renderHostbar(); tick();
+  if(!me || !room.players[me.pid]) return gate();
+  const sig = JSON.stringify([ph, room.day, room.players, room.current?.id, room.votes, room.myNight, room.seerLog, room.settings, room.me, room.acted, revealed]);
   if(sig === lastSig) return;
   lastSig = sig;
-  (views[ph] || lobby)();
+  if(ph === "lobby") lobby();
+  else if(ph === "roles") rolesView();
+  else if(ph === "final") final();
+  else tableView();
 }
 function gate(){
-  $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">You've been summoned</div><h2 style="font-size:26px;text-align:center">Join this village</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
+  $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">There's a free seat</div><h2 style="font-size:26px;text-align:center">Join this table</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit down</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("ww:"+code, {me, hostKey}); lastSig=""; poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
 }
 
-/* ---------- lobby ---------- */
-function lobby(){
-  const ps = Object.keys(room.players), s = room.settings, mine = P(me.pid);
-  const n = ps.filter(pid=>!P(pid).spectator).length;
-  const wolves = s.wolves || (n <= 6 ? 1 : n <= 10 ? 2 : 3);
-  const specials = ["seer","doctor","hunter"].filter(r=>s[r]);
-  const villagers = Math.max(0, n - wolves - specials.length);
-  const sel = (id, opts, val) => `<select id="${id}" ${hostKey?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
-  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">The village gathers</div><h1 class="title">${n} villager${n===1?"":"s"}</h1>
-    <p class="sub">Share the code <b style="letter-spacing:.2em;color:var(--moon)">${room.code}</b>. You need at least 4 players.</p></div>
-    <div class="panel" style="margin-top:18px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Add your photo">${mine.photo ? `<img src="/api/img/${mine.photo}" alt="">` : "Add<br>photo"}</button>
-      <div><b>${esc(mine.name)}</b><p class="hint">${mine.photo ? "Looking good. Tap your photo to change it." : "Tap the circle to take a selfie or pick a photo. It goes on your card."}</p></div></div></div>
-    <div class="ring">${ps.map(pid=>`<div class="tok fadeup">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span>${hostKey && pid!==me.pid ? `<button class="btn small" data-kick="${pid}" style="padding:2px 10px;font-size:11px">Kick</button>`:""}</div>`).join("")}</div>
-    <div class="panel" style="margin-top:20px"><h2 style="font-size:20px">${hostKey ? "Set up the game" : "Game setup"}</h2>
-      <div><label>Roles</label><div class="toggles">
-        <span class="tg on r-wolf"><i style="background:var(--wolf2)"></i>${wolves} Werewol${wolves===1?"f":"ves"}</span>
-        ${["seer","doctor","hunter"].map(r=>`<button type="button" class="tg r-${r} ${s[r]?"on":""}" data-toggle="${r}" ${hostKey?"":"disabled"}><i style="background:var(--c2)"></i>${rname(r)}</button>`).join("")}
-        <span class="tg"><i style="background:var(--vill2)"></i>${villagers} Villager${villagers===1?"":"s"}</span></div></div>
-      <div class="row3">
-        <div><label for="sWolves">Werewolves</label>${sel("sWolves", [[0,"Auto"],[1,"1"],[2,"2"],[3,"3"],[4,"4"]], s.wolves)}</div>
-        <div><label for="sNight">Night</label>${sel("sNight", [[30,"30 sec"],[45,"45 sec"],[60,"1 min"],[90,"90 sec"]], s.nightSec)}</div>
-        <div><label for="sDay">Discussion</label>${sel("sDay", [[60,"1 min"],[120,"2 min"],[180,"3 min"],[300,"5 min"]], s.daySec)}</div>
-        <div><label for="sVote">Voting</label>${sel("sVote", [[30,"30 sec"],[60,"1 min"],[90,"90 sec"]], s.voteSec)}</div>
-        <div><label for="sSpice">Narrator</label>${sel("sSpice", [["wholesome","Wholesome"],["spicy","Spicy"],["unhinged","Unhinged"]], s.spice)}</div>
-        <div><label for="sSetting">Setting</label>${sel("sSetting", [["ninja","Ninja village"],["classic","Dark village"],["school","Anime high school"],["space","Space station"],["pirate","Pirate ship"],["custom","Custom"]], s.setting)}</div>
-      </div>
-      ${s.setting === "custom" ? `<div><label for="sCustom">Describe the setting</label><input type="text" id="sCustom" maxlength="200" value="${esc(s.custom)}" ${hostKey?"":"disabled"} placeholder="e.g. a K-pop idol dorm, or our school cafeteria"></div>` : ""}
-      ${hostKey ? `<button class="btn primary wide" data-host="start" ${n<4?"disabled":""}>${n<4?`Waiting for ${4-n} more`:"Deal the cards"}</button>` : `<p class="hint" style="text-align:center">The host deals the cards when everyone is here.</p>`}
-    </div>
-    <details class="panel" style="margin-top:16px"><summary>How to play</summary><div class="rolelist">${Object.keys(ART).map(r=>`<div class="r-${r}">${ART[r]}<span><b>${rname(r)}.</b> ${DESC[r]}</span></div>`).join("")}</div>
-      <p class="hint" style="margin-top:10px">Night: wolves pick a victim, the Seer and Doctor use their powers, and everyone else picks who they suspect. Day: talk, then vote someone out. The village wins when every wolf is gone. The wolves win when they match the village in number.</p></details>`;
-  $("#photoBtn").onclick = ()=>$("#photoInput").click();
-  if(hostKey){
-    const send = extra => act("settings", extra).catch(err=>toast(err.message));
-    document.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>send({[b.dataset.toggle]: !s[b.dataset.toggle]}));
-    $("#sWolves").onchange = e=>send({wolves:+e.target.value}); $("#sNight").onchange = e=>send({nightSec:+e.target.value});
-    $("#sDay").onchange = e=>send({daySec:+e.target.value}); $("#sVote").onchange = e=>send({voteSec:+e.target.value});
-    $("#sSpice").onchange = e=>send({spice:e.target.value}); $("#sSetting").onchange = e=>send({setting:e.target.value});
-    if($("#sCustom")) $("#sCustom").onchange = e=>send({custom:e.target.value});
+/* ---------- the table ---------- */
+// seats go around the circle with you at the bottom
+function seatOrder(){
+  const ids = inGame();
+  const i = ids.indexOf(me.pid);
+  return i < 0 ? ids : ids.slice(i).concat(ids.slice(0, i));
+}
+function seatPos(ids){
+  const n = ids.length, pos = {};
+  ids.forEach((pid, i)=>{ const a = Math.PI/2 + i * 2*Math.PI/n; pos[pid] = [50 + 41*Math.cos(a), 50 + 41*Math.sin(a)]; });
+  return pos;
+}
+function tableHTML({center, pickable=()=>false, selected=null, selClass="sel", arrows=[], counts={}, tags={}, dying=[]}){
+  const ids = seatOrder(), pos = seatPos(ids), n = ids.length;
+  const sz = n <= 6 ? "70px" : n <= 9 ? "60px" : n <= 12 ? "50px" : "42px";
+  const lines = arrows.map(([from, to, color])=>{
+    if(!pos[from] || !pos[to]) return "";
+    const [x1,y1] = pos[from], [x2,y2] = pos[to];
+    // bend each arrow toward the table's center so crossing votes stay readable
+    const cx = (x1+x2)/2 + (50-(x1+x2)/2)*.45, cy = (y1+y2)/2 + (50-(y1+y2)/2)*.45;
+    const key = `${from}>${to}`, fresh = !lastLines.has(key); lastLines.add(key);
+    return `<path class="${fresh?"new":""}" d="M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}" stroke="${color}" marker-end="url(#ah-${color==="#e3264b"?"r":"m"})" opacity=".85"/>`;
+  }).join("");
+  const seats = ids.map(pid=>{
+    const p = P(pid), [x,y] = pos[pid], can = pickable(pid);
+    const cls = ["seat", pid===me.pid?"me":"", !p.alive&&p.role?"dead":"", can?"pick":"off", selected===pid?selClass:"", dying.includes(pid)?"dying":""].join(" ");
+    const roleTag = (!p.alive || room.phase==="final") && p.role ? `<span class="tag r-${p.role}">${rname(p.role)}</span>` : (tags[pid] ? `<span class="tag ${tags[pid][1]||""}">${tags[pid][0]}</span>` : "");
+    return `<button class="${cls}" data-seat="${pid}" style="--x:${x}%;--y:${y}%;--sz:${sz}" ${can?"":"tabindex='-1'"} aria-label="${esc(p.name)}">${pic(pid,"av")}${roleTag}${counts[pid]?`<span class="cnt">${counts[pid]}</span>`:""}<span class="nm">${esc(p.name)}${pid===me.pid?" (you)":""}</span></button>`;
+  }).join("");
+  return `<div class="tablewrap"><svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none"><defs>
+      <marker id="ah-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#e3264b" stroke="none"/></marker>
+      <marker id="ah-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ffe9b0" stroke="none"/></marker></defs>${lines}</svg>
+    <div class="tabletop"><div class="center">${center}</div></div>${seats}</div>`;
+}
+function myRoleChip(){
+  const r = room.me.role; if(!r) return "";
+  return `<span class="chip role r-${r}">${ART[r]}You are the ${rname(r)}${room.me.alive?"":" (ghost)"}</span>`;
+}
+const clockHTML = () => `<div class="clock" id="clock"></div>`;
+
+const NIGHT = {
+  wolf: ["Choose your prey.", "Tap who the pack eliminates. Your pack sees your pick."],
+  seer: ["Peer into a soul.", "Tap someone to learn if they're a werewolf."],
+  doctor: ["Protect someone.", "Tap who to shield tonight. It can be you."],
+  hunter: ["Who's suspicious?", "Tap who you suspect. Everyone taps something at night."],
+  villager: ["Who's suspicious?", "Tap who you suspect. Everyone taps something at night."],
+};
+function tableView(){
+  const ph = room.phase, role = room.me.role, aliveMe = room.me.alive, c = room.current || {};
+  let center = "", opts = {}, say = "", under = "";
+  if(ph === "night"){
+    const mn = room.myNight || {}, wv = mn.wolfVotes || {};
+    const [h, sub] = aliveMe ? (NIGHT[role] || NIGHT.villager) : ["Night falls.", "The village sleeps. You watch from beyond."];
+    center = `<span class="ico moonico"></span><h2>Night ${room.day}</h2>${clockHTML()}<span class="small">${room.acted||0}/${room.actNeed||0} have acted</span>`;
+    say = `<b>${h}</b> ${sub}`;
+    opts.pickable = pid => aliveMe && P(pid).alive && !(role==="wolf" && P(pid).role==="wolf") && !(role==="seer" && (pid===me.pid || mn.done)) && !(role==="doctor" && pid===mn.noRepeat);
+    opts.selected = mn.target; opts.selClass = role === "wolf" ? "redsel" : "sel";
+    if(role === "wolf") opts.arrows = Object.entries(wv).map(([w,t])=>[w,t,"#e3264b"]);
+    else if(mn.target) opts.arrows = [[me.pid, mn.target, "#ffe9b0"]];
+    if(role === "wolf") opts.tags = Object.fromEntries(inGame().filter(pid=>P(pid).role==="wolf"&&P(pid).alive).map(pid=>[pid,["Pack","r-wolf"]]));
+    if(role === "doctor" && mn.noRepeat) opts.tags = {[mn.noRepeat]:["Last night",""]};
+    if(role === "seer" && room.seerLog?.length) under = `<div class="panel"><b style="color:var(--seer2)">Your visions</b>${room.seerLog.map(v=>`<div>Night ${v.night}: ${esc(v.name)} is ${v.wolf?'<b style="color:var(--blood)">a werewolf</b>':'<b style="color:var(--mint)">not a werewolf</b>'}</div>`).join("")}</div>`;
+  } else if(ph === "day"){
+    center = `<span class="ico sunico"></span><h2>Day ${room.day}</h2>${clockHTML()}<span class="small">Talk it out</span>`;
+    say = "Accuse, defend, bluff. The vote opens when the clock runs out.";
+  } else if(ph === "vote"){
+    const votes = room.votes || {}, mine = votes[me.pid];
+    const counts = {}; Object.values(votes).forEach(t=>{ if(t!=="skip") counts[t]=(counts[t]||0)+1; });
+    center = `<span class="ico voteico"></span><h2>The vote</h2>${clockHTML()}<span class="small">${Object.keys(votes).length}/${alivePids().length} voted</span>`;
+    say = aliveMe ? "<b>Point the finger.</b> Tap who should be cast out. Everyone sees the arrows." : "Ghosts don't vote. Watch the arrows fly.";
+    opts = {pickable: pid => aliveMe && P(pid).alive && pid!==me.pid, selected: mine, selClass:"redsel", counts,
+            arrows: Object.entries(votes).filter(([v,t])=>t!=="skip").map(([v,t])=>[v,t,"#e3264b"])};
+    if(aliveMe) under = `<div style="display:flex;justify-content:center"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip vote${Object.values(votes).filter(t=>t==="skip").length?` (${Object.values(votes).filter(t=>t==="skip").length})`:""}</button></div>`;
+  } else if(ph === "hunter"){
+    const h = room.hunter?.pid;
+    center = `<span class="ico voteico"></span><h2>Last shot</h2>${clockHTML()}`;
+    say = h === me.pid ? "<b>You are dying.</b> Tap one player to take down with you." : `${esc(P(h).name)}, the Hunter, takes aim…`;
+    opts = {pickable: pid => h===me.pid && P(pid).alive, selClass:"redsel"};
+  } else {
+    // dawn, verdict, shot: the reveal plays over the table, then the game moves on by itself
+    const kind = {dawn:["sunico","Dawn"], verdict:["voteico","The verdict"], shot:["voteico","The shot"]}[ph];
+    center = `<span class="ico ${kind[0]}"></span><h2>${kind[1]}</h2>${clockHTML()}`;
+    say = esc(c.story || "");
+    opts = {dying: c.dead || []};
+    if(ph === "verdict" && c.votes) opts.arrows = Object.entries(c.votes).filter(([v,t])=>t!=="skip").map(([v,t])=>[v,t,"#e3264b"]);
+    if(ph === "verdict" && c.tally) opts.counts = Object.fromEntries(Object.entries(c.tally).filter(([t])=>t!=="skip"));
   }
+  $("#stage").innerHTML = `${tableHTML({center, ...opts})}
+    <div class="info"><p class="say fadeup">${say}</p><div class="myrole">${myRoleChip()}</div>${under}
+    ${room.me.ghost ? '<p class="hint" style="text-align:center">You are a ghost. You can see every role, so no spoilers out loud.</p>' : ""}</div>`;
+  tick();
+  if(["dawn","verdict","shot"].includes(ph) && (c.dead||[]).length) popReveal(c, ph);
+  else if($("#overlay .reveal-pop")) $("#overlay").innerHTML = "";  // leave the Seer's vision alone
 }
-$("#photoInput").onchange = async e=>{
-  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+function popReveal(c, ph){
+  const pid = c.dead[0], role = c.roles[pid];
+  if($("#overlay").dataset.cid === c.id) return;  // already showing this one
+  $("#overlay").dataset.cid = c.id;
+  const stamp = {dawn:"KILLED IN THE NIGHT", verdict:"VOTED OUT", shot:"SHOT DOWN"}[ph];
+  $("#overlay").innerHTML = `<div class="reveal-pop"><div class="cardwrap">${cardHTML(pid, role, {id:"deadCard"})}</div></div>`;
+  setTimeout(()=>$("#deadCard")?.classList.add("flip"), 900);
+  setTimeout(()=>{ const card = $("#deadCard"); if(card) card.insertAdjacentHTML("beforeend", `<span class="stamp">${stamp}</span>`); }, 950);
+  // the card steps aside after a few seconds so everyone sees the table again
+  setTimeout(()=>{ if($("#overlay").dataset.cid === c.id) $("#overlay").innerHTML = ""; }, 5200);
+}
+$("#stage").addEventListener("click", async e=>{
+  const s = e.target.closest(".seat.pick"), v = e.target.closest("[data-vote]");
   try{
-    const img = await new Promise((res, rej)=>{ const i = new Image(); i.onload = ()=>res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
-    const c = document.createElement("canvas"); c.width = c.height = 320; const x = c.getContext("2d");
-    const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 320, 320);
-    await act("photo", {img: c.toDataURL("image/jpeg", .82)}); toast("Photo added");
-  }catch(err){ toast(err.message || "That photo didn't work. Try another one."); }
-};
-
-/* ---------- role reveal ---------- */
-function cardHTML(pid, role, opts={}){
-  const p = P(pid) || {name:"?"};
-  return `<div class="card ${opts.flip?"flip":""} ${opts.dead?"dead":""} r-${role}" ${opts.id?`id="${opts.id}"`:""} style="${opts.delay?`transition-delay:${opts.delay}s`:""}">
-    <div class="side back"><div class="mn"></div>${opts.tap?'<div class="tap">TAP TO REVEAL</div>':""}</div>
-    <div class="side front"><span class="owner" style="background:${hue(p.name)}">${p.photo?`<img src="/api/img/${p.photo}" alt="">`:esc(p.name[0])}</span>
-      <div><div class="team">${TEAM(role)}</div><div class="rname">${rname(role)}</div></div>${ART[role]}
-      <div class="desc">${opts.mini ? esc(p.name) : DESC[role]}</div>${opts.stamp?`<span class="stamp2">${opts.stamp}</span>`:""}</div></div>`;
-}
-let revealed = false;
-function rolesView(){
-  const role = room.me.role, mine = P(me.pid);
-  const pack = role === "wolf" ? Object.keys(room.players).filter(pid=>pid!==me.pid && P(pid).role==="wolf") : [];
-  const ready = Object.values(room.players).filter(p=>p.role && p.ready).length, total = Object.values(room.players).filter(p=>p.role).length;
-  $("#stage").innerHTML = `<div class="eyebrow fadeup">Keep it secret</div><h1 class="title fadeup">Your role</h1>
-    <div class="cardwrap">${cardHTML(me.pid, role, {tap:true, id:"myCard", flip: revealed})}</div>
-    <div id="after" ${revealed?"":"hidden"} class="fadeup" style="display:grid;gap:12px">
-      ${pack.length ? `<div class="panel"><b style="color:var(--wolf2)">Your pack</b><div class="ring" style="margin-top:0">${pack.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div></div>` : ""}
-      ${mine.ready ? `<p class="sub">Waiting for everyone · ${ready}/${total} ready</p>` : `<button class="btn primary wide" id="readyBtn">I've memorized it</button>`}
-    </div>
-    <p class="hint" style="text-align:center;margin-top:10px">Hide your screen, then tap the card.</p>`;
-  $("#myCard").onclick = ()=>{ revealed = !revealed; $("#myCard").classList.toggle("flip", revealed); if(revealed){ buzz(80); $("#after").hidden = false; } };
-  if($("#readyBtn")) $("#readyBtn").onclick = ()=>act("ready").catch(err=>toast(err.message));
-}
-
-/* ---------- night ---------- */
-const NIGHT_TEXT = {
-  wolf: ["Choose your prey", "Tap who the pack should eliminate. Your packmates see your pick live."],
-  seer: ["Peer into a soul", "Tap a player to learn if they are a werewolf. One vision per night."],
-  doctor: ["Protect someone", "Tap who to shield from the wolves tonight. It can be you."],
-  hunter: ["Who do you suspect?", "Keep up appearances. Tap who you think is a wolf."],
-  villager: ["Who do you suspect?", "Keep up appearances. Tap who you think is a wolf."],
-};
-function night(){
-  const role = room.me.role, mn = room.myNight || {};
-  if(!room.me.alive){ return ghostView("Night falls", "The village sleeps. You watch from beyond."); }
-  const [h, sub] = NIGHT_TEXT[role] || NIGHT_TEXT.villager;
-  const wolfVotes = mn.wolfVotes || {};
-  const targets = alivePids();
-  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Night ${room.day}</div><h1 class="title">${h}</h1><p class="sub">${sub}</p></div>
-    <div class="ring">${targets.map(pid=>{
-      const isWolf = role === "wolf" && P(pid).role === "wolf";
-      const self = pid === me.pid && (role === "seer");
-      const blocked = isWolf || self || (role === "doctor" && pid === mn.noRepeat) || (role === "seer" && mn.done);
-      const packPicks = Object.entries(wolfVotes).filter(([w,t])=>t===pid).map(([w])=>w);
-      const cls = ["tok", blocked?"off":"pick", mn.target===pid ? (role==="wolf"?"wolfsel":"sel") : ""].join(" ");
-      return `<button class="${cls}" data-target="${pid}" ${blocked?"disabled":""}>${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span>
-        ${isWolf?'<span class="badge" style="color:var(--wolf2)">Pack</span>':""}${role==="doctor"&&pid===mn.noRepeat?'<span class="badge">Last night</span>':""}
-        ${packPicks.length?`<span class="voters">${packPicks.map(w=>face(w)).join("")}</span>`:'<span class="voters"></span>'}</button>`; }).join("")}</div>
-    <p class="sub" style="margin-top:16px">${mn.done ? (role==="seer" ? "Your vision is done. Sleep tight." : "Locked in. You can still change your mind.") : "Pick someone."} · ${room.acted}/${room.actNeed} have acted</p>
-    ${role==="seer" && room.seerLog?.length ? `<div class="panel" style="margin-top:14px"><b style="color:var(--seer2)">Your visions</b>${room.seerLog.map(v=>`<div>Night ${v.night}: ${esc(v.name)} is ${v.wolf?'<b style="color:var(--blood)">a werewolf</b>':'<b style="color:var(--mint)">not a werewolf</b>'}</div>`).join("")}</div>` : ""}`;
-  document.querySelectorAll("[data-target]").forEach(b=>b.onclick = async ()=>{
-    try{ await act("night", {target:b.dataset.target}); buzz(40); if(role === "seer") seerVision(b.dataset.target); }catch(err){ toast(err.message); }
-  });
-}
+    if(v){ await act("vote", {target:"skip"}); buzz(30); return; }
+    if(!s) return;
+    const pid = s.dataset.seat, ph = room.phase;
+    if(ph === "night"){ await act("night", {target:pid}); buzz(40); if(room.me.role === "seer") seerVision(pid); }
+    else if(ph === "vote"){ await act("vote", {target:pid}); buzz(40); }
+    else if(ph === "hunter"){ await act("shoot", {target:pid}); }
+  }catch(err){ toast(err.message); }
+});
 function seerVision(pid){
   setTimeout(()=>{
-    const v = (room.seerLog||[]).slice(-1)[0];
-    const wolf = v && v.pid === pid ? v.wolf : null;
-    $("#overlay").innerHTML = `<div class="vision" id="vision"><div style="text-align:center;max-width:420px"><div class="orb"></div>
-      <div class="eyebrow">Your vision</div><h2 style="font-size:clamp(26px,7vw,40px);margin-top:8px">${esc(P(pid).name)}</h2>
-      <div class="drum" style="color:${wolf?"var(--blood)":"var(--mint)"};margin-top:10px">${wolf===null?"…":wolf?"IS A WEREWOLF":"is not a werewolf"}</div>
+    const v = (room.seerLog||[]).slice(-1)[0], wolf = v && v.pid === pid ? v.wolf : null;
+    $("#overlay").dataset.cid = "";
+    $("#overlay").innerHTML = `<div class="vision" id="vision"><div style="text-align:center;max-width:420px"><div class="orb"></div><div class="eyebrow">Your vision</div>
+      <h2 style="font-size:clamp(26px,7vw,40px);margin-top:8px">${esc(P(pid).name)}</h2><div class="drum" style="color:${wolf?"var(--blood)":"var(--mint)"};margin-top:10px">${wolf===null?"…":wolf?"IS A WEREWOLF":"is not a werewolf"}</div>
       <p class="sub">Keep a straight face.</p><button class="btn primary" id="closeVision" style="margin-top:14px">Close</button></div></div>`;
     buzz(wolf ? [200,80,200] : 80);
     $("#closeVision").onclick = ()=>$("#overlay").innerHTML = "";
   }, 700);
 }
-function ghostView(h, sub){
-  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">You are a ghost</div><h1 class="title">${h}</h1><p class="sub">${sub}</p></div>
-    <div class="ghost">Ghosts can see everyone's role. No spoilers out loud.</div>
-    <div class="minicards">${Object.keys(room.players).filter(pid=>P(pid).role).map(pid=>cardHTML(pid, P(pid).role, {flip:true, mini:true, dead:!P(pid).alive, stamp: P(pid).alive?"ALIVE":"DEAD"})).join("")}</div>`;
-}
 
-/* ---------- dawn, verdict, hunter's shot ---------- */
-let typer = null;
-function typeInto(el, text){
-  clearInterval(typer); let i = 0; el.innerHTML = '<span></span><span class="caret"></span>';
-  const span = el.firstChild;
-  typer = setInterval(()=>{ i += 2; span.textContent = text.slice(0, i); if(i >= text.length){ clearInterval(typer); el.lastChild.remove(); } }, 28);
-}
-function reveal(){
-  const c = room.current || {}, ph = room.phase;
-  const heading = {dawn:`Dawn of day ${room.day}`, verdict:"The village has spoken", shot:"The Hunter's last shot"}[ph];
-  const dead = c.dead || [];
-  let body;
-  if(dead.length){
-    const pid = dead[0];
-    const stamp = {dawn:"KILLED IN THE NIGHT", verdict:"VOTED OUT", shot:"SHOT DOWN"}[ph];
-    body = `<div class="cardwrap" style="position:relative">${cardHTML(pid, c.roles[pid], {id:"deadCard"})}<span class="stamp">${stamp}</span></div>`;
-  } else if(ph === "dawn" && c.saved){
-    body = `<svg class="shield" viewBox="0 0 120 120">${ART.doctor.replace(/<\/?svg[^>]*>/g,"")}</svg><p class="sub" style="font-weight:800;color:var(--mint)">Someone was saved tonight.</p>`;
-  } else {
-    body = `<p class="drum" style="margin:30px 0">${ph==="verdict"?"Nobody was voted out":ph==="shot"?"The shot missed":"Everyone survived"}</p>`;
+/* ---------- lobby ---------- */
+function lobby(){
+  const ps = inGame(), s = room.settings, mine = P(me.pid), n = ps.length;
+  const wolves = s.wolves || (n <= 6 ? 1 : n <= 10 ? 2 : 3), specials = ["seer","doctor","hunter"].filter(r=>s[r]);
+  const villagers = Math.max(0, n - wolves - specials.length), H = !!hostKey;
+  const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  const src = Avatars.src(mine);
+  $("#stage").innerHTML = tableHTML({center:`<span class="ico moonico"></span><h2>${n} at the table</h2><span class="small">Code <b style="letter-spacing:.2em;color:var(--moon)">${room.code}</b></span><span class="small">${n<4?`Need ${4-n} more`:"Ready when the host is"}</span>`,
+      tags: H ? {} : {}})
+    + `<div class="info">
+    <div class="panel"><div class="me-pic"><button id="avBtn" type="button" aria-label="Choose your avatar">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">${src ? "Tap to change your avatar." : "Pick an anime character or a picture from your gallery."}</p></div></div></div>
+    ${H ? `<div class="panel"><b>Players</b><div style="display:flex;flex-wrap:wrap;gap:8px">${ps.filter(pid=>pid!==me.pid).map(pid=>`<span class="chip">${esc(P(pid).name)} <button class="btn small" data-kick="${pid}" style="padding:1px 9px;font-size:11px">Kick</button></span>`).join("") || '<span class="hint">Nobody else yet. Share the code.</span>'}</div></div>` : ""}
+    <div class="panel"><h2 style="font-size:19px">${H ? "Set up the game" : "Game setup"}</h2>
+      <div class="toggles"><span class="tg on"><i style="background:var(--wolf2)"></i>${wolves} Werewol${wolves===1?"f":"ves"}</span>
+        ${["seer","doctor","hunter"].map(r=>`<button type="button" class="tg r-${r} ${s[r]?"on":""}" data-toggle="${r}" ${H?"":"disabled"}><i style="background:var(--c2)"></i>${rname(r)}</button>`).join("")}
+        <span class="tg"><i style="background:var(--vill2)"></i>${villagers} Villager${villagers===1?"":"s"}</span></div>
+      <div class="row3">
+        <div><label for="sWolves">Werewolves</label>${sel("sWolves", [[0,"Auto"],[1,"1"],[2,"2"],[3,"3"],[4,"4"]], s.wolves)}</div>
+        <div><label for="sNight">Night</label>${sel("sNight", [[30,"30 sec"],[45,"45 sec"],[60,"1 min"],[90,"90 sec"]], s.nightSec)}</div>
+        <div><label for="sDay">Discussion</label>${sel("sDay", [[60,"1 min"],[120,"2 min"],[180,"3 min"],[300,"5 min"]], s.daySec)}</div>
+        <div><label for="sVote">Voting</label>${sel("sVote", [[30,"30 sec"],[60,"1 min"],[90,"90 sec"]], s.voteSec)}</div>
+      </div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${n<4?"disabled":""}>${n<4?`Waiting for ${4-n} more`:"Deal the cards"}</button>` : '<p class="hint" style="text-align:center">The host deals the cards when everyone is seated.</p>'}</div>
+    <details class="panel"><summary>How to play</summary><div class="rolelist">${Object.keys(ART).map(r=>`<div class="r-${r}">${ART[r]}<span><b>${rname(r)}.</b> ${DESC[r]}</span></div>`).join("")}</div>
+      <p class="hint" style="margin-top:8px">The game runs itself: night, dawn, discussion, vote, repeat. The village wins when every wolf is gone. The wolves win when they match the village in number.</p></details></div>`;
+  $("#avBtn").onclick = ()=>Avatars.open(act);
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>send({[b.dataset.toggle]: !s[b.dataset.toggle]}));
+    $("#sWolves").onchange=e=>send({wolves:+e.target.value}); $("#sNight").onchange=e=>send({nightSec:+e.target.value});
+    $("#sDay").onchange=e=>send({daySec:+e.target.value}); $("#sVote").onchange=e=>send({voteSec:+e.target.value});
   }
-  const tally = ph === "verdict" && c.tally ? `<div class="panel" style="margin-top:14px"><b>How everyone voted</b>${Object.entries(c.votes||{}).map(([v,t])=>`<div style="display:flex;align-items:center;gap:8px;font-size:14px">${face(v,"av")}<span>${esc(P(v)?.name||"?")}</span><span class="muted">voted</span><b>${t==="skip"?"skip":esc(P(t)?.name||"?")}</b></div>`).join("") || '<span class="muted">Nobody voted.</span>'}</div>` : "";
-  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">${ph==="dawn"?"The sun rises":"Day "+room.day}</div><h1 class="title">${heading}</h1></div>
-    <div class="story" id="story" style="margin-top:16px">${c.story ? "" : '<div class="thinking"><i></i><i></i><i></i></div><span class="muted" style="font-family:var(--body);font-size:14px">The narrator is writing…</span>'}</div>
-    ${body}${tally}
-    ${room.me.ghost ? '<div class="ghost">You are a ghost now. You can see every role, but stay quiet.</div>' : ""}`;
-  if(c.story) typeInto($("#story"), c.story);
-  if($("#deadCard")) setTimeout(()=>$("#deadCard")?.classList.add("flip"), 1100);
-  document.querySelectorAll(".av").forEach(a=>a.style.cssText += ";width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;color:#0b0820");
 }
 
-/* ---------- day: talk ---------- */
-function day(){
-  const story = room.current?.story;
-  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Day ${room.day}</div><h1 class="title">Who is lying?</h1><p class="sub">Talk it out. Accuse, defend, bluff. The vote starts when the timer ends.</p></div>
-    ${story ? `<p class="story" style="font-size:15px;opacity:.85;margin-top:14px">${esc(story)}</p>` : ""}
-    <div class="ring">${Object.keys(room.players).filter(pid=>P(pid).role).map(pid=>`<div class="tok ${P(pid).alive?"":"dead"}">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span>${!P(pid).alive?`<span class="rolechip r-${P(pid).role}" style="background:var(--c1);color:#fff">${rname(P(pid).role)}</span>`:""}</div>`).join("")}</div>
-    ${room.me.ghost ? '<div class="ghost">You are a ghost. Haunt quietly.</div>' : ""}`;
+/* ---------- cards ---------- */
+function cardHTML(pid, role, opts={}){
+  const p = P(pid), src = Avatars.src(p);
+  return `<div class="card ${opts.flip?"flip":""} ${opts.dead?"dead":""} r-${role}" ${opts.id?`id="${opts.id}"`:""} style="${opts.delay?`transition-delay:${opts.delay}s`:""}">
+    <div class="side back"><div class="mn"></div>${opts.tap?'<div class="tap">TAP TO REVEAL</div>':""}</div>
+    <div class="side front"><span class="owner" style="background:${hue(p.name)}">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:esc(p.name[0])}</span>
+      <div class="rname">${rname(role)}</div>${ART[role]}<div class="desc">${opts.mini ? esc(p.name) : DESC[role]}</div>${opts.st?`<span class="st">${opts.st}</span>`:""}</div></div>`;
 }
-
-/* ---------- vote ---------- */
-function vote(){
-  const votes = room.votes || {}, mine = votes[me.pid], canVote = room.me.alive;
-  const targets = alivePids();
-  const tally = t => Object.entries(votes).filter(([v,x])=>x===t).map(([v])=>v);
-  const voted = Object.keys(votes).length, need = targets.length;
-  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Day ${room.day} · The vote</div><h1 class="title">${canVote ? "Point the finger" : "The village votes"}</h1>
-    <p class="sub">${canVote ? "Tap who should be cast out. Everyone sees your vote." : "Ghosts don't vote."} · ${voted}/${need} voted</p></div>
-    <div class="ring">${targets.map(pid=>{ const vs = tally(pid); const self = pid === me.pid;
-      return `<button class="tok ${canVote && !self ? "pick" : "off"} ${mine===pid?"wolfsel":""}" data-vote="${pid}" ${canVote&&!self?"":"disabled"}>${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${self?" (you)":""}</span>
-        <span class="voters">${vs.map(v=>face(v)).join("")}</span>${vs.length?`<span class="count">${vs.length}</span>`:""}</button>`; }).join("")}</div>
-    ${canVote ? `<div style="display:flex;justify-content:center;margin-top:16px"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip vote ${tally("skip").length?`(${tally("skip").length})`:""}</button></div>` : ""}`;
-  document.querySelectorAll("[data-vote]").forEach(b=>b.onclick = ()=>act("vote", {target:b.dataset.vote}).then(()=>buzz(40)).catch(err=>toast(err.message)));
-}
-
-/* ---------- hunter ---------- */
-function hunter(){
-  const h = room.hunter?.pid;
-  if(h === me.pid){
-    $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">You are dying</div><h1 class="title" style="color:var(--hunt2)">Take your shot</h1><p class="sub">Pick one player to take down with you.</p></div>
-      <div class="cardwrap">${cardHTML(me.pid, "hunter", {flip:true})}</div>
-      <div class="ring">${alivePids().map(pid=>`<button class="tok pick" data-shoot="${pid}">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></button>`).join("")}</div>`;
-    document.querySelectorAll("[data-shoot]").forEach(b=>b.onclick = ()=>act("shoot", {target:b.dataset.shoot}).catch(err=>toast(err.message)));
-  } else {
-    $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Wait…</div><h1 class="title" style="color:var(--hunt2)">The Hunter takes aim</h1><p class="sub">${esc(P(h)?.name||"The Hunter")} has one last shot.</p></div>
-      <svg viewBox="0 0 120 120" style="width:180px;display:block;margin:30px auto;animation:orb 2s infinite">${ART.hunter.replace(/<\/?svg[^>]*>/g,"")}</svg>`;
-  }
+function rolesView(){
+  const role = room.me.role, mine = P(me.pid);
+  if(!role){ $("#stage").innerHTML = `<div class="fadeup" style="margin-top:10vh"><h1 class="title">The cards are dealt</h1><p class="sub">You joined mid-game, so you're watching this one.</p></div>`; return; }
+  const pack = role === "wolf" ? inGame().filter(pid=>pid!==me.pid && P(pid).role==="wolf") : [];
+  const ps = inGame(), ready = ps.filter(pid=>P(pid).ready).length;
+  $("#stage").innerHTML = `<div class="eyebrow fadeup" style="margin-top:2vh">Keep it secret</div><h1 class="title fadeup">Your role</h1>
+    <div class="cardwrap">${cardHTML(me.pid, role, {tap:true, id:"myCard", flip:revealed})}</div>
+    <div id="after" ${revealed?"":"hidden"} style="display:grid;gap:12px">
+      ${pack.length ? `<div class="panel"><b style="color:var(--wolf2)">Your pack: ${pack.map(pid=>esc(P(pid).name)).join(", ")}</b></div>` : ""}
+      ${mine.ready ? `<p class="sub">Waiting for everyone · ${ready}/${ps.length} ready</p>` : `<button class="btn primary wide" id="readyBtn">I've memorized it</button>`}</div>
+    <p class="hint" style="text-align:center;margin-top:8px">Hide your screen, then tap the card. Night falls when everyone is ready.</p>`;
+  $("#myCard").onclick = ()=>{ revealed = !revealed; $("#myCard").classList.toggle("flip", revealed); if(revealed){ buzz(80); $("#after").hidden = false; } };
+  if($("#readyBtn")) $("#readyBtn").onclick = ()=>act("ready").catch(err=>toast(err.message));
 }
 
 /* ---------- final ---------- */
 function final(){
-  const w = room.winner, ep = room.epilogue;
-  const pids = Object.keys(room.players).filter(pid=>P(pid).role);
+  const w = room.winner, ps = inGame();
+  const ev = (room.events||[]).map(e=>{
+    const who = e.dead.map(d=>esc(P(d).name)).join(", ");
+    const what = e.kind === "night" ? (who ? `The wolves took ${who}` : e.saved ? `The Doctor saved ${esc(P(e.target)?.name||"someone")}` : "A quiet night")
+      : e.kind === "vote" ? (who ? `The village voted out ${who}` : "Nobody was voted out") : (who ? `The Hunter shot ${who}` : "The Hunter missed");
+    return `<div><b>${e.kind==="night"?"Night":"Day"} ${e.day}</b><span>${what}</span></div>`; }).join("");
   $("#stage").innerHTML = `<div class="banner ${w}">${w==="wolves"?"The wolves win":"The village wins"}</div>
     <p class="sub" style="font-size:16px">${w==="wolves"?"The pack ate well tonight.":"Every wolf has been found."}</p>
-    <div class="story" id="epi" style="margin-top:18px">${ep ? "" : '<div class="thinking"><i></i><i></i><i></i></div><span class="muted" style="font-family:var(--body);font-size:14px">The narrator is writing the ending…</span>'}</div>
-    ${ep && ep.awards.length ? `<div class="awards fadeup" style="margin-top:14px;animation-delay:2s">${ep.awards.map(a=>{ const pid = pids.find(x=>P(x).name===a.name); return `<span class="award">${pid?face(pid,"av"):""}${esc(a.name)} <small>${esc(a.award)}</small></span>`; }).join("")}</div>` : ""}
-    <h2 style="font-size:20px;text-align:center;margin-top:26px">Every role</h2>
-    <div class="minicards">${pids.map((pid,i)=>cardHTML(pid, P(pid).role, {mini:true, dead:!P(pid).alive, stamp:P(pid).alive?"SURVIVED":"DIED", delay: .4+i*.18, id:"fc"+i})).join("")}</div>
-    ${room.seerLog?.length ? `<div class="panel" style="margin-top:16px"><b style="color:var(--seer2)">The Seer's visions</b>${room.seerLog.map(v=>`<div style="font-size:14px">Night ${v.night}: ${esc(v.name)} ${v.wolf?"was a werewolf":"was innocent"}</div>`).join("")}</div>` : ""}`;
-  if(ep) typeInto($("#epi"), ep.text);
+    ${tableHTML({center:`<span class="ico ${w==="wolves"?"voteico":"sunico"}"></span><h2>Game over</h2><span class="small">${room.day} night${room.day===1?"":"s"}</span>`})}
+    <div class="info"><div class="panel"><b>How it went</b><div class="timeline">${ev}</div>
+      ${room.seerLog?.length ? `<b style="color:var(--seer2)">The Seer's visions</b>${room.seerLog.map(v=>`<div style="font-size:14px">Night ${v.night}: ${esc(v.name)} ${v.wolf?"was a werewolf":"was innocent"}</div>`).join("")}` : ""}</div>
+    <div class="minicards">${ps.map((pid,i)=>cardHTML(pid, P(pid).role, {mini:true, dead:!P(pid).alive, st:P(pid).alive?"SURVIVED":"DIED", delay:.3+i*.15})).join("")}</div></div>`;
   setTimeout(()=>document.querySelectorAll(".minicards .card").forEach(c=>c.classList.add("flip")), 250);
 }
 
-/* ---------- host controls, timer ---------- */
+/* ---------- host controls, clock ---------- */
 function renderHostbar(){
   const bar = $("#hostbar"), ph = room?.phase;
   if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const skip = {roles:"Start the night", night:"End the night", day:"Start the vote", vote:"Count the votes", hunter:"Skip the shot", dawn:"Skip ahead", verdict:"Skip ahead", shot:"Skip ahead"}[ph];
   const b = [];
-  if(ph === "roles") b.push('<button class="btn small" data-host="next">Start the night now</button>');
-  if(ph === "night") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">End the night</button>');
-  if(["dawn","verdict","shot"].includes(ph)) b.push('<button class="btn primary" data-host="next">Continue</button>');
-  if(ph === "day") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn blood" data-host="next">Start the vote</button>');
-  if(ph === "vote") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Count the votes</button>');
-  if(ph === "hunter") b.push('<button class="btn small" data-host="skip">Skip the shot</button>');
+  if(skip){ b.push('<span class="lbl">Host</span>'); if(["night","day","vote"].includes(ph)) b.push('<button class="btn small" data-host="addtime">+30s</button>'); b.push(`<button class="btn small" data-host="skip">${skip}</button>`); }
   if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
   bar.hidden = !b.length; bar.innerHTML = b.join("");
 }
 document.addEventListener("click", async e=>{
   const h = e.target.closest("[data-host]"), k = e.target.closest("[data-kick]");
-  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); if(h.dataset.host==="playagain"){ revealed = false; } }catch(err){ toast(err.message); } }
+  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); }catch(err){ toast(err.message); } }
   if(k){ if(k.dataset.sure !== "1"){ k.dataset.sure = "1"; k.textContent = "Sure?"; return; } act("kick", {pid:k.dataset.kick}).catch(err=>toast(err.message)); }
 });
-function tickTimer(){
-  const el = $("#timer");
-  if(!room || !room.deadline){ el.hidden = true; return; }
+function tick(){
+  const el = $("#clock"); if(!el || !room?.deadline) return;
   const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
-  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
-  el.classList.toggle("low", left <= 10);
+  el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
+  el.classList.toggle("low", left <= 10 && !["dawn","verdict","shot"].includes(room.phase));
 }
-setInterval(tickTimer, 250);
+setInterval(tick, 250);
 
 const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
 if(c0) openRoom(c0); else home();
