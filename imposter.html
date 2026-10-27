@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14110e">
+<title>Imposter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Special+Elite&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: an interrogation desk under a lamp. Secrets live on paper (case files, clue slips, stamps);
+   the UI chrome around them stays dark and quiet so the paper pops. One centered column for phones. */
+:root{
+  --desk:#14110e; --desk2:#211b15; --lamp:rgba(255,196,120,.16);
+  --fg:#f3ece0; --muted:#a69b8a; --line:rgba(243,236,224,.13); --line2:rgba(243,236,224,.26);
+  --glass:rgba(30,25,20,.72); --glass2:rgba(255,255,255,.06);
+  --manila:#d8b679; --manila2:#c39a55; --paper:#f4ecd8; --paper2:#e9dcc0; --ink:#2b241c;
+  --red:#c8102e; --green:#1f7a4d; --amber:#ffb547;
+  --display:"Archivo Black","Arial Black",system-ui,sans-serif; --type:"Special Elite","Courier New",monospace;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;color:var(--fg);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background:radial-gradient(ellipse 70% 55% at 50% 0%,var(--lamp),transparent 70%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 3px,transparent 3px 9px),
+  linear-gradient(180deg,var(--desk2),var(--desk));background-attachment:fixed}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.01em}
+.muted{color:var(--muted)}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(20,17,14,.95),rgba(20,17,14,0))}
+.top a{color:var(--muted);text-decoration:none;font-weight:800}
+.top h1{font-size:17px;letter-spacing:.06em;text-transform:uppercase}
+.code{font-family:var(--type);font-size:15px;letter-spacing:.2em;border:1px dashed var(--line2);border-radius:6px;padding:2px 10px}
+.spacer{flex:1}
+.timer{font-family:var(--type);font-size:17px;font-variant-numeric:tabular-nums;border-radius:8px;padding:3px 12px;background:var(--glass);border:1px solid var(--line2)}
+.timer.low{color:var(--red);border-color:var(--red);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+.stage{width:min(760px,100%);margin:0 auto;padding:4px max(16px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-family:var(--type);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber)}
+.title{font-size:clamp(28px,7.5vw,48px);line-height:1.05;text-align:center;text-transform:uppercase;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:52ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
+.panel h2{font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:10px;padding:11px 20px;font-weight:800;transition:transform .12s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#241500}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.small{padding:6px 12px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+input[type=text],select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg)}
+input[type=text]:focus,select:focus{border-color:var(--amber);box-shadow:0 0 0 4px rgba(255,181,71,.12)}
+select option{background:#211b15}
+.err{color:#ff8b8b;font-size:14px;min-height:1.4em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:520px){.row3{grid-template-columns:1fr 1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px}
+.chips button.on{border-color:var(--amber);background:rgba(255,181,71,.12);color:var(--amber)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:11px;text-align:left;display:grid;gap:2px}
+.seg button small{color:var(--muted);font-weight:500;line-height:1.35}
+.seg button.on{border-color:var(--amber);background:rgba(255,181,71,.1)}
+
+/* people */
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px;margin-top:14px}
+.tok{position:relative;display:grid;justify-items:center;gap:5px;border:0;background:none;padding:6px 2px;border-radius:14px;transition:transform .15s}
+.tok .face{position:relative;width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.18);display:grid;place-items:center;font-family:var(--display);font-size:26px;color:#1c140b;box-shadow:0 10px 24px -10px rgba(0,0,0,.9)}
+.tok .face img,.mini img,.pin img{width:100%;height:100%;object-fit:cover;display:block}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tok.pick{cursor:pointer}
+.tok.pick:hover{transform:translateY(-3px)}
+.tok.sel .face{border-color:var(--red);box-shadow:0 0 0 4px rgba(200,16,46,.3),0 0 26px rgba(200,16,46,.5)}
+.tok.off{opacity:.4;cursor:not-allowed}
+.mini{width:20px;height:20px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:9px;font-weight:900;color:#1c140b;border:1.5px solid var(--desk);vertical-align:middle}
+.voters{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;min-height:20px}
+.voters .mini{animation:drop .35s cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes drop{from{transform:translateY(-14px) scale(.4);opacity:0}}
+.count{font-family:var(--type);font-size:16px;color:var(--red);font-weight:700}
+
+/* case file */
+.filewrap{display:grid;justify-items:center;margin:22px 0 8px;perspective:1200px}
+.file{position:relative;width:min(330px,86vw);aspect-ratio:4/5;cursor:pointer}
+.file .paper{position:absolute;left:6%;right:6%;top:9%;bottom:4%;background:linear-gradient(180deg,var(--paper),var(--paper2));border-radius:4px;box-shadow:0 2px 0 rgba(0,0,0,.08);color:var(--ink);padding:20px 18px;display:grid;align-content:start;gap:10px;font-family:var(--type);transition:transform .8s cubic-bezier(.3,1.3,.4,1);background-image:repeating-linear-gradient(180deg,transparent 0 27px,rgba(80,60,30,.12) 27px 28px),linear-gradient(180deg,var(--paper),var(--paper2))}
+.file .paper .lbl{font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+.file .paper .word{margin-right:64px;font-family:var(--display);font-size:clamp(30px,9vw,44px);line-height:1.05;text-transform:uppercase;letter-spacing:.01em;overflow-wrap:anywhere}
+.file .paper .note{font-size:14px;line-height:1.5}
+.file .cover{position:absolute;inset:0;transform-origin:left center;transition:transform 1s cubic-bezier(.4,1.2,.4,1);background:linear-gradient(160deg,var(--manila),var(--manila2));border-radius:6px 14px 14px 6px;box-shadow:0 30px 60px -20px rgba(0,0,0,.95),inset 0 0 0 1px rgba(80,50,10,.25);display:grid;place-items:center;backface-visibility:hidden;z-index:2}
+.file .cover::before{content:"";position:absolute;top:-6%;left:8%;width:38%;height:8%;background:var(--manila);border-radius:8px 8px 0 0}
+.file .cover .ts{font-family:var(--display);color:var(--red);font-size:clamp(22px,7vw,32px);border:4px solid var(--red);padding:4px 14px;transform:rotate(-8deg);opacity:.85;letter-spacing:.06em}
+.file .cover .agent{position:absolute;bottom:12%;font-family:var(--type);color:var(--ink);font-size:15px}
+.file .cover .tap{position:absolute;bottom:5%;font-family:var(--type);font-size:12px;letter-spacing:.2em;color:#4a3618;animation:breathe 2s infinite}
+@keyframes breathe{50%{opacity:.35}}
+.file.open .cover{transform:rotateY(-160deg)}
+.file .pin{position:absolute;top:12%;right:9%;width:58px;height:58px;border-radius:4px;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.35);transform:rotate(4deg);display:grid;place-items:center;font-family:var(--display);font-size:22px;color:#1c140b}
+.file.imp .paper .word{color:var(--red)}
+.stamp{position:absolute;left:50%;top:58%;z-index:4;transform:translate(-50%,-50%) rotate(-14deg) scale(2.6);opacity:0;font-family:var(--display);font-size:clamp(30px,9vw,46px);letter-spacing:.05em;border:6px solid currentColor;border-radius:8px;padding:2px 16px;mix-blend-mode:multiply;animation:slam .45s .9s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
+.stamp.imp{color:var(--red)} .stamp.crew{color:var(--green)}
+@keyframes slam{to{opacity:.92;transform:translate(-50%,-50%) rotate(-14deg) scale(1)}}
+
+/* clue board */
+.turns{display:flex;gap:8px;overflow-x:auto;padding:10px 2px;scrollbar-width:none}
+.turns .t{flex:none;display:grid;justify-items:center;gap:3px;opacity:.45;transition:opacity .3s,transform .3s}
+.turns .t .face{width:46px;height:46px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:#1c140b;border:2px solid transparent}
+.turns .t span{font-size:11px;font-weight:800}
+.turns .t.done{opacity:.8}
+.turns .t.now{opacity:1;transform:scale(1.12)}
+.turns .t.now .face{border-color:var(--amber);box-shadow:0 0 22px rgba(255,181,71,.6)}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
+.slip{position:relative;background:var(--paper);color:var(--ink);font-family:var(--type);padding:12px 12px 10px;border-radius:2px;box-shadow:0 10px 20px -10px rgba(0,0,0,.8);transform:rotate(var(--r,0deg));animation:slip .5s cubic-bezier(.2,1.4,.4,1) backwards}
+@keyframes slip{from{opacity:0;transform:translateY(-20px) rotate(-10deg) scale(.8)}}
+.slip::before{content:"";position:absolute;top:-7px;left:50%;width:44px;height:14px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,236,170,.55)}
+.slip .who{display:flex;align-items:center;gap:6px;font-size:12px;opacity:.75}
+.slip .txt{font-size:19px;line-height:1.25;margin-top:4px;overflow-wrap:anywhere}
+.slip.late .txt{opacity:.5;font-size:15px}
+.slip.imp{outline:3px solid var(--red);outline-offset:2px}
+.yourturn{background:linear-gradient(180deg,var(--paper),var(--paper2));color:var(--ink);border-radius:12px;padding:16px;display:grid;gap:10px;box-shadow:0 20px 40px -20px rgba(0,0,0,.9);animation:slip .5s backwards}
+.yourturn b{font-family:var(--display);text-transform:uppercase;font-size:20px}
+.yourturn input{background:#fffaf0;color:var(--ink);border-color:rgba(43,36,28,.3);font-family:var(--type);font-size:20px}
+.peek{display:flex;justify-content:center;margin-top:6px}
+.peek button{border:1px dashed var(--line2);background:none;border-radius:999px;padding:5px 14px;font-family:var(--type);font-size:14px}
+
+/* results */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.wordcard{background:linear-gradient(180deg,var(--paper),var(--paper2));color:var(--ink);border-radius:8px;padding:14px;text-align:center;font-family:var(--type);box-shadow:0 16px 30px -16px rgba(0,0,0,.9);animation:slip .6s backwards}
+.wordcard .w{font-family:var(--display);font-size:clamp(20px,6vw,30px);text-transform:uppercase;overflow-wrap:anywhere}
+.wordcard.imp .w{color:var(--red)}
+.chat{display:grid;gap:9px;margin-top:14px}
+.msg{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:start;animation:slip .45s backwards}
+.msg .bot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:11px;background:var(--amber);color:#241500}
+.msg .mini{width:32px;height:32px;font-size:13px}
+.bubble{background:var(--glass2);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:9px 12px;overflow-wrap:anywhere}
+.bubble b{margin-right:6px}
+.scores{display:grid;gap:8px;margin-top:12px}
+.srow{display:grid;grid-template-columns:34px 30px 1fr auto auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800;animation:slip .45s backwards}
+.srow .rk{font-family:var(--type);font-size:18px;color:var(--muted);text-align:center}
+.srow.first{border-color:var(--amber);background:rgba(255,181,71,.1)}
+.srow.first .rk{color:var(--amber)}
+.srow .plus{color:var(--green);font-size:13px}
+.srow .pts{font-family:var(--type);font-size:18px}
+.thinking{display:flex;justify-content:center;gap:6px;padding:10px}
+.thinking i{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:breathe 1.2s infinite}
+.thinking i:nth-child(2){animation-delay:.2s}.thinking i:nth-child(3){animation-delay:.4s}
+.fadeup{animation:fadeup .6s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(16px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(0deg,rgba(20,17,14,.97),rgba(20,17,14,.7));border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;background:var(--amber);color:#241500;font-weight:800;border-radius:10px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:68px;height:68px;border-radius:50%;overflow:hidden;border:3px dashed var(--line2);display:grid;place-items:center;background:rgba(0,0,0,.3);flex:none;font-size:12px;color:var(--muted);text-align:center}
+.photo-pick .face img{width:100%;height:100%;object-fit:cover}
+details summary{cursor:pointer;font-weight:800}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a href="/" aria-label="All games">&larr;</a>
+  <h1>Imposter</h1>
+  <span class="code" id="hCode" hidden></span>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+<input type="file" id="photoInput" accept="image/*" capture="user" hidden>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 70%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, opened=false, peek=false;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+const P = pid => room.players[pid] || {name:"Someone who left"};
+const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" style="background:${hue(p.name)}">${p.photo?`<img src="/api/img/${p.photo}" alt="">`:esc(p.name[0].toUpperCase())}</span>`; };
+const rd = () => room.round >= 0 ? room.roundData[room.round] : null;
+
+/* ---------- home ---------- */
+function home(){
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:5vh"><div class="eyebrow">Classified · eyes only</div>
+    <h1 class="title" style="font-size:clamp(44px,13vw,86px)">Imposter</h1>
+    <p class="sub">Everyone gets the same secret word. Except one of you. Give a clue, sniff out the fake, and try not to give yourself away.</p></div>
+    <div style="display:grid;gap:14px;margin-top:26px">
+    <form class="panel" id="createForm"><h2>Open a case</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+      <div class="err" id="cErr"></div><button class="btn primary wide">Create game</button><p class="hint">You'll pick the mode, words and timers in the lobby.</p></form>
+    <form class="panel" id="joinForm"><h2>Join a case</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div>
+      <div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
+  $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
+    try{ const r = await api("/api/rooms", {game:"imposter", title:"Imposter"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("imp:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
+  $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
+    if(!c || !n){ $("#jErr").textContent = "Enter the room code and your name."; return; }
+    try{ const m = await api(`/api/rooms/${c}/join`, {name:n}); store("imp:"+c, {...(store("imp:"+c)||{}), me:m}); openRoom(c); }catch(err){ $("#jErr").textContent = err.message; } };
+}
+function openRoom(c){
+  code = c; const s = store("imp:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
+  history.replaceState(null, "", "/imposter?room="+c); $("#hCode").hidden = false; $("#hCode").textContent = c;
+  poll(++pollGen, -1);
+}
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
+      if(r.status === 404){ history.replaceState(null,"","/imposter"); home(); $("#jErr").textContent = "That game doesn't exist anymore."; return; }
+      const d = await r.json(); if(gen !== pollGen) return;
+      clockOffset = d.now - Date.now()/1000;
+      const prev = room; room = d; v = d.version;
+      if(me && !room.players[me.pid]){ me = null; store("imp:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(prev && (prev.phase !== room.phase || prev.round !== room.round)){
+        if(room.phase === "reveal"){ opened = false; peek = false; }
+        if(room.phase === "clues" && room.turnPid === me?.pid) buzz(120);
+        window.scrollTo({top:0, behavior:"smooth"});
+      }
+      if(prev && prev.turnPid !== room.turnPid && room.turnPid === me?.pid) buzz([80,60,80]);
+      render();
+    }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+/* ---------- render ---------- */
+let lastSig = "";
+function render(){
+  renderHostbar(); tickTimer();
+  if(!me || !room.players[me.pid]) return gate();
+  const sig = JSON.stringify([room.phase, room.round, room.players, room.roundData[room.round], room.settings, room.scores, room.turnPid, peek, opened]);
+  if(sig === lastSig) return;
+  lastSig = sig;
+  const views = {lobby, starting, reveal, clues, discuss:clues, vote, verdict, guess, results, final};
+  (views[room.phase] || lobby)();
+}
+function gate(){
+  $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">You've been briefed</div><h2 style="text-align:center">Join this case</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
+  $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
+    try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("imp:"+code, {me, hostKey}); lastSig=""; poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
+}
+
+/* ---------- lobby ---------- */
+const CATS = [["mix","Mix"],["anime","Anime"],["food","Food"],["animals","Animals"],["places","Places"],["objects","Objects"],["movies","Movies and TV"],["jobs","Jobs"],["custom","Custom"]];
+function lobby(){
+  const s = room.settings, ps = Object.keys(room.players), mine = P(me.pid), H = !!hostKey;
+  const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Briefing room</div><h1 class="title">${ps.length} agent${ps.length===1?"":"s"}</h1>
+    <p class="sub">Share the code <b style="font-family:var(--type);letter-spacing:.2em;color:var(--amber)">${room.code}</b>. You need at least 3 players.</p></div>
+    <div class="panel" style="margin-top:16px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Add your photo">${mine.photo?`<img src="/api/img/${mine.photo}" alt="">`:"Add<br>photo"}</button>
+      <div><b>Agent ${esc(mine.name)}</b><p class="hint">${mine.photo ? "Tap your photo to change it." : "Tap the circle for a selfie. It goes on your case file."}</p></div></div></div>
+    <div class="ring">${ps.map(pid=>`<div class="tok fadeup">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span>${H&&pid!==me.pid?`<button class="btn small" data-kick="${pid}" style="padding:2px 10px;font-size:11px">Kick</button>`:""}</div>`).join("")}</div>
+    <div class="panel" style="margin-top:18px"><h2>${H ? "Set up the case" : "The case"}</h2>
+      <div><label>Mode</label><div class="seg">
+        <button type="button" class="${s.mode==="undercover"?"on":""}" data-mode="undercover" ${H?"":"disabled"}><b>Undercover</b><small>The imposter gets a similar word and doesn't know they're the imposter</small></button>
+        <button type="button" class="${s.mode==="clueless"?"on":""}" data-mode="clueless" ${H?"":"disabled"}><b>Clueless</b><small>The imposter knows, gets no word, only the category</small></button></div></div>
+      <div><label>Words about</label><div class="chips">${CATS.map(([v,t])=>`<button type="button" class="${s.category===v?"on":""}" data-cat="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+      ${s.category==="custom" ? `<div><label for="sCustom">Describe the words you want</label><input type="text" id="sCustom" maxlength="200" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Pakistani food, K-pop groups, things in our school"></div>` : ""}
+      <div class="row3">
+        <div><label for="sRounds">Rounds</label>${sel("sRounds", [1,2,3,4,5,6,8,10].map(n=>[n,n]), s.rounds)}</div>
+        <div><label for="sClueRounds">Clues each</label>${sel("sClueRounds", [[1,"1 clue"],[2,"2 clues"],[3,"3 clues"]], s.clueRounds)}</div>
+        <div><label for="sImp">Imposters</label>${sel("sImp", [[0,"Auto"],[1,"1"],[2,"2"],[3,"3"]], s.imposters)}</div>
+        <div><label for="sClue">Time per clue</label>${sel("sClue", [[20,"20 sec"],[30,"30 sec"],[45,"45 sec"],[60,"1 min"]], s.clueSec)}</div>
+        <div><label for="sDiscuss">Discussion</label>${sel("sDiscuss", [[45,"45 sec"],[90,"90 sec"],[120,"2 min"],[180,"3 min"]], s.discussSec)}</div>
+        <div><label for="sSpice">AI roast</label>${sel("sSpice", [["wholesome","Wholesome"],["spicy","Spicy"],["unhinged","Unhinged"]], s.spice)}</div>
+      </div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<3?"disabled":""}>${ps.length<3?`Waiting for ${3-ps.length} more`:"Hand out the files"}</button>` : `<p class="hint" style="text-align:center">The host starts when everyone is here.</p>`}</div>
+    <details class="panel" style="margin-top:14px"><summary>How to play</summary><p class="hint" style="margin-top:8px">Everyone opens their case file to see the secret word. Take turns giving one short clue about it: specific enough that the crew trusts you, vague enough that the imposter can't work out the word. Then argue and vote. If the crew catches the imposter, the imposter gets one guess at the real word to steal points.<br><br>Points: crew who vote for the imposter +1. An imposter who escapes +3. A caught imposter who guesses the word +2.</p></details>`;
+  $("#photoBtn").onclick = ()=>$("#photoInput").click();
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>send({mode:b.dataset.mode}));
+    document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>send({category:b.dataset.cat}));
+    $("#sRounds").onchange=e=>send({rounds:+e.target.value}); $("#sClueRounds").onchange=e=>send({clueRounds:+e.target.value});
+    $("#sImp").onchange=e=>send({imposters:+e.target.value}); $("#sClue").onchange=e=>send({clueSec:+e.target.value});
+    $("#sDiscuss").onchange=e=>send({discussSec:+e.target.value}); $("#sSpice").onchange=e=>send({spice:e.target.value});
+    if($("#sCustom")) $("#sCustom").onchange=e=>send({custom:e.target.value});
+  }
+}
+$("#photoInput").onchange = async e=>{
+  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+  try{
+    const img = await new Promise((res, rej)=>{ const i = new Image(); i.onload = ()=>res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
+    const c = document.createElement("canvas"); c.width = c.height = 320; const x = c.getContext("2d");
+    const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 320, 320);
+    await act("photo", {img: c.toDataURL("image/jpeg", .82)}); toast("Photo added");
+  }catch(err){ toast(err.message || "That photo didn't work. Try another one."); }
+};
+function starting(){
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:12vh"><div class="eyebrow">Stand by</div><h1 class="title">Preparing case files</h1><div class="thinking"><i></i><i></i><i></i></div><p class="sub">The AI is picking secret words about ${esc(room.categoryLabel)}.</p></div>`;
+}
+
+/* ---------- reveal ---------- */
+function fileHTML(m, opts={}){
+  const p = P(me.pid);
+  const inner = m.imposter
+    ? `<div class="lbl">Your assignment</div><div class="word">You are the imposter</div><div class="note">There's no word for you. The category is <b>${esc(room.categoryLabel)}</b>. Listen to the clues, blend in, and work out the word.</div>`
+    : `<div class="lbl">The secret word</div><div class="word">${esc(m.word)}</div><div class="note">${room.settings.mode==="undercover" ? "Careful: one of you got a slightly different word, and they don't know it. It might be you." : "One of you has no word at all. Find them."}</div>`;
+  return `<div class="file ${opts.open?"open":""} ${m.imposter?"imp":""}" id="file"><div class="paper"><span class="pin" style="background:${hue(p.name)}">${p.photo?`<img src="/api/img/${p.photo}" alt="">`:esc(p.name[0])}</span>${inner}</div>
+    <div class="cover"><span class="ts">TOP SECRET</span><span class="agent">Agent ${esc(p.name)}</span><span class="tap">TAP TO OPEN</span></div></div>`;
+}
+function reveal(){
+  const r = rd(), m = r.mine || {};
+  const act_ = r.order.map(pid=>P(pid)), ready = act_.filter(p=>p.ready).length;
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds} · ${esc(room.categoryLabel)}</div><h1 class="title">Your case file</h1><p class="sub">Shield your screen, then open it.</p></div>
+    <div class="filewrap">${fileHTML(m, {open:opened})}</div>
+    <div id="after" ${opened?"":"hidden"} class="fadeup" style="display:grid;gap:10px">
+      ${P(me.pid).ready ? `<p class="sub">Waiting for everyone · ${ready}/${act_.length} ready</p>` : `<button class="btn primary wide" id="readyBtn">Got it. Close the file</button>`}</div>`;
+  $("#file").onclick = ()=>{ opened = !opened; $("#file").classList.toggle("open", opened); if(opened){ buzz(60); $("#after").hidden = false; } };
+  if($("#readyBtn")) $("#readyBtn").onclick = ()=>act("ready").catch(err=>toast(err.message));
+}
+
+/* ---------- clues and discussion ---------- */
+function slipHTML(c, i, opts={}){
+  const rot = ((i*37)%7 - 3) * .8;
+  return `<div class="slip ${c.late?"late":""} ${opts.imp?"imp":""}" style="--r:${rot}deg;animation-delay:${opts.delay||0}s"><div class="who">${face(c.pid)}${esc(P(c.pid).name)}</div><div class="txt">${esc(c.text)}</div></div>`;
+}
+function clues(){
+  const r = rd(), m = r.mine || {}, discuss = room.phase === "discuss";
+  const myTurn = !discuss && room.turnPid === me.pid;
+  const seq = r.order.flatMap(()=>[]).concat(Array.from({length: room.totalTurns || r.order.length*room.settings.clueRounds}, (_, i)=>r.order[i % r.order.length]));
+  const strip = discuss ? "" : `<div class="turns">${seq.map((pid,i)=>`<div class="t ${i<r.turn?"done":""} ${i===r.turn?"now":""}">${face(pid,"face")}<span>${esc(P(pid).name)}</span></div>`).join("")}</div>`;
+  const myWord = `<div class="peek"><button id="peekBtn">${peek ? (m.imposter ? "You're the imposter" : `Your word: <b>${esc(m.word)}</b>`) : "Tap to peek at your word"}</button></div>`;
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} · ${esc(room.categoryLabel)}</div>
+    <h1 class="title">${discuss ? "Who's the fake?" : myTurn ? "Your turn" : `${esc(P(room.turnPid).name)} is thinking`}</h1>
+    <p class="sub">${discuss ? "Argue it out. The vote opens when the timer ends." : myTurn ? "Give one short clue. Don't say the word." : "Clues go up on the board as people give them."}</p></div>
+    ${myWord}${strip}
+    ${myTurn ? `<form class="yourturn" id="clueForm"><b>Your clue</b><input type="text" id="clueIn" maxlength="40" autocomplete="off" placeholder="One word or a few"><div class="err" id="clueErr" style="color:var(--red)"></div><button class="btn red">Pin it to the board</button></form>` : ""}
+    <div class="board">${r.clues.map((c,i)=>slipHTML(c,i)).join("") || '<p class="hint">No clues yet.</p>'}</div>`;
+  $("#peekBtn").onclick = ()=>{ peek = !peek; render(); };
+  if(myTurn){ $("#clueIn").focus(); $("#clueForm").onsubmit = async e=>{ e.preventDefault(); const t = $("#clueIn").value.trim(); if(!t) return;
+    try{ await act("clue", {text:t}); }catch(err){ $("#clueErr").textContent = err.message; } }; }
+}
+
+/* ---------- vote ---------- */
+function vote(){
+  const r = rd(), votes = r.votes || {}, mine = votes[me.pid], inRound = r.order.includes(me.pid);
+  const tally = t => Object.entries(votes).filter(([v,x])=>x===t).map(([v])=>v);
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} · The vote</div><h1 class="title">Name the imposter</h1>
+    <p class="sub">Tap a suspect. Everyone sees your vote. · ${Object.keys(votes).length}/${r.order.length} voted</p></div>
+    <div class="ring">${r.order.map(pid=>{ const vs = tally(pid), self = pid === me.pid;
+      return `<button class="tok ${inRound&&!self?"pick":"off"} ${mine===pid?"sel":""}" data-vote="${pid}" ${inRound&&!self?"":"disabled"}>${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${self?" (you)":""}</span><span class="voters">${vs.map(v=>face(v)).join("")}</span>${vs.length?`<span class="count">${vs.length}</span>`:""}</button>`; }).join("")}</div>
+    ${inRound ? `<div style="display:flex;justify-content:center;margin-top:14px"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip ${tally("skip").length?`(${tally("skip").length})`:""}</button></div>` : ""}
+    <div class="board" style="margin-top:20px">${r.clues.map((c,i)=>slipHTML(c,i)).join("")}</div>`;
+  document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>act("vote", {target:b.dataset.vote}).then(()=>buzz(40)).catch(err=>toast(err.message)));
+}
+
+/* ---------- verdict and last guess ---------- */
+function accusedFile(pid, caught){
+  const p = P(pid);
+  return `<div class="filewrap" style="position:relative"><div class="file open"><div class="paper"><span class="pin" style="background:${hue(p.name)}">${p.photo?`<img src="/api/img/${p.photo}" alt="">`:esc(p.name[0])}</span>
+    <div class="lbl">Accused</div><div class="word">${esc(p.name)}</div><div class="note">${(rd().clues.filter(c=>c.pid===pid).map(c=>`"${esc(c.text)}"`).join(", ")) || "No clues on record."}</div></div></div>
+    <span class="stamp ${caught?"imp":"crew"}">${caught?"IMPOSTER":"INNOCENT"}</span></div>`;
+}
+function verdict(){
+  const r = rd();
+  $("#stage").innerHTML = r.accused
+    ? `<div class="fadeup"><div class="eyebrow">The verdict</div><h1 class="title">${esc(P(r.accused).name)} is…</h1></div>${accusedFile(r.accused, r.caught)}
+       <p class="sub fadeup" style="animation-delay:1.6s;font-weight:800;color:${r.caught?"var(--fg)":"var(--red)"}">${r.caught ? "Caught. But they get one last guess at the word." : "Wrong person. The real imposter is still out there."}</p>`
+    : `<div class="fadeup" style="margin-top:10vh"><div class="eyebrow">The verdict</div><h1 class="title">Nobody was accused</h1><p class="sub">The vote was split. The imposter slips away into the night.</p></div>`;
+  if(r.caught) buzz([200,80,200]);
+}
+function guess(){
+  const r = rd(), m = r.mine || {};
+  if(m.guessing){
+    $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Busted</div><h1 class="title" style="color:var(--red)">You were the imposter</h1>
+      <p class="sub">${room.settings.mode==="undercover" ? `Your word was <b>${esc(m.word)}</b>, but the crew had a different one.` : "You had no word."} One guess to steal the round. What was the crew's word?</p></div>
+      <form class="yourturn" id="guessForm" style="margin-top:20px"><b>Final answer</b><input type="text" id="guessIn" maxlength="40" autocomplete="off"><button class="btn red">Lock it in</button></form>
+      <div class="board">${r.clues.map((c,i)=>slipHTML(c,i)).join("")}</div>`;
+    $("#guessIn").focus();
+    $("#guessForm").onsubmit = async e=>{ e.preventDefault(); const t = $("#guessIn").value.trim(); if(!t) return; try{ await act("guess", {text:t}); }catch(err){ toast(err.message); } };
+  } else {
+    $("#stage").innerHTML = `<div class="fadeup" style="margin-top:8vh"><div class="eyebrow">Last chance</div><h1 class="title">The imposter is guessing</h1>
+      <p class="sub">${esc(P(r.accused).name)} gets one shot at the crew's word. If they get it, they steal the round.</p><div class="thinking"><i></i><i></i><i></i></div></div>`;
+  }
+}
+
+/* ---------- round results ---------- */
+function results(){
+  const r = rd(), imps = r.imposters;
+  const outcome = r.caught ? (r.guess && r.guess.correct ? "Caught, but stole the word" : "The crew wins this round") : "The imposter got away";
+  const ai = r.ai;
+  const sc = scoreRows(r.points);
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds} · case closed</div><h1 class="title">${outcome}</h1></div>
+    <div class="duo"><div class="wordcard"><div class="lbl">The crew's word</div><div class="w">${esc(r.word)}</div></div>
+      <div class="wordcard imp" style="animation-delay:.25s"><div class="lbl">${room.settings.mode==="undercover"?"The imposter's word":"The imposter had"}</div><div class="w">${room.settings.mode==="undercover"?esc(r.decoy):"No word"}</div></div></div>
+    <div class="panel" style="margin-top:14px"><b>The imposter${imps.length>1?"s":""}</b><div style="display:flex;flex-wrap:wrap;gap:12px">${imps.map(pid=>`<span class="tok" style="padding:0">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></span>`).join("")}</div>
+      ${r.guess ? `<span>Last guess: <b>"${esc(r.guess.text)}"</b> ${r.guess.correct ? '<b style="color:var(--green)">correct</b>' : '<b style="color:var(--red)">wrong</b>'}</span>` : ""}</div>
+    <div class="board">${r.clues.map((c,i)=>slipHTML(c,i,{imp:imps.includes(c.pid), delay:.1*i})).join("")}</div>
+    <div class="chat">${ai && ai.story ? `<div class="msg"><span class="bot">AI</span><div class="bubble">${esc(ai.story)}</div></div>${(ai.lines||[]).map((l,i)=>{ const pid = Object.keys(room.players).find(x=>P(x).name===l.name); return `<div class="msg" style="animation-delay:${.4+i*.35}s">${pid?face(pid):'<span class="bot">?</span>'}<div class="bubble"><b>${esc(l.name)}</b>${esc(l.line)}</div></div>`; }).join("")}`
+      : ai && ai.failed ? "" : '<div class="thinking"><i></i><i></i><i></i></div><p class="hint" style="text-align:center">The AI is reading everyone\'s clues…</p>'}</div>
+    <h2 style="margin-top:22px;font-size:18px;text-transform:uppercase">Scores</h2>${sc}`;
+}
+function scoreRows(plus){
+  const rows = Object.keys(room.players).map(pid=>({pid, s: room.scores[pid]||0})).sort((a,b)=>b.s-a.s);
+  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}" style="animation-delay:${i*.08}s"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}</span><span class="plus">${plus&&plus[x.pid]?`+${plus[x.pid]}`:""}</span><span class="pts">${x.s}</span></div>`).join("")}</div>`;
+}
+function final(){
+  const rows = Object.keys(room.players).map(pid=>({pid, s: room.scores[pid]||0})).sort((a,b)=>b.s-a.s);
+  const top = rows[0];
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">All cases closed</div><h1 class="title">${top && top.s>0 ? `${esc(P(top.pid).name)} wins` : "Game over"}</h1>
+    ${top ? `<div class="filewrap" style="position:relative"><div class="file open"><div class="paper"><span class="pin" style="background:${hue(P(top.pid).name)}">${P(top.pid).photo?`<img src="/api/img/${P(top.pid).photo}" alt="">`:esc(P(top.pid).name[0])}</span><div class="lbl">Agent of the night</div><div class="word">${esc(P(top.pid).name)}</div><div class="note">${top.s} points</div></div></div><span class="stamp crew" style="color:var(--amber)">TOP AGENT</span></div>` : ""}</div>
+    ${scoreRows(null)}
+    <h2 style="margin-top:22px;font-size:18px;text-transform:uppercase">Every case</h2>
+    <div class="scores">${room.roundData.map((r,i)=>`<div class="srow" style="grid-template-columns:auto 1fr auto"><span class="rk">${i+1}</span><span>${esc(r.word)} <span class="muted">vs</span> ${esc(r.decoy||"")}</span><span class="muted" style="font-size:13px">${r.imposters?.map(pid=>esc(P(pid).name)).join(", ")}</span></div>`).join("")}</div>`;
+}
+
+/* ---------- host controls, timer ---------- */
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "reveal") b.push('<button class="btn small" data-host="next">Start the clues now</button>');
+  if(ph === "clues") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Skip this turn</button>');
+  if(ph === "discuss") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn red" data-host="next">Start the vote</button>');
+  if(ph === "vote") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Count the votes</button>');
+  if(ph === "verdict") b.push('<button class="btn primary" data-host="next">Continue</button>');
+  if(ph === "guess") b.push('<button class="btn small" data-host="skip">Skip the guess</button>');
+  if(ph === "results") b.push(`<button class="btn primary" data-host="next">${room.round+1 < room.settings.rounds ? "Next round" : "Final scores"}</button>`);
+  if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+document.addEventListener("click", async e=>{
+  const h = e.target.closest("[data-host]"), k = e.target.closest("[data-kick]");
+  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); }catch(err){ toast(err.message); } }
+  if(k){ if(k.dataset.sure !== "1"){ k.dataset.sure = "1"; k.textContent = "Sure?"; return; } act("kick", {pid:k.dataset.kick}).catch(err=>toast(err.message)); }
+});
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !room.deadline){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
+  el.classList.toggle("low", left <= 10);
+}
+setInterval(tickTimer, 250);
+
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>
