@@ -347,6 +347,7 @@ function home(){
 function openRoom(c){
   code = c; const s = store("ww:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
   history.replaceState(null, "", "/werewolf?room="+c); $("#hCode").hidden = false; $("#hCode").textContent = c;
+  armBack();
   poll(++pollGen, -1);
 }
 async function poll(gen, v){
@@ -695,8 +696,31 @@ function renderChat(){
 // the send button must not steal focus from the text box, or the keyboard closes and reopens on every message
 document.addEventListener("pointerdown", e=>{ if(e.target.closest("#chatForm button")) e.preventDefault(); });
 document.addEventListener("mousedown", e=>{ if(e.target.closest("#chatForm button")) e.preventDefault(); });
-$("#chatFab").onclick = ()=>{ chatOpen = true; chatSig = ""; renderChat(); setTimeout(()=>$("#chatMsgs").scrollTop = 1e9, 50); };
-$("#chatClose").onclick = ()=>{ chatOpen = false; $("#chatIn")?.blur(); renderChat(); };
+/* ---------- the phone's Back button ----------
+   Back closes the chat instead of leaving, and leaving the game takes a second press.
+   Two extra history entries do this: "guard" while you're in a room, "chat" while the chat is open. */
+let skipPop = false, leaveArmed = false;
+function armBack(){ if(!history.state?.guard) history.pushState({guard:1}, ""); }
+function openChat(){
+  chatOpen = true; chatSig = ""; renderChat(); setTimeout(()=>$("#chatMsgs").scrollTop = 1e9, 50);
+  if(!history.state?.chat) history.pushState({chat:1}, "");
+}
+function closeChat(fromBack){
+  chatOpen = false; $("#chatIn")?.blur(); renderChat();
+  if(!fromBack && history.state?.chat){ skipPop = true; history.back(); }  // drop the chat entry we added
+}
+window.addEventListener("popstate", ()=>{
+  if(skipPop){ skipPop = false; return; }
+  if(chatOpen && !wide()){ closeChat(true); return; }
+  if(!code) return;
+  if(leaveArmed){ history.back(); return; }  // second press: really leave
+  leaveArmed = true;
+  toast("Press back again to leave the game");
+  history.pushState({guard:1}, "");
+  setTimeout(()=>{ leaveArmed = false; }, 2500);
+});
+$("#chatFab").onclick = openChat;
+$("#chatClose").onclick = ()=>closeChat(false);
 $("#chatTabs").onclick = e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; chatCh = b.dataset.ch; chatSig = ""; renderChat(); $("#chatMsgs").scrollTop = 1e9; };
 function growChat(){
   const t = $("#chatIn"); if(!t) return;
