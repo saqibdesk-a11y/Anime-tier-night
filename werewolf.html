@@ -204,7 +204,7 @@ details summary{cursor:pointer;font-weight:800}
 .chatfab svg{width:26px;height:26px}
 .chatfab .badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:999px;background:var(--blood);color:#fff;font-size:12px;font-weight:900;display:grid;place-items:center;padding:0 6px}
 body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-.chat{position:fixed;left:0;right:0;bottom:0;z-index:35;height:min(72dvh,620px);display:grid;grid-template-rows:auto auto 1fr auto;background:rgba(12,10,32,.97);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;box-shadow:0 -20px 60px rgba(0,0,0,.7);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);backdrop-filter:blur(14px)}
+.chat{position:fixed;left:0;right:0;bottom:0;z-index:35;height:min(72dvh,620px);display:flex;flex-direction:column;background:rgba(12,10,32,.97);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;box-shadow:0 -20px 60px rgba(0,0,0,.7);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);backdrop-filter:blur(14px)}
 .chat.open{transform:none}
 /* keyboard open on a phone: the chat fills exactly the space above it, newest messages in view */
 /* while typing on a phone: the chat runs from the top of the screen to the top of the keyboard, no gaps */
@@ -222,7 +222,8 @@ body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .chat .tabs button.ghosts.on{background:#5b5f7a;color:#fff;border-color:#5b5f7a}
 .chat .tabs button i{position:absolute;top:2px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--blood)}
 .chat .x{border:0;background:rgba(255,255,255,.08);border-radius:999px;width:36px;height:36px;font-size:18px;color:var(--fg)}
-.chat .msgs{overflow-y:auto;padding:6px 12px 10px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
+.chat .msgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 12px 10px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
+.chat header,.chat .grab,.chat form{flex:none}
 .chat .m{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:end;max-width:86%}
 .chat .m .av{width:30px;height:30px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;font-size:12px;color:#0b0820}
 .chat .m .av img{width:100%;height:100%;object-fit:cover;object-position:top}
@@ -235,10 +236,10 @@ body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .chat .m.evil .b{background:rgba(227,38,75,.18)}
 .chat .m.ghosts .b{background:rgba(150,155,190,.16);font-style:italic}
 .chat .empty{margin:auto;color:var(--muted);text-align:center;font-size:14px;padding:20px}
-.chat form{display:flex;align-items:center;gap:6px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
-.chat form input{flex:1;min-width:0;height:38px;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:19px;padding:0 14px;font-size:16px;line-height:1.2;color:var(--fg);outline:none}
-.chat form input:focus{border-color:var(--moon)}
-.chat form button{border:0;border-radius:50%;width:36px;height:36px;flex:none;background:var(--moon);color:#2a1a00;display:grid;place-items:center}
+.chat form{display:flex;align-items:flex-end;gap:6px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat form textarea{flex:1;min-width:0;height:38px;max-height:120px;resize:none;overflow-y:auto;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:19px;padding:8px 14px;font:inherit;font-size:16px;line-height:1.3;color:var(--fg);outline:none;display:block}
+.chat form textarea:focus{border-color:var(--moon)}
+.chat form button{border:0;border-radius:50%;width:36px;height:36px;margin-bottom:1px;flex:none;background:var(--moon);color:#2a1a00;display:grid;place-items:center}
 .chat form button svg{width:16px;height:16px}
 .chat form .locked{flex:1;color:var(--muted);font-size:13px;text-align:center;padding:6px}
 @media (min-width:1100px){
@@ -667,9 +668,9 @@ function renderChat(){
   renderChat.formSig = formSig;
   const keep = $("#chatIn")?.value || "";
   $("#chatForm").innerHTML = write.includes(chatCh)
-    ? `<input id="chatIn" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Message ${CH[chatCh].toLowerCase()}…" aria-label="Message"><button aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5 21 12 3 3.5 3 10l12 2-12 2z"/></svg></button>`
+    ? `<textarea id="chatIn" rows="1" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Message ${CH[chatCh].toLowerCase()}…" aria-label="Message"></textarea><button aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5 21 12 3 3.5 3 10l12 2-12 2z"/></svg></button>`
     : `<div class="locked">${why}</div>`;
-  if($("#chatIn")) $("#chatIn").value = keep;
+  if($("#chatIn")){ $("#chatIn").value = keep; growChat(); }
 }
 // phones shrink the visible area when the keyboard opens; keep the whole chat inside what's left.
 // Android Chrome resizes the page itself (see the viewport tag); iPhones need the keyboard measured.
@@ -697,10 +698,18 @@ document.addEventListener("mousedown", e=>{ if(e.target.closest("#chatForm butto
 $("#chatFab").onclick = ()=>{ chatOpen = true; chatSig = ""; renderChat(); setTimeout(()=>$("#chatMsgs").scrollTop = 1e9, 50); };
 $("#chatClose").onclick = ()=>{ chatOpen = false; $("#chatIn")?.blur(); renderChat(); };
 $("#chatTabs").onclick = e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; chatCh = b.dataset.ch; chatSig = ""; renderChat(); $("#chatMsgs").scrollTop = 1e9; };
+function growChat(){
+  const t = $("#chatIn"); if(!t) return;
+  t.style.height = "38px";
+  t.style.height = Math.min(t.scrollHeight + 2, 120) + "px";  // grows line by line, then scrolls inside
+}
+$("#chatForm").addEventListener("input", e=>{ if(e.target.id === "chatIn") growChat(); });
+// Enter sends; Shift+Enter (on a keyboard) adds a new line
+$("#chatForm").addEventListener("keydown", e=>{ if(e.target.id === "chatIn" && e.key === "Enter" && !e.shiftKey){ e.preventDefault(); $("#chatForm").requestSubmit(); } });
 $("#chatForm").onsubmit = async e=>{
   e.preventDefault(); const inp = $("#chatIn"); const text = inp?.value.trim(); if(!text) return;
-  inp.value = "";
-  try{ await act("chat", {ch: chatCh, text}); }catch(err){ inp.value = text; toast(err.message); }
+  inp.value = ""; growChat();
+  try{ await act("chat", {ch: chatCh, text}); }catch(err){ inp.value = text; growChat(); toast(err.message); }
 };
 
 /* ---------- host controls, clock ---------- */
