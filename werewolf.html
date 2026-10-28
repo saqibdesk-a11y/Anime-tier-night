@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#05060f">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
@@ -207,8 +207,12 @@ body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .chat{position:fixed;left:0;right:0;bottom:0;z-index:35;height:min(72dvh,620px);display:grid;grid-template-rows:auto auto 1fr auto;background:rgba(12,10,32,.97);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;box-shadow:0 -20px 60px rgba(0,0,0,.7);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);backdrop-filter:blur(14px)}
 .chat.open{transform:none}
 /* keyboard open on a phone: the chat fills exactly the space above it, newest messages in view */
-.chat.kb{top:var(--kb-top,0px);bottom:auto;height:var(--kb-h,100dvh);border-radius:0;transition:none}
-.chat.kb .grab{display:none}
+/* while typing on a phone: the chat runs from the top of the screen to the top of the keyboard, no gaps */
+.chat.typing{top:var(--kb-top,0px);bottom:var(--kb-bottom,0px);height:auto;border-radius:0;border-top:0;transition:none}
+.chat.typing .grab{display:none}
+.chat.typing header{padding:calc(4px + env(safe-area-inset-top,0px)) 10px 4px}
+.chat.typing .msgs{padding:4px 10px 6px}
+.chat.typing form{padding:4px 8px}
 .chat .grab{width:42px;height:5px;border-radius:999px;background:rgba(255,255,255,.25);margin:8px auto 0}
 .chat header{display:flex;align-items:center;gap:6px;padding:8px 12px 8px 14px}
 .chat .tabs{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
@@ -667,22 +671,29 @@ function renderChat(){
     : `<div class="locked">${why}</div>`;
   if($("#chatIn")) $("#chatIn").value = keep;
 }
-// phones shrink the visible area when the keyboard opens; keep the whole chat inside what's left
+// phones shrink the visible area when the keyboard opens; keep the whole chat inside what's left.
+// Android Chrome resizes the page itself (see the viewport tag); iPhones need the keyboard measured.
 (function fitChatToKeyboard(){
-  const vv = window.visualViewport; if(!vv) return;
+  const vv = window.visualViewport;
+  const typing = () => document.activeElement?.id === "chatIn" && !wide();
   const fit = ()=>{
-    const sheet = $("#chat"), up = vv.height < window.innerHeight * .8 && document.activeElement?.id === "chatIn";
-    sheet.classList.toggle("kb", up && !wide());
-    if(up){
-      sheet.style.setProperty("--kb-top", vv.offsetTop + "px");
-      sheet.style.setProperty("--kb-h", vv.height + "px");
-      $("#chatMsgs").scrollTop = $("#chatMsgs").scrollHeight;
-    }
+    const sheet = $("#chat"), on = typing();
+    sheet.classList.toggle("typing", on);
+    if(!on) return;
+    const top = vv ? vv.offsetTop : 0;
+    const below = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+    sheet.style.setProperty("--kb-top", top + "px");
+    sheet.style.setProperty("--kb-bottom", below + "px");
+    const box = $("#chatMsgs"); box.scrollTop = box.scrollHeight;
   };
-  vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit);
-  document.addEventListener("focusin", e=>{ if(e.target.id === "chatIn") setTimeout(fit, 60); });
-  document.addEventListener("focusout", e=>{ if(e.target.id === "chatIn") setTimeout(fit, 60); });
+  if(vv){ vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
+  window.addEventListener("resize", fit);
+  document.addEventListener("focusin", e=>{ if(e.target.id === "chatIn"){ fit(); setTimeout(fit, 120); setTimeout(fit, 350); } });
+  document.addEventListener("focusout", e=>{ if(e.target.id === "chatIn") setTimeout(fit, 120); });
 })();
+// the send button must not steal focus from the text box, or the keyboard closes and reopens on every message
+document.addEventListener("pointerdown", e=>{ if(e.target.closest("#chatForm button")) e.preventDefault(); });
+document.addEventListener("mousedown", e=>{ if(e.target.closest("#chatForm button")) e.preventDefault(); });
 $("#chatFab").onclick = ()=>{ chatOpen = true; chatSig = ""; renderChat(); setTimeout(()=>$("#chatMsgs").scrollTop = 1e9, 50); };
 $("#chatClose").onclick = ()=>{ chatOpen = false; $("#chatIn")?.blur(); renderChat(); };
 $("#chatTabs").onclick = e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; chatCh = b.dataset.ch; chatSig = ""; renderChat(); $("#chatMsgs").scrollTop = 1e9; };
@@ -690,7 +701,6 @@ $("#chatForm").onsubmit = async e=>{
   e.preventDefault(); const inp = $("#chatIn"); const text = inp?.value.trim(); if(!text) return;
   inp.value = "";
   try{ await act("chat", {ch: chatCh, text}); }catch(err){ inp.value = text; toast(err.message); }
-  $("#chatIn")?.focus();
 };
 
 /* ---------- host controls, clock ---------- */
