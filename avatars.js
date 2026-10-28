@@ -13,7 +13,7 @@
   .av-head h2{margin:0;font-size:19px;flex:1;font-family:inherit;font-weight:800;letter-spacing:0;text-transform:none}
   .av-x{border:0;background:rgba(255,255,255,.08);color:inherit;border-radius:999px;width:36px;height:36px;font-size:18px;cursor:pointer}
   .av-tools{display:flex;gap:8px;padding:0 18px 8px;flex-wrap:wrap}
-  .av-chips{display:flex;gap:6px;padding:0 18px 10px;overflow-x:auto;scrollbar-width:none}
+  .av-chips{display:flex;gap:6px;padding:0 18px 10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,#000 88%,transparent)}
   .av-chips button{flex:none;border:1px solid rgba(255,255,255,.16);background:none;color:inherit;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
   .av-chips button.on{background:#ffd166;color:#2a1c00;border-color:#ffd166}
   .av-tools input{flex:1;min-width:150px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;color:inherit;font:inherit;font-size:16px;outline:none}
@@ -29,7 +29,16 @@
   const style = document.createElement("style"); style.textContent = css; document.head.appendChild(style);
   const file = document.createElement("input"); file.type = "file"; file.accept = "image/*"; file.hidden = true; document.body.appendChild(file);
   let list = null, act = null, close = null, show = "";
-  const SHOWS = [["", "All"], ["Detective Conan", "Detective Conan"], ["Dragon Ball Z", "Dragon Ball Z"]];
+  // one filter per show in the list, the shows with the most characters first
+  function shows(){
+    const n = {};
+    (list||[]).forEach(c=>{ if(c.show) n[c.show] = (n[c.show]||0) + 1; });
+    return [["", "All"], ...Object.keys(n).sort((a,b)=>n[b]-n[a] || a.localeCompare(b)).map(s=>[s, `${s} · ${n[s]}`])];
+  }
+  function chips(){
+    const el = document.querySelector(".av-chips"); if(!el) return;
+    el.innerHTML = shows().map(([v,t])=>`<button data-show="${esc(v)}" class="${v===show?"on":""}">${esc(t)}</button>`).join("");
+  }
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   async function load(){
@@ -54,7 +63,7 @@
     const scrim = document.createElement("div"); scrim.className = "av-scrim";
     scrim.innerHTML = `<div class="av-sheet" role="dialog" aria-label="Choose your avatar"><div class="av-head"><h2>Choose your avatar</h2><button class="av-x" aria-label="Close">×</button></div>
       <div class="av-tools"><input type="text" placeholder="Search a character or show" aria-label="Search characters"><button class="av-up">Upload from gallery</button></div>
-      <div class="av-chips">${SHOWS.map(([v,t])=>`<button data-show="${esc(v)}" class="${v===show?"on":""}">${t}</button>`).join("")}</div><div class="av-grid"></div></div>`;
+      <div class="av-chips"></div><div class="av-grid"></div></div>`;
     document.body.appendChild(scrim);
     // the visible area shrinks when the phone keyboard opens: size the picker to it
     const vv = window.visualViewport;
@@ -74,7 +83,7 @@
       search.blur();
       try{ await act("avatar", {url: t.dataset.url}); close && close(); }catch(err){ alertish(err.message); }
     };
-    grid(""); await load(); grid(search.value);
+    chips(); grid(""); await load(); chips(); grid(search.value);
   }
 
   file.onchange = async ()=>{
