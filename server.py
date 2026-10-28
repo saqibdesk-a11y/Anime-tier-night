@@ -149,6 +149,7 @@ CHAR_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { characters(sort:
 SHOW_QUERY = """query ($id: Int) { Media(id: $id) { characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } image { large } } } } }"""
 FEATURED_SHOWS = [(235, "Detective Conan"), (813, "Dragon Ball Z")]  # AniList ids, picked by request
 SKIP_CHARACTERS = {"Narrator", "Lum"}
+ALIASES = {"Ai Haibara": "Sherry"}  # Sherry is Ai Haibara's Black Organization codename; AniList has no separate entry
 _avatars = {"list": None, "at": 0}
 _avatars_lock = threading.Lock()
 AVATAR_HOST = "https://s4.anilist.co/"
@@ -189,6 +190,10 @@ def avatar_gallery():
                 if img.startswith(AVATAR_HOST) and "default" not in img and nm not in SKIP_CHARACTERS and img not in seen:
                     out.append({"name": nm, "show": show, "img": img})
                     seen.add(img)
+        for c in out:
+            if c["name"] in ALIASES:
+                c["alias"] = ALIASES[c["name"]]
+                c["name"] = f'{c["name"]} ({ALIASES[c["name"]]})'
         if out:
             _avatars.update(list=out, at=time.time())
         return out
