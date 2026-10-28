@@ -332,6 +332,7 @@ body.focus .dock .closetools{display:block}
 <div class="toast" id="toast" hidden></div>
 
 <script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -389,6 +390,7 @@ function openRoom(c){
   me = s.me || null; hostKey = s.hostKey || null;
   $("#home").hidden = true; $("#room").hidden = false;
   history.replaceState(null, "", "/draw?room="+c);
+  BackGuard.arm();
   poll(++pollGen, -1);
 }
 async function poll(gen, v){
@@ -622,6 +624,8 @@ function renderDraw(){
 }
 
 /* ---------- full-screen drawing ---------- */
+// Back leaves full-screen drawing (and closes the tools) before anything else
+BackGuard.onBack(()=>{ if(!document.body.classList.contains("focus")) return false; setFocus(false); return true; });
 async function setFocus(on){
   document.body.classList.toggle("focus", on);
   document.body.classList.remove("tools");

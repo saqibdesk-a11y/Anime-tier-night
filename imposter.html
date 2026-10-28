@@ -180,6 +180,7 @@ details summary{cursor:pointer;font-weight:800}
 <div class="toast" id="toast" hidden></div>
 
 <script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -222,6 +223,7 @@ function home(){
 function openRoom(c){
   code = c; const s = store("imp:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
   history.replaceState(null, "", "/imposter?room="+c); $("#hCode").hidden = false; $("#hCode").textContent = c;
+  BackGuard.arm();
   poll(++pollGen, -1);
 }
 async function poll(gen, v){

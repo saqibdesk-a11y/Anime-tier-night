@@ -401,6 +401,7 @@ select option{background:var(--panel-solid)}
 <div class="showbar" id="showbar" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="/backguard.js"></script>
 <script>
 const TIERS = ["S","A","B","C","D","F"];
 const SCORE = {S:6,A:5,B:4,C:3,D:2,F:1};
@@ -438,6 +439,7 @@ function openRoom(c){
   if(hk){ hostKey = hk; store("atn:"+code, {me, hostKey}); }
   $("#home").hidden = true; $("#room").hidden = false;
   if(new URLSearchParams(location.search).get("room") !== code) history.replaceState(null,"","?room="+code);
+  BackGuard.arm();
   poll(++pollGen, -1);
 }
 function saveLocal(){ store("atn:"+code, {me, hostKey}); }
@@ -721,6 +723,12 @@ $("#copyLink").onclick = async ()=>{
 
 /* ---------- host tools ---------- */
 let pickId = null;
+// Back closes the poster picker, then Host tools, before anything else
+BackGuard.onBack(()=>{
+  if(!$("#picker").hidden){ closePicker(); return true; }
+  if(!$("#drawer").hidden){ openDrawer(false); return true; }
+  return false;
+});
 function openDrawer(open){ $("#drawer").hidden = !open; $("#scrim").hidden = !open; if(open) renderHost(); }
 $("#hostBtn").onclick = ()=>openDrawer(true);
 $("#closeDrawer").onclick = ()=>openDrawer(false);
