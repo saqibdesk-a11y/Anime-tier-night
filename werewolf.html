@@ -231,12 +231,12 @@ body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .chat .m.evil .b{background:rgba(227,38,75,.18)}
 .chat .m.ghosts .b{background:rgba(150,155,190,.16);font-style:italic}
 .chat .empty{margin:auto;color:var(--muted);text-align:center;font-size:14px;padding:20px}
-.chat form{display:flex;gap:8px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
-.chat form input{flex:1;min-width:0;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:999px;padding:11px 16px;font-size:16px;color:var(--fg);outline:none}
+.chat form{display:flex;align-items:center;gap:6px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat form input{flex:1;min-width:0;height:38px;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:19px;padding:0 14px;font-size:16px;line-height:1.2;color:var(--fg);outline:none}
 .chat form input:focus{border-color:var(--moon)}
-.chat form button{border:0;border-radius:999px;width:46px;height:46px;flex:none;background:var(--moon);color:#2a1a00;display:grid;place-items:center}
-.chat form button svg{width:20px;height:20px}
-.chat form .locked{flex:1;color:var(--muted);font-size:14px;text-align:center;padding:12px}
+.chat form button{border:0;border-radius:50%;width:36px;height:36px;flex:none;background:var(--moon);color:#2a1a00;display:grid;place-items:center}
+.chat form button svg{width:16px;height:16px}
+.chat form .locked{flex:1;color:var(--muted);font-size:13px;text-align:center;padding:6px}
 @media (min-width:1100px){
   .chat{left:auto;right:16px;top:70px;bottom:16px;width:340px;height:auto;border-radius:20px;border:1px solid var(--line2);transform:none}
   .chat .grab,.chat .x,.chatfab{display:none}
