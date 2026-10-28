@@ -146,6 +146,9 @@ def to_option(a):
 
 CHAR_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { characters(sort: [FAVOURITES_DESC]) {
   name { full } image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } } } } } }"""
+SHOW_QUERY = """query ($id: Int) { Media(id: $id) { characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } image { large } } } } }"""
+FEATURED_SHOWS = [(235, "Detective Conan"), (813, "Dragon Ball Z")]  # AniList ids, picked by request
+SKIP_CHARACTERS = {"Narrator", "Lum"}
 _avatars = {"list": None, "at": 0}
 _avatars_lock = threading.Lock()
 AVATAR_HOST = "https://s4.anilist.co/"
@@ -171,6 +174,21 @@ def avatar_gallery():
                 show = ((((c.get("media") or {}).get("nodes") or [{}])[0] or {}).get("title") or {})
                 if img.startswith(AVATAR_HOST) and "default" not in img:
                     out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img})
+        seen = {c["img"] for c in out}
+        for media_id, show in FEATURED_SHOWS:
+            body = json.dumps({"query": SHOW_QUERY, "variables": {"id": media_id}}).encode("utf-8")
+            try:
+                req = urllib.request.Request("https://graphql.anilist.co", data=body, headers={
+                    "Content-Type": "application/json", "Accept": "application/json", "User-Agent": "AnimeTierNight/1.0"})
+                with urllib.request.urlopen(req, timeout=15) as r:
+                    nodes = json.loads(r.read().decode("utf-8"))["data"]["Media"]["characters"]["nodes"]
+            except Exception:
+                continue
+            for c in nodes:
+                img, nm = (c.get("image") or {}).get("large") or "", (c.get("name") or {}).get("full") or ""
+                if img.startswith(AVATAR_HOST) and "default" not in img and nm not in SKIP_CHARACTERS and img not in seen:
+                    out.append({"name": nm, "show": show, "img": img})
+                    seen.add(img)
         if out:
             _avatars.update(list=out, at=time.time())
         return out
@@ -520,9 +538,10 @@ class Handler(BaseHTTPRequestHandler):
         if parts == ["api", "avatars"]:
             return self.send_json({"avatars": avatar_gallery()})
 
-        if u.path == "/avatars.js":
-            with open(os.path.join(HERE, "avatars.js"), "rb") as f:
-                return self.send_bytes(f.read(), "text/javascript; charset=utf-8", "no-store")
+        if u.path in STATIC:
+            ctype, cache = STATIC[u.path]
+            with open(os.path.join(HERE, u.path.lstrip("/")), "rb") as f:
+                return self.send_bytes(f.read(), ctype, cache)
 
         if parts[:2] == ["api", "search"]:
             q = (qs.get("q") or [""])[0].strip()
@@ -795,6 +814,12 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_json({"ok": True, "provider": entry["provider"]})
 
 
+STATIC = {  # files the pages load: the shared avatar picker and what makes the site installable as an app
+    "/avatars.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),
+    "/icon-192.png": ("image/png", "public, max-age=86400"),
+    "/icon-512.png": ("image/png", "public, max-age=86400"),
+}
 PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html"}
 
 

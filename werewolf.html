@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#05060f">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
 <title>Werewolf</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap">
@@ -126,6 +133,9 @@ select option{background:#14122e}
 @keyframes draw{from{stroke-dashoffset:200}}
 .r-wolf{--c1:var(--wolf1);--c2:var(--wolf2)} .r-seer{--c1:var(--seer1);--c2:var(--seer2)} .r-doctor{--c1:var(--doc1);--c2:var(--doc2)}
 .r-hunter{--c1:var(--hunt1);--c2:var(--hunt2)} .r-villager{--c1:var(--vill1);--c2:var(--vill2)}
+.r-alpha{--c1:#5a0a1c;--c2:#ffd34d} .r-shaman{--c1:#3a0a4a;--c2:#e08cff} .r-siren{--c1:#4a0a30;--c2:#ff6fb5}
+.r-knight{--c1:#26324a;--c2:#c9d6e8} .r-mayor{--c1:#4a3508;--c2:#ffd34d} .r-assassin{--c1:#2b2f3a;--c2:#e3264b}
+.r-necro{--c1:#0f3a24;--c2:#8cf5b8} .r-jester{--c1:#3a1660;--c2:#ffd34d}
 
 /* under the table */
 .info{margin-top:8px;display:grid;gap:10px}
@@ -188,6 +198,48 @@ details summary{cursor:pointer;font-weight:800}
 .rolelist{display:grid;gap:8px;margin-top:10px}
 .rolelist div{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center;font-size:14px}
 .rolelist svg{width:34px;filter:drop-shadow(0 0 8px var(--c2))}
+/* ---------- chat: a sheet from the bottom on phones, docked on the right on big screens ---------- */
+.chatfab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25;width:58px;height:58px;border-radius:50%;border:1px solid var(--line2);background:linear-gradient(135deg,#2a2160,#14123a);color:var(--moon);display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.9);transition:transform .15s}
+.chatfab:active{transform:scale(.94)}
+.chatfab svg{width:26px;height:26px}
+.chatfab .badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:999px;background:var(--blood);color:#fff;font-size:12px;font-weight:900;display:grid;place-items:center;padding:0 6px}
+body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+.chat{position:fixed;left:0;right:0;bottom:0;z-index:35;height:min(72dvh,620px);display:grid;grid-template-rows:auto auto 1fr auto;background:rgba(12,10,32,.97);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;box-shadow:0 -20px 60px rgba(0,0,0,.7);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);backdrop-filter:blur(14px)}
+.chat.open{transform:none}
+.chat .grab{width:42px;height:5px;border-radius:999px;background:rgba(255,255,255,.25);margin:8px auto 0}
+.chat header{display:flex;align-items:center;gap:6px;padding:8px 12px 8px 14px}
+.chat .tabs{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
+.chat .tabs button{flex:none;border:1px solid var(--line);background:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:13px;color:var(--muted);position:relative}
+.chat .tabs button.on{background:var(--moon);color:#2a1a00;border-color:var(--moon)}
+.chat .tabs button.evil.on{background:var(--blood);color:#fff;border-color:var(--blood)}
+.chat .tabs button.ghosts.on{background:#5b5f7a;color:#fff;border-color:#5b5f7a}
+.chat .tabs button i{position:absolute;top:2px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--blood)}
+.chat .x{border:0;background:rgba(255,255,255,.08);border-radius:999px;width:36px;height:36px;font-size:18px;color:var(--fg)}
+.chat .msgs{overflow-y:auto;padding:6px 12px 10px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
+.chat .m{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:end;max-width:86%}
+.chat .m .av{width:30px;height:30px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;font-size:12px;color:#0b0820}
+.chat .m .av img{width:100%;height:100%;object-fit:cover;object-position:top}
+.chat .m .b{background:rgba(255,255,255,.08);border-radius:16px 16px 16px 4px;padding:7px 11px;overflow-wrap:anywhere;font-size:15px;line-height:1.4}
+.chat .m .b b{display:block;font-size:11px;color:var(--moon);margin-bottom:1px}
+.chat .m.mine{align-self:flex-end;grid-template-columns:minmax(0,1fr)}
+.chat .m.mine .av{display:none}
+.chat .m.mine .b{background:linear-gradient(135deg,#3b2f8f,#2a2160);border-radius:16px 16px 4px 16px}
+.chat .m.mine .b b{display:none}
+.chat .m.evil .b{background:rgba(227,38,75,.18)}
+.chat .m.ghosts .b{background:rgba(150,155,190,.16);font-style:italic}
+.chat .empty{margin:auto;color:var(--muted);text-align:center;font-size:14px;padding:20px}
+.chat form{display:flex;gap:8px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat form input{flex:1;min-width:0;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:999px;padding:11px 16px;font-size:16px;color:var(--fg);outline:none}
+.chat form input:focus{border-color:var(--moon)}
+.chat form button{border:0;border-radius:999px;width:46px;height:46px;flex:none;background:var(--moon);color:#2a1a00;display:grid;place-items:center}
+.chat form button svg{width:20px;height:20px}
+.chat form .locked{flex:1;color:var(--muted);font-size:14px;text-align:center;padding:12px}
+@media (min-width:1100px){
+  .chat{left:auto;right:16px;top:70px;bottom:16px;width:340px;height:auto;border-radius:20px;border:1px solid var(--line2);transform:none}
+  .chat .grab,.chat .x,.chatfab{display:none}
+  body.has-hostbar .chat{bottom:80px}
+  .stage{margin-right:max(calc((100vw - 720px)/2), 372px)}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -201,6 +253,13 @@ details summary{cursor:pointer;font-weight:800}
   <main class="stage" id="stage"></main>
 </div>
 <div class="hostbar" id="hostbar" hidden></div>
+<button class="chatfab" id="chatFab" hidden aria-label="Open chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="badge" id="chatBadge" hidden></span></button>
+<section class="chat" id="chat" hidden aria-label="Chat">
+  <div class="grab"></div>
+  <header><div class="tabs" id="chatTabs"></div><button class="x" id="chatClose" aria-label="Close chat">×</button></header>
+  <div class="msgs" id="chatMsgs"></div>
+  <form id="chatForm"></form>
+</section>
 <div class="toast" id="toast" hidden></div>
 <div id="overlay"></div>
 <script src="/avatars.js"></script>
@@ -225,13 +284,29 @@ const ART = {
   seer: `<svg viewBox="0 0 120 120"><path d="M8 60 Q60 14 112 60 Q60 106 8 60 Z" fill="#160a38" stroke="#cdb8ff" stroke-width="3"/><circle cx="60" cy="60" r="20" fill="#9d7bff"/><circle cx="60" cy="60" r="9" fill="#0b0820"/><circle cx="54" cy="54" r="4" fill="#fff"/><g stroke="#cdb8ff" stroke-width="3" stroke-linecap="round"><path d="M60 8 V20 M30 16 L36 27 M90 16 L84 27 M60 112 V100"/></g></svg>`,
   doctor: `<svg viewBox="0 0 120 120"><path d="M60 8 L102 22 V56 C102 84 84 102 60 112 C36 102 18 84 18 56 V22 Z" fill="#06291f" stroke="#9cf5cf" stroke-width="3"/><path d="M52 36 H68 V52 H84 V68 H68 V84 H52 V68 H36 V52 H52 Z" fill="#53e3a6"/></svg>`,
   hunter: `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="#f2a33a" stroke-width="4"/><circle cx="60" cy="60" r="28" fill="none" stroke="#f2a33a" stroke-width="3" opacity=".7"/><circle cx="60" cy="60" r="8" fill="#f2a33a"/><g stroke="#ffd8a0" stroke-width="3" stroke-linecap="round"><path d="M60 4 V24 M60 96 V116 M4 60 H24 M96 60 H116"/></g></svg>`,
+  alpha: `<svg viewBox="0 0 120 120"><path fill="#14030a" stroke="#ffd34d" stroke-width="2.5" d="M18 34 L36 10 L50 36 L70 36 L84 10 L102 34 L98 64 L84 90 L60 112 L36 90 L22 64 Z"/><path fill="#ffd34d" d="M38 4 L48 16 L60 2 L72 16 L82 4 L80 22 L40 22 Z"/><path fill="#ff4d4d" d="M36 54 L52 58 L42 64 Z M84 54 L68 58 L78 64 Z"/><path fill="#2a0612" d="M42 76 L60 104 L78 76 L60 84 Z"/></svg>`,
+  shaman: `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="44" fill="#1a0820" stroke="#e08cff" stroke-width="3"/><path d="M60 22 L68 50 L96 52 L72 66 L82 94 L60 76 L38 94 L48 66 L24 52 L52 50 Z" fill="#b04cff" opacity=".85"/><circle cx="60" cy="60" r="10" fill="#ffd34d"/></svg>`,
+  siren: `<svg viewBox="0 0 120 120"><path d="M20 70 Q40 40 60 70 T100 70" fill="none" stroke="#ff6fb5" stroke-width="5" stroke-linecap="round"/><path d="M28 88 Q44 66 60 88 T92 88" fill="none" stroke="#ff6fb5" stroke-width="4" opacity=".6" stroke-linecap="round"/><circle cx="60" cy="38" r="16" fill="#3a0a26" stroke="#ff9fd0" stroke-width="3"/><path d="M52 34 Q60 44 68 34" stroke="#ff9fd0" stroke-width="3" fill="none"/><path d="M84 22 L84 44 M84 22 L96 18 L96 40" stroke="#ffd34d" stroke-width="3" fill="none"/><circle cx="81" cy="44" r="4" fill="#ffd34d"/><circle cx="93" cy="40" r="4" fill="#ffd34d"/></svg>`,
+  knight: `<svg viewBox="0 0 120 120"><path d="M60 10 L100 24 V58 C100 86 82 104 60 112 C38 104 20 86 20 58 V24 Z" fill="#1d2633" stroke="#c9d6e8" stroke-width="3"/><path d="M60 28 V96 M38 50 H82" stroke="#c9d6e8" stroke-width="6" stroke-linecap="round"/></svg>`,
+  mayor: `<svg viewBox="0 0 120 120"><rect x="34" y="40" width="52" height="48" rx="4" fill="#3a2a08" stroke="#ffd34d" stroke-width="3"/><rect x="26" y="34" width="68" height="10" rx="3" fill="#ffd34d"/><rect x="40" y="16" width="40" height="20" rx="3" fill="#1d1404" stroke="#ffd34d" stroke-width="3"/><circle cx="60" cy="64" r="12" fill="#ffd34d"/><text x="60" y="69" text-anchor="middle" font-size="14" font-weight="900" fill="#3a2a08" font-family="sans-serif">2</text><path d="M30 96 H90" stroke="#ffd34d" stroke-width="4" stroke-linecap="round"/></svg>`,
+  assassin: `<svg viewBox="0 0 120 120"><path d="M30 92 L82 24 L92 30 L42 100 Z" fill="#c9d6e8"/><path d="M26 86 L44 104" stroke="#8a5a2b" stroke-width="8" stroke-linecap="round"/><path d="M22 100 L30 92" stroke="#c9d6e8" stroke-width="5" stroke-linecap="round"/><circle cx="84" cy="28" r="5" fill="#e3264b"/><path d="M84 34 Q86 46 80 52" stroke="#e3264b" stroke-width="3" fill="none"/></svg>`,
+  necro: `<svg viewBox="0 0 120 120"><path d="M60 16 C82 16 96 32 96 52 C96 66 88 74 84 78 V94 H36 V78 C32 74 24 66 24 52 C24 32 38 16 60 16 Z" fill="#1a2a1f" stroke="#8cf5b8" stroke-width="3"/><circle cx="46" cy="54" r="9" fill="#8cf5b8"/><circle cx="74" cy="54" r="9" fill="#8cf5b8"/><path d="M60 64 L54 74 H66 Z" fill="#8cf5b8"/><path d="M44 94 V102 M56 94 V104 M68 94 V102" stroke="#8cf5b8" stroke-width="3"/></svg>`,
+  jester: `<svg viewBox="0 0 120 120"><path d="M20 50 Q30 18 60 40 Q90 18 100 50 L92 56 Q84 40 60 52 Q36 40 28 56 Z" fill="#7a2bd0" stroke="#ffd34d" stroke-width="2"/><circle cx="20" cy="50" r="6" fill="#ffd34d"/><circle cx="100" cy="50" r="6" fill="#ffd34d"/><circle cx="60" cy="74" r="24" fill="#f5e6d0"/><path d="M48 80 Q60 92 72 80" stroke="#7a2bd0" stroke-width="3" fill="none"/><circle cx="51" cy="70" r="3" fill="#2a1040"/><circle cx="69" cy="70" r="3" fill="#2a1040"/></svg>`,
   villager: `<svg viewBox="0 0 120 120"><path d="M14 58 L60 18 L106 58 Z" fill="#203a63" stroke="#a9c8ff" stroke-width="3" stroke-linejoin="round"/><rect x="24" y="56" width="72" height="50" rx="3" fill="#152a4a" stroke="#a9c8ff" stroke-width="3"/><rect x="50" y="78" width="20" height="28" rx="2" fill="#6fa8ff"/><rect x="32" y="66" width="14" height="14" rx="2" fill="#ffe9b0"/><rect x="74" y="66" width="14" height="14" rx="2" fill="#ffe9b0"/></svg>`,
 };
 const DESC = {
-  wolf: "Each night, agree with your pack on someone to eliminate. By day, blend in and lie.",
-  seer: "Each night, look into one player's soul and learn if they are a werewolf.",
-  doctor: "Each night, protect one player from the wolves. Not the same person twice in a row.",
-  hunter: "If you die, you take one last shot and drag someone down with you.",
+  wolf: "Each night, the evil team agrees on someone to eliminate. By day, blend in and lie.",
+  alpha: "A werewolf who leads the hunt. Shows as Good to the Seer.",
+  shaman: "Evil. Once per game, during the day, protect another evil player from being voted out.",
+  siren: "Evil. If the village votes you out, every Good power fails the following night.",
+  knight: "Your shield lets you survive one night attack per game.",
+  mayor: "Your vote counts twice.",
+  assassin: "Once per game, at night, eliminate anyone, Good or Evil.",
+  necro: "Once per game, at night, bring one dead player from the Good team back to life.",
+  jester: "Good team, with a twist: you also win if you die. You show randomly as Good or Evil to the Seer.",
+  seer: "Each night, look into one player's soul and learn if they are Good or Evil.",
+  doctor: "Each night, protect one player from being killed. It can be you.",
+  hunter: "If you're killed at night, there's a 75% chance you take a random evil player down with you.",
   villager: "No powers, just instincts. Find the wolves and vote them out by day.",
 };
 const rname = r => room?.roleInfo?.[r]?.name || r;
@@ -283,7 +358,7 @@ async function poll(gen, v){
         if(room.current?.dead?.includes(me?.pid)) buzz([300,100,300]);
         lastLines = new Set();
       }
-      render();
+      render(); renderChat();
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -292,11 +367,11 @@ async function poll(gen, v){
 let lastSig = "";
 function render(){
   const ph = room.phase;
-  const scene = {dawn:"s-dawn", day:"s-day", vote:"s-vote", verdict:"s-vote", hunter:"s-vote", shot:"s-vote", final: room.winner==="wolves"?"s-wolves":"s-village"}[ph] || "s-night";
+  const scene = {dawn:"s-dawn", day:"s-day", vote:"s-vote", verdict:"s-vote", final: room.winner==="wolves"?"s-wolves":"s-village"}[ph] || "s-night";
   document.body.className = scene;
   renderHostbar(); tick();
   if(!me || !room.players[me.pid]) return gate();
-  const sig = JSON.stringify([ph, room.day, room.players, room.current?.id, room.votes, room.myNight, room.seerLog, room.settings, room.me, room.acted, revealed]);
+  const sig = JSON.stringify([ph, room.day, room.players, room.current?.id, room.votes, room.myNight, room.seerLog, room.settings, room.me, room.acted, room.myShield, revealed]);
   if(sig === lastSig) return;
   lastSig = sig;
   if(ph === "lobby") lobby();
@@ -352,30 +427,49 @@ function myRoleChip(){
 const clockHTML = () => `<div class="clock" id="clock"></div>`;
 
 const NIGHT = {
-  wolf: ["Choose your prey.", "Tap who the pack eliminates. Your pack sees your pick."],
-  seer: ["Peer into a soul.", "Tap someone to learn if they're a werewolf."],
-  doctor: ["Protect someone.", "Tap who to shield tonight. It can be you."],
-  hunter: ["Who's suspicious?", "Tap who you suspect. Everyone taps something at night."],
-  villager: ["Who's suspicious?", "Tap who you suspect. Everyone taps something at night."],
+  evil: ["Choose your prey.", "Tap who the evil team eliminates. Your team sees your pick."],
+  seer: ["Peer into a soul.", "Tap someone to learn if they're Good or Evil."],
+  doctor: ["Protect someone.", "Tap who to save tonight. It can be you."],
+  assassin: ["Strike from the shadows.", "Tap someone to eliminate tonight, or hold your one shot for later."],
+  necro: ["Raise the dead.", "Tap a fallen Good player to bring them back at dawn, or wait for later."],
+  other: ["Who's suspicious?", "Tap who you suspect. Everyone taps something at night, so nobody stands out."],
+  blocked: ["Your power is gone tonight.", "The Siren's song blocks Good powers. Just tap who you suspect."],
 };
+const isEvil = pid => room.roleInfo?.[P(pid).role]?.team === "evil";
+function nightMode(){
+  const r = room.me.role, pw = room.me.powers || {}, mn = room.myNight || {};
+  if(room.me.team === "evil") return "evil";
+  if(mn.blocked && ["seer","doctor","assassin","necro"].includes(r)) return "blocked";
+  if(r === "seer" || r === "doctor") return r;
+  if(r === "assassin" && pw.assassin) return "assassin";
+  if(r === "necro" && pw.revive && inGame().some(pid=>!P(pid).alive && P(pid).role && !isEvil(pid))) return "necro";
+  return "other";
+}
 function tableView(){
   const ph = room.phase, role = room.me.role, aliveMe = room.me.alive, c = room.current || {};
   let center = "", opts = {}, say = "", under = "";
   if(ph === "night"){
-    const mn = room.myNight || {}, wv = mn.wolfVotes || {};
-    const [h, sub] = aliveMe ? (NIGHT[role] || NIGHT.villager) : ["Night falls.", "The village sleeps. You watch from beyond."];
+    const mn = room.myNight || {}, ev = mn.evilVotes || {}, mode = nightMode();
+    const [h, sub] = aliveMe ? NIGHT[mode] : ["Night falls.", "The village sleeps. You watch from beyond."];
     center = `<span class="ico moonico"></span><h2>Night ${room.day}</h2>${clockHTML()}<span class="small">${room.acted||0}/${room.actNeed||0} have acted</span>`;
     say = `<b>${h}</b> ${sub}`;
-    opts.pickable = pid => aliveMe && P(pid).alive && !(role==="wolf" && P(pid).role==="wolf") && !(role==="seer" && (pid===me.pid || mn.done)) && !(role==="doctor" && pid===mn.noRepeat);
-    opts.selected = mn.target; opts.selClass = role === "wolf" ? "redsel" : "sel";
-    if(role === "wolf") opts.arrows = Object.entries(wv).map(([w,t])=>[w,t,"#e3264b"]);
-    else if(mn.target) opts.arrows = [[me.pid, mn.target, "#ffe9b0"]];
-    if(role === "wolf") opts.tags = Object.fromEntries(inGame().filter(pid=>P(pid).role==="wolf"&&P(pid).alive).map(pid=>[pid,["Pack","r-wolf"]]));
-    if(role === "doctor" && mn.noRepeat) opts.tags = {[mn.noRepeat]:["Last night",""]};
-    if(role === "seer" && room.seerLog?.length) under = `<div class="panel"><b style="color:var(--seer2)">Your visions</b>${room.seerLog.map(v=>`<div>Night ${v.night}: ${esc(v.name)} is ${v.wolf?'<b style="color:var(--blood)">a werewolf</b>':'<b style="color:var(--mint)">not a werewolf</b>'}</div>`).join("")}</div>`;
+    const aliveSeat = pid => P(pid).alive;
+    opts.pickable = !aliveMe ? ()=>false
+      : mode === "evil" ? pid => aliveSeat(pid) && !isEvil(pid)
+      : mode === "seer" ? pid => aliveSeat(pid) && pid !== me.pid && !mn.done
+      : mode === "assassin" ? pid => aliveSeat(pid) && pid !== me.pid
+      : mode === "necro" ? pid => !P(pid).alive && P(pid).role && !isEvil(pid)
+      : pid => aliveSeat(pid);
+    opts.selected = mn.target; opts.selClass = mode === "evil" || mode === "assassin" ? "redsel" : "sel";
+    if(mode === "evil") opts.arrows = Object.entries(ev).map(([w,t])=>[w,t,"#e3264b"]);
+    else if(mn.target) opts.arrows = [[me.pid, mn.target, mode === "assassin" ? "#e3264b" : "#ffe9b0"]];
+    if(room.me.team === "evil") opts.tags = Object.fromEntries(inGame().filter(pid=>isEvil(pid) && P(pid).alive).map(pid=>[pid,[pid===me.pid?"You":"Evil","r-wolf"]]));
+    if(aliveMe && (mode === "assassin" || mode === "necro")) under = `<div style="display:flex;justify-content:center"><button class="btn ${mn.done && !mn.target ? "primary" : ""}" data-pass="1">${mode === "assassin" ? "Not tonight" : "Nobody tonight"}</button></div>`;
+    if(room.me.role === "seer" && room.seerLog?.length) under = `<div class="panel"><b style="color:var(--seer2)">Your visions</b>${room.seerLog.map(v=>`<div>Night ${v.night}: ${esc(v.name)} is ${v.evil?'<b style="color:var(--blood)">Evil</b>':'<b style="color:var(--mint)">Good</b>'}</div>`).join("")}</div>`;
   } else if(ph === "day"){
     center = `<span class="ico sunico"></span><h2>Day ${room.day}</h2>${clockHTML()}<span class="small">Talk it out</span>`;
     say = "Accuse, defend, bluff. The vote opens when the clock runs out.";
+    under = shamanPanel();
   } else if(ph === "vote"){
     const votes = room.votes || {}, mine = votes[me.pid];
     const counts = {}; Object.values(votes).forEach(t=>{ if(t!=="skip") counts[t]=(counts[t]||0)+1; });
@@ -383,18 +477,14 @@ function tableView(){
     say = aliveMe ? "<b>Point the finger.</b> Tap who should be cast out. Everyone sees the arrows." : "Ghosts don't vote. Watch the arrows fly.";
     opts = {pickable: pid => aliveMe && P(pid).alive && pid!==me.pid, selected: mine, selClass:"redsel", counts,
             arrows: Object.entries(votes).filter(([v,t])=>t!=="skip").map(([v,t])=>[v,t,"#e3264b"])};
-    if(aliveMe) under = `<div style="display:flex;justify-content:center"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip vote${Object.values(votes).filter(t=>t==="skip").length?` (${Object.values(votes).filter(t=>t==="skip").length})`:""}</button></div>`;
-  } else if(ph === "hunter"){
-    const h = room.hunter?.pid;
-    center = `<span class="ico voteico"></span><h2>Last shot</h2>${clockHTML()}`;
-    say = h === me.pid ? "<b>You are dying.</b> Tap one player to take down with you." : `${esc(P(h).name)}, the Hunter, takes aim…`;
-    opts = {pickable: pid => h===me.pid && P(pid).alive, selClass:"redsel"};
+    under = shamanPanel() + (room.me.role === "mayor" && aliveMe ? '<p class="hint" style="text-align:center">Your vote counts twice.</p>' : "");
+    if(aliveMe) under += `<div style="display:flex;justify-content:center"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip vote${Object.values(votes).filter(t=>t==="skip").length?` (${Object.values(votes).filter(t=>t==="skip").length})`:""}</button></div>`;
   } else {
     // dawn, verdict, shot: the reveal plays over the table, then the game moves on by itself
-    const kind = {dawn:["sunico","Dawn"], verdict:["voteico","The verdict"], shot:["voteico","The shot"]}[ph];
+    const kind = {dawn:["sunico","Dawn"], verdict:["voteico","The verdict"]}[ph] || ["voteico",""];
     center = `<span class="ico ${kind[0]}"></span><h2>${kind[1]}</h2>${clockHTML()}`;
     say = esc(c.story || "");
-    opts = {dying: c.dead || []};
+    opts = {dying: c.dead || [], tags: Object.fromEntries([...(c.survived||[]).map(pid=>[pid,["Survived","r-knight"]]), ...(c.revived?[[c.revived,["Revived","r-necro"]]]:[])])};
     if(ph === "verdict" && c.votes) opts.arrows = Object.entries(c.votes).filter(([v,t])=>t!=="skip").map(([v,t])=>[v,t,"#e3264b"]);
     if(ph === "verdict" && c.tally) opts.counts = Object.fromEntries(Object.entries(c.tally).filter(([t])=>t!=="skip"));
   }
@@ -402,37 +492,49 @@ function tableView(){
     <div class="info"><p class="say fadeup">${say}</p><div class="myrole">${myRoleChip()}</div>${under}
     ${room.me.ghost ? '<p class="hint" style="text-align:center">You are a ghost. You can see every role, so no spoilers out loud.</p>' : ""}</div>`;
   tick();
-  if(["dawn","verdict","shot"].includes(ph) && (c.dead||[]).length) popReveal(c, ph);
+  if(["dawn","verdict"].includes(ph) && (c.dead||[]).length) popReveal(c, ph);
   else if($("#overlay .reveal-pop")) $("#overlay").innerHTML = "";  // leave the Seer's vision alone
 }
+function shamanPanel(){
+  if(room.me.role !== "shaman" || !room.me.alive) return "";
+  if(room.myShield) return `<p class="hint" style="text-align:center">Your dark charm protects <b>${esc(P(room.myShield).name)}</b> from today's vote.</p>`;
+  if(!room.me.powers?.shamanShield) return "";
+  const allies = inGame().filter(pid=>pid !== me.pid && P(pid).alive && isEvil(pid));
+  if(!allies.length) return "";
+  return `<div class="panel"><b style="color:#e08cff">Protect an ally from today's vote (once per game)</b><div style="display:flex;flex-wrap:wrap;gap:8px">${allies.map(pid=>`<button class="btn small" data-shield="${pid}">${esc(P(pid).name)}</button>`).join("")}</div></div>`;
+}
 function popReveal(c, ph){
-  const pid = c.dead[0], role = c.roles[pid];
   if($("#overlay").dataset.cid === c.id) return;  // already showing this one
   $("#overlay").dataset.cid = c.id;
-  const stamp = {dawn:"KILLED IN THE NIGHT", verdict:"VOTED OUT", shot:"SHOT DOWN"}[ph];
-  $("#overlay").innerHTML = `<div class="reveal-pop"><div class="cardwrap">${cardHTML(pid, role, {id:"deadCard"})}</div></div>`;
-  setTimeout(()=>$("#deadCard")?.classList.add("flip"), 900);
-  setTimeout(()=>{ const card = $("#deadCard"); if(card) card.insertAdjacentHTML("beforeend", `<span class="stamp">${stamp}</span>`); }, 950);
-  // the card steps aside after a few seconds so everyone sees the table again
-  setTimeout(()=>{ if($("#overlay").dataset.cid === c.id) $("#overlay").innerHTML = ""; }, 5200);
+  const stamp = {dawn:"KILLED", verdict:"VOTED OUT"}[ph] || "DEAD";
+  const many = c.dead.length > 1;
+  $("#overlay").innerHTML = `<div class="reveal-pop"><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:16px">${c.dead.map((pid,i)=>`<div class="cardwrap" style="margin:0">${cardHTML(pid, c.roles[pid], {id:"dc"+i})}</div>`).join("")}</div></div>`;
+  if(many) document.querySelectorAll(".reveal-pop .card").forEach(cd=>cd.style.width = `min(${c.dead.length > 2 ? 150 : 190}px, ${c.dead.length > 2 ? 30 : 44}vw)`);
+  c.dead.forEach((pid,i)=>{
+    setTimeout(()=>$("#dc"+i)?.classList.add("flip"), 900 + i*500);
+    setTimeout(()=>$("#dc"+i)?.insertAdjacentHTML("beforeend", `<span class="stamp">${stamp}</span>`), 950 + i*500);
+  });
+  // the cards step aside after a few seconds so everyone sees the table again
+  setTimeout(()=>{ if($("#overlay").dataset.cid === c.id) $("#overlay").innerHTML = ""; }, 5600 + c.dead.length*400);
 }
 $("#stage").addEventListener("click", async e=>{
-  const s = e.target.closest(".seat.pick"), v = e.target.closest("[data-vote]");
+  const s = e.target.closest(".seat.pick"), v = e.target.closest("[data-vote]"), pass = e.target.closest("[data-pass]"), sh = e.target.closest("[data-shield]");
   try{
     if(v){ await act("vote", {target:"skip"}); buzz(30); return; }
+    if(pass){ await act("night", {target:"pass"}); buzz(30); return; }
+    if(sh){ await act("shamanshield", {target:sh.dataset.shield}); toast(`${P(sh.dataset.shield).name} is protected today`); return; }
     if(!s) return;
     const pid = s.dataset.seat, ph = room.phase;
-    if(ph === "night"){ await act("night", {target:pid}); buzz(40); if(room.me.role === "seer") seerVision(pid); }
+    if(ph === "night"){ await act("night", {target:pid}); buzz(40); if(nightMode() === "seer") seerVision(pid); }
     else if(ph === "vote"){ await act("vote", {target:pid}); buzz(40); }
-    else if(ph === "hunter"){ await act("shoot", {target:pid}); }
   }catch(err){ toast(err.message); }
 });
 function seerVision(pid){
   setTimeout(()=>{
-    const v = (room.seerLog||[]).slice(-1)[0], wolf = v && v.pid === pid ? v.wolf : null;
+    const v = (room.seerLog||[]).slice(-1)[0], wolf = v && v.pid === pid ? v.evil : null;
     $("#overlay").dataset.cid = "";
     $("#overlay").innerHTML = `<div class="vision" id="vision"><div style="text-align:center;max-width:420px"><div class="orb"></div><div class="eyebrow">Your vision</div>
-      <h2 style="font-size:clamp(26px,7vw,40px);margin-top:8px">${esc(P(pid).name)}</h2><div class="drum" style="color:${wolf?"var(--blood)":"var(--mint)"};margin-top:10px">${wolf===null?"…":wolf?"IS A WEREWOLF":"is not a werewolf"}</div>
+      <h2 style="font-size:clamp(26px,7vw,40px);margin-top:8px">${esc(P(pid).name)}</h2><div class="drum" style="color:${wolf?"var(--blood)":"var(--mint)"};margin-top:10px">${wolf===null?"…":wolf?"IS EVIL":"is Good"}</div>
       <p class="sub">Keep a straight face.</p><button class="btn primary" id="closeVision" style="margin-top:14px">Close</button></div></div>`;
     buzz(wolf ? [200,80,200] : 80);
     $("#closeVision").onclick = ()=>$("#overlay").innerHTML = "";
@@ -442,8 +544,13 @@ function seerVision(pid){
 /* ---------- lobby ---------- */
 function lobby(){
   const ps = inGame(), s = room.settings, mine = P(me.pid), n = ps.length;
-  const wolves = s.wolves || (n <= 6 ? 1 : n <= 10 ? 2 : 3), specials = ["seer","doctor","hunter"].filter(r=>s[r]);
-  const villagers = Math.max(0, n - wolves - specials.length), H = !!hostKey;
+  const GOOD = ["seer","doctor","hunter","knight","mayor","assassin","necro","jester"], EVIL = ["alpha","shaman","siren"];
+  const evilN = Math.max(1, Math.min(s.wolves || (n <= 6 ? 1 : n <= 9 ? 2 : n <= 12 ? 3 : 4), Math.max(1, Math.floor((n-1)/2))));
+  let evilSpecials = EVIL.filter(r=>s[r]).slice(0, evilN);
+  if(!evilSpecials.includes("alpha") && evilSpecials.length === evilN) evilSpecials = evilSpecials.slice(0, evilN-1);
+  const plainWolves = evilN - evilSpecials.length;
+  const specials = GOOD.filter(r=>s[r]).slice(0, Math.max(0, n - evilN));
+  const villagers = Math.max(0, n - evilN - specials.length), H = !!hostKey;
   const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
   const src = Avatars.src(mine);
   $("#stage").innerHTML = tableHTML({center:`<span class="ico moonico"></span><h2>${n} at the table</h2><span class="small">Code <b style="letter-spacing:.2em;color:var(--moon)">${room.code}</b></span><span class="small">${n<4?`Need ${4-n} more`:"Ready when the host is"}</span>`,
@@ -453,18 +560,18 @@ function lobby(){
       <div><b>${esc(mine.name)}</b><p class="hint">${src ? "Tap to change your avatar." : "Pick an anime character or a picture from your gallery."}</p></div></div></div>
     ${H ? `<div class="panel"><b>Players</b><div style="display:flex;flex-wrap:wrap;gap:8px">${ps.filter(pid=>pid!==me.pid).map(pid=>`<span class="chip">${esc(P(pid).name)} <button class="btn small" data-kick="${pid}" style="padding:1px 9px;font-size:11px">Kick</button></span>`).join("") || '<span class="hint">Nobody else yet. Share the code.</span>'}</div></div>` : ""}
     <div class="panel"><h2 style="font-size:19px">${H ? "Set up the game" : "Game setup"}</h2>
-      <div class="toggles"><span class="tg on"><i style="background:var(--wolf2)"></i>${wolves} Werewol${wolves===1?"f":"ves"}</span>
-        ${["seer","doctor","hunter"].map(r=>`<button type="button" class="tg r-${r} ${s[r]?"on":""}" data-toggle="${r}" ${H?"":"disabled"}><i style="background:var(--c2)"></i>${rname(r)}</button>`).join("")}
-        <span class="tg"><i style="background:var(--vill2)"></i>${villagers} Villager${villagers===1?"":"s"}</span></div>
+      <div><label>Good team</label><div class="toggles">${GOOD.map(r=>`<button type="button" class="tg r-${r} ${s[r]?"on":""}" data-toggle="${r}" ${H?"":"disabled"}><i style="background:var(--c2)"></i>${rname(r)}</button>`).join("")}</div></div>
+      <div><label>Evil team</label><div class="toggles">${EVIL.map(r=>`<button type="button" class="tg r-${r} ${s[r]?"on":""}" data-toggle="${r}" ${H?"":"disabled"}><i style="background:var(--c2)"></i>${rname(r)}</button>`).join("")}</div></div>
+      <p class="hint">This game: <b style="color:#ff8aa0">${evilN} evil</b> (${[...evilSpecials.map(rname), ...(plainWolves ? [`${plainWolves} Werewol${plainWolves===1?"f":"ves"}`] : [])].join(", ")}) and <b style="color:#a9c8ff">${n-evilN} good</b> (${[...specials.map(rname), ...(villagers ? [`${villagers} Villager${villagers===1?"":"s"}`] : [])].join(", ") || "none yet"}).</p>
       <div class="row3">
-        <div><label for="sWolves">Werewolves</label>${sel("sWolves", [[0,"Auto"],[1,"1"],[2,"2"],[3,"3"],[4,"4"]], s.wolves)}</div>
+        <div><label for="sWolves">Evil team size</label>${sel("sWolves", [[0,"Auto"],[1,"1"],[2,"2"],[3,"3"],[4,"4"],[5,"5"]], s.wolves)}</div>
         <div><label for="sNight">Night</label>${sel("sNight", [[30,"30 sec"],[45,"45 sec"],[60,"1 min"],[90,"90 sec"]], s.nightSec)}</div>
         <div><label for="sDay">Discussion</label>${sel("sDay", [[60,"1 min"],[120,"2 min"],[180,"3 min"],[300,"5 min"]], s.daySec)}</div>
         <div><label for="sVote">Voting</label>${sel("sVote", [[30,"30 sec"],[60,"1 min"],[90,"90 sec"]], s.voteSec)}</div>
       </div>
       ${H ? `<button class="btn primary wide" data-host="start" ${n<4?"disabled":""}>${n<4?`Waiting for ${4-n} more`:"Deal the cards"}</button>` : '<p class="hint" style="text-align:center">The host deals the cards when everyone is seated.</p>'}</div>
     <details class="panel"><summary>How to play</summary><div class="rolelist">${Object.keys(ART).map(r=>`<div class="r-${r}">${ART[r]}<span><b>${rname(r)}.</b> ${DESC[r]}</span></div>`).join("")}</div>
-      <p class="hint" style="margin-top:8px">The game runs itself: night, dawn, discussion, vote, repeat. The village wins when every wolf is gone. The wolves win when they match the village in number.</p></details></div>`;
+      <p class="hint" style="margin-top:8px">The game runs itself: night, dawn, discussion, vote, repeat. Good wins when the whole evil team is gone. Evil wins when they match the good team in number. Roles follow Plato's Werewolf.</p></details></div>`;
   $("#avBtn").onclick = ()=>Avatars.open(act);
   if(H){
     const send = x => act("settings", x).catch(err=>toast(err.message));
@@ -485,12 +592,12 @@ function cardHTML(pid, role, opts={}){
 function rolesView(){
   const role = room.me.role, mine = P(me.pid);
   if(!role){ $("#stage").innerHTML = `<div class="fadeup" style="margin-top:10vh"><h1 class="title">The cards are dealt</h1><p class="sub">You joined mid-game, so you're watching this one.</p></div>`; return; }
-  const pack = role === "wolf" ? inGame().filter(pid=>pid!==me.pid && P(pid).role==="wolf") : [];
+  const pack = room.me.team === "evil" ? inGame().filter(pid=>pid!==me.pid && isEvil(pid)) : [];
   const ps = inGame(), ready = ps.filter(pid=>P(pid).ready).length;
   $("#stage").innerHTML = `<div class="eyebrow fadeup" style="margin-top:2vh">Keep it secret</div><h1 class="title fadeup">Your role</h1>
     <div class="cardwrap">${cardHTML(me.pid, role, {tap:true, id:"myCard", flip:revealed})}</div>
     <div id="after" ${revealed?"":"hidden"} style="display:grid;gap:12px">
-      ${pack.length ? `<div class="panel"><b style="color:var(--wolf2)">Your pack: ${pack.map(pid=>esc(P(pid).name)).join(", ")}</b></div>` : ""}
+      ${pack.length ? `<div class="panel"><b style="color:var(--wolf2)">Your evil team: ${pack.map(pid=>`${esc(P(pid).name)} (${rname(P(pid).role)})`).join(", ")}</b></div>` : ""}
       ${mine.ready ? `<p class="sub">Waiting for everyone · ${ready}/${ps.length} ready</p>` : `<button class="btn primary wide" id="readyBtn">I've memorized it</button>`}</div>
     <p class="hint" style="text-align:center;margin-top:8px">Hide your screen, then tap the card. Night falls when everyone is ready.</p>`;
   $("#myCard").onclick = ()=>{ revealed = !revealed; $("#myCard").classList.toggle("flip", revealed); if(revealed){ buzz(80); $("#after").hidden = false; } };
@@ -502,23 +609,76 @@ function final(){
   const w = room.winner, ps = inGame();
   const ev = (room.events||[]).map(e=>{
     const who = e.dead.map(d=>esc(P(d).name)).join(", ");
-    const what = e.kind === "night" ? (who ? `The wolves took ${who}` : e.saved ? `The Doctor saved ${esc(P(e.target)?.name||"someone")}` : "A quiet night")
-      : e.kind === "vote" ? (who ? `The village voted out ${who}` : "Nobody was voted out") : (who ? `The Hunter shot ${who}` : "The Hunter missed");
+    const what = e.kind === "night" ? [who ? `Died: ${who}` : "", (e.survived||[]).length ? `${e.survived.map(x=>esc(P(x).name)).join(", ")} survived an attack` : "", e.saved ? "The Doctor saved someone" : "", e.revived ? `${esc(P(e.revived).name)} came back to life` : ""].filter(Boolean).join(" · ") || "A quiet night"
+      : who ? `The village voted out ${who}` : e.shielded ? `${esc(P(e.shielded).name)} survived the vote` : "Nobody was voted out";
     return `<div><b>${e.kind==="night"?"Night":"Day"} ${e.day}</b><span>${what}</span></div>`; }).join("");
-  $("#stage").innerHTML = `<div class="banner ${w}">${w==="wolves"?"The wolves win":"The village wins"}</div>
-    <p class="sub" style="font-size:16px">${w==="wolves"?"The pack ate well tonight.":"Every wolf has been found."}</p>
+  const jesters = (room.jesterWins||[]).map(pid=>esc(P(pid).name));
+  $("#stage").innerHTML = `<div class="banner ${w}">${w==="wolves"?"Evil wins":"The village wins"}</div>
+    <p class="sub" style="font-size:16px">${w==="wolves"?"The evil team took over the village.":"The whole evil team has been found."}${jesters.length?` <b style="color:var(--gold)">${jesters.join(", ")} the Jester also win${jesters.length===1?"s":""}!</b>`:""}</p>
     ${tableHTML({center:`<span class="ico ${w==="wolves"?"voteico":"sunico"}"></span><h2>Game over</h2><span class="small">${room.day} night${room.day===1?"":"s"}</span>`})}
     <div class="info"><div class="panel"><b>How it went</b><div class="timeline">${ev}</div>
-      ${room.seerLog?.length ? `<b style="color:var(--seer2)">The Seer's visions</b>${room.seerLog.map(v=>`<div style="font-size:14px">Night ${v.night}: ${esc(v.name)} ${v.wolf?"was a werewolf":"was innocent"}</div>`).join("")}` : ""}</div>
+      ${room.seerLog?.length ? `<b style="color:var(--seer2)">The Seer's visions</b>${room.seerLog.map(v=>`<div style="font-size:14px">Night ${v.night}: ${esc(v.name)} looked ${v.evil?"Evil":"Good"}</div>`).join("")}` : ""}</div>
     <div class="minicards">${ps.map((pid,i)=>cardHTML(pid, P(pid).role, {mini:true, dead:!P(pid).alive, st:P(pid).alive?"SURVIVED":"DIED", delay:.3+i*.15})).join("")}</div></div>`;
   setTimeout(()=>document.querySelectorAll(".minicards .card").forEach(c=>c.classList.add("flip")), 250);
 }
+
+/* ---------- chat ---------- */
+const CH = {all:"Everyone", evil:"Evil team", ghosts:"Ghosts"};
+let chatOpen = false, chatCh = "all", chatSeen = {}, chatSig = "";
+const wide = () => matchMedia("(min-width:1100px)").matches;
+function renderChat(){
+  const sheet = $("#chat"), fab = $("#chatFab");
+  const joined = me && room && room.players[me.pid];
+  sheet.hidden = !joined; fab.hidden = !joined;
+  if(!joined) return;
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  const read = room.chatRead || ["all"], write = room.chatWrite || [];
+  // land on the channel that matters: the evil team at night, ghosts once you're dead
+  if(!read.includes(chatCh)) chatCh = read.includes("ghosts") && !room.me?.alive && room.me?.role ? "ghosts" : read[0];
+  const msgs = room.chat || [];
+  const latest = ch => { const l = msgs.filter(m=>m.ch===ch).slice(-1)[0]; return l ? l.id : null; };
+  const open = chatOpen || wide();
+  if(open) chatSeen[chatCh] = latest(chatCh);
+  const unread = read.reduce((n, ch)=>{ const list = msgs.filter(m=>m.ch===ch); const i = list.findIndex(m=>m.id===chatSeen[ch]); return n + (open && ch===chatCh ? 0 : list.slice(i+1).filter(m=>m.pid!==me.pid).length); }, 0);
+  $("#chatBadge").hidden = !unread; $("#chatBadge").textContent = unread > 99 ? "99+" : unread;
+  sheet.classList.toggle("open", open);
+  $("#chatTabs").innerHTML = read.length > 1 ? read.map(ch=>{ const dot = ch!==chatCh && latest(ch) && latest(ch)!==chatSeen[ch] && msgs.some(m=>m.ch===ch && m.pid!==me.pid);
+    return `<button class="${ch} ${ch===chatCh?"on":""}" data-ch="${ch}">${CH[ch]}${dot?"<i></i>":""}</button>`; }).join("") : `<button class="${chatCh} on">${CH[chatCh]}</button>`;
+  const list = msgs.filter(m=>m.ch===chatCh);
+  const sig = chatCh + "|" + list.map(m=>m.id).join(",") + "|" + write.includes(chatCh);
+  if(sig === chatSig) return;
+  chatSig = sig;
+  const box = $("#chatMsgs"), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.innerHTML = list.length ? list.map(m=>{ const p = room.players[m.pid] || {name:m.name}, src = Avatars.src(p);
+    return `<div class="m ${m.pid===me.pid?"mine":""} ${m.ch}"><span class="av" style="background:${hue(m.name)}">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:esc(m.name[0])}</span><div class="b"><b>${esc(m.name)}</b>${esc(m.text)}</div></div>`; }).join("")
+    : `<div class="empty">${chatCh==="evil" ? "Plot with your evil team here. Nobody else can see this." : chatCh==="ghosts" ? "Only the dead can read this. Haunt freely." : "Say hi to the table."}</div>`;
+  if(atBottom || list.slice(-1)[0]?.pid === me.pid) box.scrollTop = box.scrollHeight;
+  const why = chatCh === "all" && room.phase === "night" && room.me?.alive ? "The village is asleep. No talking until dawn." : chatCh === "all" && room.me?.ghost ? "Ghosts can't talk to the living. Use Ghosts." : "You can't write here right now.";
+  // rebuild the input only when what you can write changes, so the phone keyboard stays open
+  const formSig = chatCh + "|" + write.includes(chatCh) + "|" + why;
+  if(formSig === renderChat.formSig) return;
+  renderChat.formSig = formSig;
+  const keep = $("#chatIn")?.value || "";
+  $("#chatForm").innerHTML = write.includes(chatCh)
+    ? `<input id="chatIn" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Message ${CH[chatCh].toLowerCase()}…" aria-label="Message"><button aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5 21 12 3 3.5 3 10l12 2-12 2z"/></svg></button>`
+    : `<div class="locked">${why}</div>`;
+  if($("#chatIn")) $("#chatIn").value = keep;
+}
+$("#chatFab").onclick = ()=>{ chatOpen = true; chatSig = ""; renderChat(); setTimeout(()=>$("#chatMsgs").scrollTop = 1e9, 50); };
+$("#chatClose").onclick = ()=>{ chatOpen = false; $("#chatIn")?.blur(); renderChat(); };
+$("#chatTabs").onclick = e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; chatCh = b.dataset.ch; chatSig = ""; renderChat(); $("#chatMsgs").scrollTop = 1e9; };
+$("#chatForm").onsubmit = async e=>{
+  e.preventDefault(); const inp = $("#chatIn"); const text = inp?.value.trim(); if(!text) return;
+  inp.value = "";
+  try{ await act("chat", {ch: chatCh, text}); }catch(err){ inp.value = text; toast(err.message); }
+  $("#chatIn")?.focus();
+};
 
 /* ---------- host controls, clock ---------- */
 function renderHostbar(){
   const bar = $("#hostbar"), ph = room?.phase;
   if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
-  const skip = {roles:"Start the night", night:"End the night", day:"Start the vote", vote:"Count the votes", hunter:"Skip the shot", dawn:"Skip ahead", verdict:"Skip ahead", shot:"Skip ahead"}[ph];
+  const skip = {roles:"Start the night", night:"End the night", day:"Start the vote", vote:"Count the votes", dawn:"Skip ahead", verdict:"Skip ahead"}[ph];
   const b = [];
   if(skip){ b.push('<span class="lbl">Host</span>'); if(["night","day","vote"].includes(ph)) b.push('<button class="btn small" data-host="addtime">+30s</button>'); b.push(`<button class="btn small" data-host="skip">${skip}</button>`); }
   if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
@@ -533,7 +693,7 @@ function tick(){
   const el = $("#clock"); if(!el || !room?.deadline) return;
   const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
   el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
-  el.classList.toggle("low", left <= 10 && !["dawn","verdict","shot"].includes(room.phase));
+  el.classList.toggle("low", left <= 10 && !["dawn","verdict"].includes(room.phase));
 }
 setInterval(tick, 250);
 

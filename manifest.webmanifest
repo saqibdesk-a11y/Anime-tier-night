@@ -1,0 +1,15 @@
+{
+  "name": "Anime Game Night",
+  "short_name": "Game Night",
+  "description": "Party games for friends: anime tier lists, drawing, Werewolf and Imposter.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#060a13",
+  "theme_color": "#060a13",
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

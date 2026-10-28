@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<meta name="theme-color" content="#060a13">
 <title>Draw It</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
@@ -104,7 +112,29 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
 .prompt h2{font-size:clamp(22px,4vw,36px)}
 .studio{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start}
 @media (max-width:860px){.studio{grid-template-columns:1fr}}
-.sheet{position:relative;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -30px rgba(0,0,0,.9);max-width:100%}
+.sheet{position:relative;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -30px rgba(0,0,0,.9);max-width:100%;width:min(100%,calc((100dvh - 150px) * 4 / 3));margin:0 auto}
+/* a phone turned sideways: the canvas shrinks to fit the height instead of overflowing */
+@media (orientation:landscape) and (max-height:560px){.sheet{width:min(100%,calc((100dvh - 24px) * 4 / 3))}.prompt{margin:8px 0}}
+.fsbtn{position:absolute;right:10px;bottom:10px;z-index:2;border:0;border-radius:12px;background:rgba(6,10,19,.78);color:#fff;font-weight:800;font-size:13px;padding:8px 12px;display:flex;align-items:center;gap:6px}
+.fsbtn svg{width:16px;height:16px}
+/* full-screen drawing: the canvas fills the screen, tools slide in from the side */
+.focusbar,.tooltab{display:none}
+body.focus{overflow:hidden}
+body.focus::before{content:"";position:fixed;inset:0;background:#0b0f1a;z-index:39}
+body.focus .sheet{position:fixed;z-index:40;inset:0;margin:auto;width:min(100vw,calc(100dvh * 4 / 3));height:min(100dvh,calc(100vw * 3 / 4));max-width:none;border-radius:0;box-shadow:none}
+body.focus .fsbtn{display:none}
+body.focus .focusbar{display:flex;position:fixed;z-index:42;top:calc(8px + env(safe-area-inset-top,0px));left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));gap:8px;align-items:center;pointer-events:none}
+body.focus .focusbar>*{pointer-events:auto}
+.focusbar .fp{flex:1;min-width:0;background:rgba(6,10,19,.8);color:#fff;border-radius:12px;padding:7px 12px;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.focusbar .ft{background:rgba(6,10,19,.8);color:var(--mint);border-radius:12px;padding:7px 12px;font-family:var(--display);font-weight:700;font-variant-numeric:tabular-nums}
+.focusbar .ft.low{color:var(--pink)}
+.focusbar button{border:0;border-radius:12px;padding:8px 13px;font-weight:800;background:rgba(6,10,19,.8);color:#fff}
+body.focus .tooltab{display:flex;position:fixed;z-index:42;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 16px 10px 10px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.tooltab i{width:26px;height:26px;border-radius:50%;border:3px solid #fff;display:block}
+body.focus .dock{position:fixed;z-index:43;top:0;bottom:0;right:0;width:min(290px,86vw);border-radius:20px 0 0 20px;overflow:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px));grid-template-columns:1fr;align-content:start;background:rgba(13,19,34,.97);transform:translateX(105%);transition:transform .25s cubic-bezier(.2,.9,.3,1)}
+body.focus.tools .dock{transform:none}
+body.focus .dock .closetools{display:block}
+.closetools{display:none}
 #cv{display:block;width:100%;height:auto;aspect-ratio:4/3;touch-action:none;cursor:crosshair}
 .sheet.locked #cv{cursor:not-allowed}
 .sheet .stamp{position:absolute;inset:auto 12px 12px auto;background:rgba(6,10,19,.8);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:5px 12px}
@@ -265,8 +295,12 @@ label{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-tra
     <div id="vDraw" hidden>
       <div class="prompt"><span class="lbl" id="drawLbl">Draw this</span><h2 id="promptText"></h2></div>
       <div class="studio">
-        <div class="sheet" id="sheet"><canvas id="cv" width="800" height="600"></canvas><span class="stamp" id="stamp" hidden></span></div>
+        <div class="sheet" id="sheet"><canvas id="cv" width="800" height="600"></canvas><span class="stamp" id="stamp" hidden></span>
+          <button class="fsbtn" id="fsOpen" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Full screen</button></div>
+        <div class="focusbar"><span class="fp" id="fPrompt"></span><span class="ft" id="fTimer"></span><button type="button" id="fsClose">Exit</button></div>
+        <button class="tooltab" id="toolTab" type="button"><i id="toolSwatch"></i>Tools</button>
         <div class="dock">
+          <button class="btn small closetools" id="closeTools" type="button">Close tools</button>
           <div><label>Color</label><div class="swatches" id="swatches"></div></div>
           <div><label>Brush</label><div class="sizes" id="sizes"></div></div>
           <div class="tools">
@@ -444,6 +478,8 @@ function tickTimer(){
   if(room.phase === "drawing" && left === 0 && !autoSent){ autoSent = true; submitDrawing(true); }
   if(left > 0) autoSent = false;
   if(room.phase === "drawing") $("#sheet").classList.toggle("locked", left === 0);
+  if($("#fTimer")){ $("#fTimer").textContent = el.textContent; $("#fTimer").classList.toggle("low", left <= 10); }
+  if(room.phase !== "drawing" && document.body.classList.contains("focus")) setFocus(false);
 }
 let autoSent = false;
 setInterval(tickTimer, 250);
@@ -483,6 +519,7 @@ const cv = $("#cv"), ctx = cv.getContext("2d");
 $("#swatches").innerHTML = COLORS.map(c=>`<button class="sw" type="button" data-c="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join("");
 $("#sizes").innerHTML = SIZES.map(s=>`<button class="sz" type="button" data-s="${s}" aria-label="Brush ${s}"><i style="width:${Math.max(4,s*.8)}px;height:${Math.max(4,s*.8)}px"></i></button>`).join("");
 function paintTools(){
+  if($("#toolSwatch")) $("#toolSwatch").style.background = eraser ? "#fff" : color;
   document.querySelectorAll(".sw").forEach(b=>b.classList.toggle("on", !eraser && b.dataset.c === color));
   document.querySelectorAll(".sz").forEach(b=>b.classList.toggle("on", +b.dataset.s === size));
   $("#toolEraser").classList.toggle("on", eraser);
@@ -571,6 +608,7 @@ async function startStrokePoll(){
 
 function renderDraw(){
   const rd = cur();
+  $("#fPrompt").textContent = rd ? rd.prompt : "";
   $("#promptText").textContent = rd ? rd.prompt : "";
   const team = room.mode === "team" ? room.teams.find(t=>t.id===room.myOwner) : null;
   $("#drawLbl").textContent = team ? `${team.name}, draw this` : "Draw this";
@@ -582,6 +620,25 @@ function renderDraw(){
   $("#drawStatus").textContent = (done ? "Submitted. You can keep drawing and update it until time's up. " : "") + `${(rd.done||[]).length} of ${owners} done.`;
   $("#stamp").hidden = !done; $("#stamp").textContent = "Submitted";
 }
+
+/* ---------- full-screen drawing ---------- */
+async function setFocus(on){
+  document.body.classList.toggle("focus", on);
+  document.body.classList.remove("tools");
+  try{
+    if(on && document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen({navigationUI:"hide"});
+    if(!on && document.fullscreenElement) await document.exitFullscreen();
+  }catch(e){}  // phones without real full screen (iPhone Safari) still get the full-window layout
+}
+$("#fsOpen").onclick = ()=>setFocus(true);
+$("#fsClose").onclick = ()=>setFocus(false);
+$("#toolTab").onclick = ()=>document.body.classList.toggle("tools");
+$("#closeTools").onclick = ()=>document.body.classList.remove("tools");
+document.addEventListener("fullscreenchange", ()=>{ if(!document.fullscreenElement && document.body.classList.contains("focus")) setFocus(false); });
+// picking a colour or size, or touching the canvas, tucks the tools away so you can keep drawing
+$("#swatches").addEventListener("click", ()=>setTimeout(()=>document.body.classList.remove("tools"), 150));
+$("#sizes").addEventListener("click", ()=>setTimeout(()=>document.body.classList.remove("tools"), 150));
+cv.addEventListener("pointerdown", ()=>document.body.classList.remove("tools"));
 
 /* ---------- rating ---------- */
 let rateSig = "";
