@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
@@ -30,7 +30,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
+html,body{margin:0;overflow-x:hidden;overflow-x:clip}  /* flying cards must never widen the page on phones */
 body{min-height:100vh;color:var(--fg);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden;
   background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(61,139,255,.12),transparent 60%),
   radial-gradient(ellipse 60% 40% at 100% 100%,rgba(255,61,90,.08),transparent 60%),
@@ -162,7 +162,7 @@ select option{background:var(--bg2)}
 .card .f{position:absolute;inset:0;border-radius:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
 .card .front{background:linear-gradient(180deg,var(--card),var(--card2));box-shadow:0 6px 14px -8px #000,inset 0 0 0 1px rgba(0,0,0,.08);display:grid;place-items:center;transition:box-shadow .25s,transform .2s}
 .card .front::before{content:"";position:absolute;inset:3px;border-radius:5px;border:1px solid rgba(60,45,20,.18)}
-.card .word{position:relative;font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.02em;line-height:1.02;font-size:calc(var(--fs,1) * clamp(9px,2.75vw,16px));padding:0 3px;text-align:center;overflow-wrap:anywhere;z-index:1}
+.card .word{position:relative;font-family:var(--cardfont,var(--display));font-weight:700;text-transform:uppercase;letter-spacing:.02em;line-height:1.02;font-size:calc(var(--fs,1) * clamp(9px,2.75vw,16px));padding:0 3px;text-align:center;overflow-wrap:anywhere;z-index:1}
 .card .up{position:absolute;top:4px;left:0;right:0;text-align:center;transform:rotate(180deg);font-family:var(--display);font-weight:600;font-size:clamp(6px,1.5vw,9px);text-transform:uppercase;opacity:.28;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
 .card .pic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
 .board.pics .card .word{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(239,231,212,.97),rgba(239,231,212,.86));padding:3px 2px 2px;font-size:calc(var(--fs,1) * clamp(7px,2vw,12px))}
@@ -284,6 +284,70 @@ body.quake .stage{animation:quake .6s}
   .stage > .main{grid-column:1} .stage > .side{grid-column:2;position:sticky;top:70px}
 }
 @media (max-width:999px){ .stage > .side{display:none} }
+/* ---------- card styles (each player picks theirs in the theme menu) ---------- */
+html[data-cards=dragonball]{--cardfont:"Bangers",var(--display)}
+html[data-cards=dragonball] .card .front{background:radial-gradient(circle at 50% 120%,#ffb347,#ffe0a3 55%,#fff3d9)}
+html[data-cards=dragonball] .card .front::before{border:2px solid rgba(255,120,0,.45)}
+html[data-cards=dragonball] .card .word{letter-spacing:.06em;color:#3a1a00;font-weight:400}
+html[data-cards=dragonball] .card .up{font-family:"Bangers",var(--display);font-weight:400}
+html[data-cards=dragonball] .back.red{background:radial-gradient(circle at 50% 30%,#ff8a3d,#e8361e 55%,#8f1606)}
+html[data-cards=dragonball] .back.blue{background:radial-gradient(circle at 50% 30%,#6fb2ff,#1a5ad8 55%,#0b2a6b)}
+html[data-cards=conan]{--cardfont:"Special Elite",var(--display)}
+html[data-cards=conan] .card .front{background:repeating-linear-gradient(180deg,#fbf7ec 0 9px,#e4dcc6 9px 10px);color:#1b2240}
+html[data-cards=conan] .card .front::before{border:0;border-left:2px solid rgba(224,36,47,.6);inset:0 auto 0 10%;border-radius:0}
+html[data-cards=conan] .card .word{font-weight:400;letter-spacing:0;text-transform:none;font-size:calc(var(--fs,1) * clamp(10px,3vw,17px))}
+html[data-cards=conan] .back.neutral{background:radial-gradient(circle at 50% 30%,#f5eedd,#d8cdb2 60%,#b3a382)}
+html[data-cards=conan] .back.assassin{background:radial-gradient(circle at 50% 40%,#1a1a22,#000 70%);color:#fff}
+html[data-cards=naruto]{--cardfont:"Shojumaru",var(--display)}
+html[data-cards=naruto] .card .front{background:linear-gradient(90deg,#8a5a2b 0 6%,#f3e2bf 6% 94%,#8a5a2b 94%);color:#2a1406}
+html[data-cards=naruto] .card .front::before{border-color:rgba(138,90,43,.3);inset:3px 9%}
+html[data-cards=naruto] .card .word{font-weight:400;letter-spacing:0}
+html[data-cards=naruto] .back.red{background:radial-gradient(circle at 50% 30%,#ff9a3d,#e8601e 55%,#7a2a06)}
+html[data-cards=demonslayer]{--cardfont:"Kaisei Decol",var(--display)}
+html[data-cards=demonslayer] .card .front{background:linear-gradient(180deg,#f7f1e3,#e7dcc4);color:#10251a}
+html[data-cards=demonslayer] .card .front::after{content:"";position:absolute;left:0;right:0;top:0;height:16%;background:conic-gradient(#14251b 25%,#2ecc71 0 50%,#14251b 0 75%,#2ecc71 0) 0 0/10px 10px;opacity:.9}
+html[data-cards=demonslayer] .card .up{top:18%}
+html[data-cards=demonslayer] .card .word{text-transform:none;letter-spacing:0;font-weight:700}
+html[data-cards=demonslayer] .back.assassin{background:radial-gradient(circle at 50% 35%,#4a0b1e,#0b0306 70%);color:#ff7eb6}
+html[data-cards=neon] .card .front{background:linear-gradient(180deg,#171b2e,#0d1020);color:#bff3ff;box-shadow:0 0 0 1px rgba(63,214,255,.45),0 0 18px -6px rgba(63,214,255,.6)}
+html[data-cards=neon] .card .front::before{border-color:rgba(63,214,255,.25)}
+html[data-cards=neon] .card .word{text-shadow:0 0 8px rgba(63,214,255,.8)}
+html[data-cards=neon] .card.k-neutral:not(.revealed) .front{background:linear-gradient(180deg,#2a2618,#171409);color:#f4e6b8}
+html[data-cards=neon] .board.pics .card .word{background:rgba(13,16,32,.9)}
+
+/* ---------- chat ---------- */
+.chatfab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(var(--dockh,0px) + 14px + env(safe-area-inset-bottom,0px));z-index:35;width:54px;height:54px;border-radius:50%;border:0;background:var(--gold);color:#221800;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.8);transition:transform .2s}
+.chatfab:active{transform:scale(.92)}
+.chatfab svg{width:24px;height:24px}
+.chatfab .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;padding:0 5px;animation:pin .35s cubic-bezier(.3,1.7,.5,1)}
+.chatbox{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:45;height:min(64dvh,520px);display:flex;flex-direction:column;background:var(--bg2);border-top:1px solid var(--line2);border-radius:20px 20px 0 0;box-shadow:0 -20px 60px -10px rgba(0,0,0,.8);animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@media (min-width:700px){.chatbox{left:auto;right:16px;bottom:16px;width:380px;border-radius:20px;border:1px solid var(--line2)}}
+.chatbox.typing{height:auto;top:var(--kb-top,0px);border-radius:0}
+.chatbox header{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;flex:none}
+.chatbox header b{font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:16px;flex:1}
+.chatbox header b.red{color:var(--red)} .chatbox header b.blue{color:var(--blue)}
+.chatbox header button{border:0;background:var(--glass2);border-radius:50%;width:34px;height:34px;font-size:18px}
+.chatbox .msgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 12px 10px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
+.chatbox .m{display:flex;gap:8px;align-items:flex-end;max-width:86%;animation:fadeup .3s backwards}
+.chatbox .m.me{align-self:flex-end;flex-direction:row-reverse}
+.chatbox .m .mini{width:26px;height:26px;font-size:11px}
+.chatbox .m .b{background:var(--glass2);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:6px 11px;overflow-wrap:anywhere;font-size:14px;line-height:1.35}
+.chatbox .m.me .b{border-radius:14px 14px 4px 14px;background:rgba(255,207,77,.14);border-color:rgba(255,207,77,.35)}
+.chatbox .m .n{display:block;font-size:11px;font-weight:800;margin-bottom:1px}
+.chatbox .m .n.red{color:#ff8ea0} .chatbox .m .n.blue{color:#8fb9ff}
+.chatbox .sys{align-self:center;font-size:12px;color:var(--muted);text-align:center;background:rgba(255,255,255,.04);border-radius:999px;padding:3px 12px;max-width:94%}
+.chatbox form{display:flex;gap:6px;align-items:flex-end;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);flex:none}
+.chatbox.typing form{padding-bottom:8px}
+.chatbox textarea{flex:1;min-width:0;height:38px;max-height:110px;resize:none;background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:19px;padding:8px 14px;font:inherit;font-size:16px;line-height:1.3;color:var(--fg);outline:none;display:block}
+.chatbox textarea:focus{border-color:var(--gold)}
+.chatbox form button{border:0;border-radius:50%;width:38px;height:38px;flex:none;background:var(--gold);color:#221800;display:grid;place-items:center}
+.chatbox form button svg{width:18px;height:18px}
+.chatbox .muted-note{padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+.me-pic{border:0;padding:0;background:none;display:inline-flex;vertical-align:middle;margin-right:4px}
+.g .mini{width:16px;height:16px;margin-right:4px;font-size:8px;border-width:1px}
+.g{display:inline-flex;align-items:center}
+.g i{font-style:normal;font-weight:600;opacity:.85;margin-left:4px;text-transform:none}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -293,6 +357,12 @@ body.quake .stage{animation:quake .6s}
     <symbol id="agent" viewBox="0 0 100 100"><path fill="currentColor" d="M27 38c2-12 11-20 23-20s21 8 23 20l9 2c2 .5 2 3 0 3.5-9 2.5-21 3.5-32 3.5S27 46 18 43.5c-2-.5-2-3 0-3.5zM34 50c3 8 9 13 16 13s13-5 16-13c-5 1-11 1.5-16 1.5S39 51 34 50zM20 96c2-16 12-27 24-30l6 8 6-8c12 3 22 14 24 30z"/><path fill="rgba(0,0,0,.35)" d="M30 44h40v4H30z"/></symbol>
     <symbol id="civ" viewBox="0 0 100 100"><circle cx="50" cy="36" r="15" fill="currentColor"/><path fill="currentColor" d="M22 94c2-18 13-30 28-30s26 12 28 30z"/></symbol>
     <symbol id="skull" viewBox="0 0 100 100"><path fill="currentColor" d="M50 12c-20 0-34 14-34 32 0 11 5 19 12 24v12c0 3 2 5 5 5h4v-7h6v7h14v-7h6v7h4c3 0 5-2 5-5V68c7-5 12-13 12-24 0-18-14-32-34-32zM36 40a9 9 0 110 18 9 9 0 010-18zm28 0a9 9 0 110 18 9 9 0 010-18zM50 58l6 10H44z"/><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="6 6" opacity=".6"/></symbol>
+    <symbol id="dball" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ffa21f" stroke="#c45f00" stroke-width="3"/><circle cx="36" cy="34" r="12" fill="#fff" opacity=".45"/><g fill="#d81e1e"><path d="M50 30l4 10h11l-9 7 4 11-10-7-10 7 4-11-9-7h11z"/><path d="M34 58l2.5 6h6.5l-5 4 2 7-6-4-6 4 2-7-5-4h6.5z"/><path d="M66 58l2.5 6h6.5l-5 4 2 7-6-4-6 4 2-7-5-4h6.5z"/></g></symbol>
+    <symbol id="glass" viewBox="0 0 100 100"><circle cx="42" cy="42" r="24" fill="rgba(255,255,255,.25)" stroke="currentColor" stroke-width="8"/><path d="M60 60l22 22" stroke="currentColor" stroke-width="12" stroke-linecap="round"/><path d="M30 34a14 14 0 0110-8" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/></symbol>
+    <symbol id="culprit" viewBox="0 0 100 100"><path fill="#000" d="M50 10c-14 0-24 11-24 25 0 9 4 16 10 20-14 4-24 16-26 40h80c-2-24-12-36-26-40 6-4 10-11 10-20 0-14-10-25-24-25z"/><path fill="#fff" d="M38 33q5-4 9 0q-4 4-9 0zM53 33q5-4 9 0q-4 4-9 0z"/><path d="M42 45q8 5 16 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="leaf" viewBox="0 0 100 100"><rect x="10" y="30" width="80" height="40" rx="6" fill="#9aa3b5" stroke="#5b6375" stroke-width="3"/><path d="M50 50m-13 0a13 13 0 1 0 26 0a9 9 0 1 0 -18 0a5 5 0 1 0 10 0" fill="none" stroke="#2c3240" stroke-width="3.5"/><path d="M63 50q10-3 13-14" fill="none" stroke="#2c3240" stroke-width="3.5"/><path d="M14 30L4 22M86 30l10-8" stroke="#2c3240" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="blade" viewBox="0 0 100 100"><path d="M24 80L80 14l4 3-52 68z" fill="#e8f2ff" stroke="#9fb3cf" stroke-width="2"/><rect x="14" y="74" width="20" height="8" rx="3" transform="rotate(-50 24 78)" fill="#2ecc71"/><path d="M8 94l14-14" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round"/></symbol>
+    <symbol id="oni" viewBox="0 0 100 100"><path fill="currentColor" d="M22 30l8-20 10 16M78 30l-8-20-10 16"/><path fill="currentColor" d="M50 22c-20 0-32 14-32 32 0 20 14 34 32 34s32-14 32-34c0-18-12-32-32-32z"/><path fill="#000" d="M32 48l14 6-14 4zM68 48l-14 6 14 4z"/><path fill="#000" d="M36 72q14 8 28 0l-4 6-6-3-4 4-4-4-6 3z"/></symbol>
     <symbol id="bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="13" r="1.6" fill="currentColor"/><circle cx="15" cy="13" r="1.6" fill="currentColor"/><path d="M12 3v4M8 22h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
@@ -311,6 +381,7 @@ body.quake .stage{animation:quake .6s}
 
 <script src="/avatars.js"></script>
 <script src="/backguard.js"></script>
+<script src="/theme.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -395,7 +466,9 @@ function openRoom(c){
   BackGuard.arm();
   poll(++pollGen, -1);
 }
-BackGuard.onBack(()=>{ if(sheet){ closeSheet(); return true; } return false; });
+BackGuard.onBack(()=>{ if(chatOpen){ closeChat(); return true; } if(sheet){ closeSheet(); return true; } return false; });
+// a new card style redraws the turned cards with its own pictures
+if(window.Theme) Theme.onChange(()=>{ if(view === "game") updateBoard(); });
 
 /* ---------- sync ---------- */
 let prev = null;
@@ -409,8 +482,10 @@ async function poll(gen, v){
       clockOffset = d.now - Date.now()/1000;
       prev = room; room = d; v = d.version;
       if(me && !room.players[me.pid]){ me = null; store("cn:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       render();
       moments();
+      renderChat();
     }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -479,6 +554,11 @@ function lobby(){
         <button type="button" class="${s.assassins===1?"on":""}" data-ass="1" ${H?"":"disabled"}><b>One</b><small>The classic rule</small></button>
         <button type="button" class="${s.assassins===2?"on":""}" data-ass="2" ${H?"":"disabled"}><b>Two</b><small>Hard mode. Every clue is a risk</small></button></div></div>
       <div class="row2"><div><label for="sClue">Spymaster timer</label>${sel("sClue", TIMERS, s.clueSec)}</div><div><label for="sGuess">Guessing timer</label>${sel("sGuess", TIMERS, s.guessSec)}</div></div>
+      <div><label>Chat</label><div class="seg" style="grid-template-columns:1fr 1fr 1fr">
+        <button type="button" class="${s.chat==="teams"?"on":""}" data-chat="teams" ${H?"":"disabled"}><b>Team chats</b><small>Red and blue talk privately</small></button>
+        <button type="button" class="${s.chat==="all"?"on":""}" data-chat="all" ${H?"":"disabled"}><b>Everyone</b><small>One chat for trash talk</small></button>
+        <button type="button" class="${s.chat==="off"?"on":""}" data-chat="off" ${H?"":"disabled"}><b>Off</b><small>You're all in the same room</small></button></div>
+        <p class="hint" style="margin-top:6px">Spymasters can read, but can't type while a game is on.</p></div>
       <div class="toggle"><div><b>AI spymaster</b><p class="hint">${room.aiReady ? "Fills any empty spymaster seat. It's sneaky." : "Not available: no AI key on this server."}</p></div><button type="button" id="aiSpy" class="${s.aiSpy&&room.aiReady?"on":""}" ${H&&room.aiReady?"":"disabled"} aria-label="AI spymaster"></button></div>
       ${H ? `<button class="btn primary wide" data-host="start" ${n<2?"disabled":""}>${n<2 ? "Waiting for one more agent" : "Deal the board"}</button>` : `<p class="hint" style="text-align:center">The host deals when everyone's in.</p>`}</div>
     <details class="panel" style="margin-top:14px"><summary style="font-weight:800;cursor:pointer">How to play</summary><p class="hint" style="margin-top:8px">
@@ -492,6 +572,7 @@ function lobby(){
     document.querySelectorAll("[data-pack]").forEach(b=>b.onclick=()=>send({pack:b.dataset.pack}));
     document.querySelectorAll("[data-size]").forEach(b=>b.onclick=()=>send({size:+b.dataset.size}));
     document.querySelectorAll("[data-ass]").forEach(b=>b.onclick=()=>send({assassins:+b.dataset.ass}));
+    document.querySelectorAll("[data-chat]").forEach(b=>b.onclick=()=>send({chat:b.dataset.chat}));
     $("#sClue").onchange = e=>send({clueSec:+e.target.value}); $("#sGuess").onchange = e=>send({guessSec:+e.target.value});
     $("#aiSpy").onclick = ()=>send({aiSpy:!s.aiSpy});
     if($("#sCustom")) $("#sCustom").onchange = e=>send({custom:e.target.value});
@@ -509,10 +590,12 @@ function starting(){
 /* ---------- the game ---------- */
 let boardDeal = null;
 function fsFor(w){ const n = w.length; return n <= 5 ? 1 : n <= 7 ? .9 : n <= 9 ? .78 : n <= 11 ? .68 : n <= 14 ? .58 : .5; }
+// the picture on a turned card depends on the player's card style
+const ICONS = {dragonball:{agent:"dball"}, conan:{agent:"glass", assassin:"culprit"}, naruto:{agent:"leaf"}, demonslayer:{agent:"blade", assassin:"oni"}};
 function backHTML(c){
-  const k = c.key || "neutral";
-  const icon = k === "assassin" ? "skull" : k === "neutral" ? "civ" : "agent";
-  return `<div class="f back ${k}"><svg><use href="#${icon}"/></svg><span class="wl">${esc(c.w)}</span></div>`;
+  const k = c.key || "neutral", set = ICONS[window.Theme ? Theme.cards() : "classic"] || {};
+  const icon = k === "assassin" ? set.assassin || "skull" : k === "neutral" ? set.neutral || "civ" : set.agent || "agent";
+  return `<div class="f back ${k}" data-style="${window.Theme ? Theme.cards() : ""}"><svg><use href="#${icon}"/></svg><span class="wl">${esc(c.w)}</span></div>`;
 }
 function game(){
   const ph = room.phase, pics = room.settings.pack === "pictures" && room.cards.some(c=>c.img);
@@ -558,7 +641,7 @@ function updateBoard(){
   room.cards.forEach((c, i)=>{
     const el = document.querySelector(`.card[data-i="${i}"]`); if(!el) return;
     const back = el.querySelector(".back");
-    if(c.key && !back.classList.contains(c.key)){ back.outerHTML = backHTML(c); }
+    if(c.key && (!back.classList.contains(c.key) || back.dataset.style !== (window.Theme ? Theme.cards() : ""))){ back.outerHTML = backHTML(c); }
     const showRev = c.revealed || ph === "over";
     if(ph === "over" && !c.revealed && !el.classList.contains("revealed")){
       el.classList.add("late"); setTimeout(()=>el.classList.add("revealed"), 700 + i*55);
@@ -594,7 +677,7 @@ function renderDock(){
   d.hidden = false;
   const H = !!hostKey;
   let body = "", mode = "";
-  const roleLine = `<div class="role"><span>${my.role === "spy" ? "Spymaster" : "Guesser"} · <b class="${t}">${TEAM[t]} team</b></span><span class="tools"><button class="btn small" data-sheet="log">Log</button><button class="btn small" data-sheet="teams">Teams</button>${H?'<button class="btn small" data-sheet="host">Host</button>':""}</span></div>`;
+  const roleLine = `<div class="role"><span><button type="button" class="me-pic" data-mypic="1" aria-label="Change your picture">${face(me.pid,"mini")}</button>${my.role === "spy" ? "Spymaster" : "Guesser"} · <b class="${t}">${TEAM[t]} team</b></span><span class="tools"><button class="btn small" data-sheet="log">Log</button><button class="btn small" data-sheet="teams">Teams</button>${H?'<button class="btn small" data-sheet="host">Host</button>':""}</span></div>`;
   if(ph === "clue" && myTurn && my.role === "spy"){
     mode = "clue";
     body = `<form class="row" id="clueForm"><input type="text" id="clueIn" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="One-word clue" enterkeyhint="send"><button class="btn ${t}">Send</button></form>
@@ -641,7 +724,7 @@ function logHTML(){
   const why = {wrong:"wrong card", out:"out of guesses", pass:"ended their turn", timeout:"ran out of time", host:"host skipped", "clue-timeout":"no clue in time"};
   return `<div class="log">${out.reverse().map(x=> x.skip ? `<div class="le ${x.skip.team}"><span class="end">${TEAM[x.skip.team]}: ${why[x.skip.why]||"turn skipped"}</span></div>`
     : `<div class="le ${x.e.team}"><div class="cl"><span class="w">${esc(x.e.word)}</span><span class="n">${x.e.n===10?"∞":x.e.n}</span><span class="muted" style="font-size:12px;font-weight:600">${x.e.by==="ai"?"AI":esc(P(x.e.by).name)}</span></div>
-      ${x.gs.length?`<div class="gs">${x.gs.map(g=>`<span class="g ${g.key}" title="${esc(P(g.by).name)}">${esc(g.w)}</span>`).join("")}</div>`:""}
+      ${x.gs.length?`<div class="gs">${x.gs.map(g=>`<span class="g ${g.key}" title="${esc(P(g.by).name)} locked ${esc(g.w)}">${face(g.by)}${esc(g.w)}<i>${esc(P(g.by).name)}</i></span>`).join("")}</div>`:""}
       ${x.e.targets?`<div class="plan">AI was thinking of: ${x.e.targets.map(esc).join(", ")}</div>`:""}
       ${x.end?`<span class="end">${why[x.end]||""}</span>`:""}</div>`).join("")}</div>`;
 }
@@ -658,7 +741,7 @@ function renderSheet(){
         ${room.spymasters[t]==="ai"?`<div class="op">${botFace()}<span>AI spymaster</span></div>`:""}
         ${my.role !== "spy" && my.team !== t ? `<button class="btn small ${t}" data-join="${t}">Switch to ${TEAM[t]}</button>` : ""}
         ${my.role !== "spy" && (!live || room.spymasters[t] === "ai" || !room.spymasters[t]) && (room.spymasters[t]==="ai" || !room.spymasters[t]) ? `<button class="btn small" data-seat="${t}">Become ${TEAM[t]} spymaster</button>` : ""}</div>`; };
-    html = `<h2>Teams</h2><div class="teams" style="margin:0">${row("red")}${row("blue")}</div>${live && my.role !== "spy" ? '<p class="hint">Becoming a spymaster shows you the key, so only do it if your team needs one.</p>' : ""}`;
+    html = `<div class="row" style="display:flex;align-items:center;gap:10px">${face(me.pid,"face")}<b style="flex:1">${esc(my.name)}</b><button class="btn small" data-mypic="1">Change my picture</button></div><h2>Teams</h2><div class="teams" style="margin:0">${row("red")}${row("blue")}</div>${live && my.role !== "spy" ? '<p class="hint">Becoming a spymaster shows you the key, so only do it if your team needs one.</p>' : ""}`;
   }
   if(sheet === "host"){
     const ph = room.phase;
@@ -760,6 +843,7 @@ document.addEventListener("click", async e=>{
   const h = e.target.closest("[data-host]"), k = e.target.closest("[data-kick]"), j = e.target.closest("[data-join]"), s = e.target.closest("[data-seat]");
   const sh = e.target.closest("[data-sheet]"), cl = e.target.closest("[data-close]"), ag = e.target.closest("[data-again]"), sp = e.target.closest("[data-shuffle-spies]");
   try{
+    if(e.target.closest("[data-mypic]")){ Avatars.open(act); return; }
     if(sh){ openSheet(sh.dataset.sheet); return; }
     if(cl){ closeSheet(); return; }
     if(h){ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); if(h.closest(".sheet")) closeSheet(); }
@@ -774,6 +858,80 @@ document.addEventListener("click", async e=>{
     if(k){ if(k.dataset.sure !== "1"){ k.dataset.sure = "1"; k.textContent = "Sure?"; return; } await act("kick", {pid:k.dataset.kick}); }
   }catch(err){ toast(err.message); }
 });
+
+/* ---------- chat: a bubble button, and a panel that sits right above the keyboard ---------- */
+let chatOpen = false, chatSeen = store("cn:seen") || "", chatShown = new Set(), chatRoom = null;
+const SEND = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5l18-8.5L3 3.5v6.6l12 1.9-12 1.9z"/></svg>';
+const BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>';
+function chatChannel(){ return room.settings.chat === "all" ? "Everyone" : `${TEAM[myTeam()] || "Team"} team chat`; }
+function renderChat(){
+  if(!room || !mine()) return;
+  const off = room.settings.chat === "off";
+  let fab = $("#chatFab");
+  if(off){ fab?.remove(); if(chatOpen) closeChat(); return; }
+  if(!fab){ fab = document.createElement("button"); fab.id = "chatFab"; fab.className = "chatfab"; fab.setAttribute("aria-label", "Chat"); fab.onclick = openChat; document.body.appendChild(fab); }
+  const msgs = room.chat || [];
+  const lastIdx = msgs.findIndex(m=>m.id === chatSeen);
+  const unread = chatOpen ? 0 : msgs.slice(lastIdx + 1).filter(m=>!m.sys && m.pid !== me.pid).length;
+  fab.hidden = chatOpen;
+  fab.innerHTML = BUBBLE + (unread ? `<span class="badge">${unread > 9 ? "9+" : unread}</span>` : "");
+  if(prev && msgs.length && prev.chat && msgs[msgs.length-1].id !== prev.chat[prev.chat.length-1]?.id && !chatOpen && msgs[msgs.length-1].pid && msgs[msgs.length-1].pid !== me.pid) SFX.tap();
+  if(!chatOpen) return;
+  const box = $("#chatBox");
+  if(chatRoom !== room.code + myTeam() + room.settings.chat){ chatRoom = room.code + myTeam() + room.settings.chat; chatShown.clear(); box.querySelector(".msgs").innerHTML = ""; }
+  box.querySelector("header b").textContent = chatChannel();
+  box.querySelector("header b").className = room.settings.chat === "teams" ? myTeam() : "";
+  const list = box.querySelector(".msgs"), atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+  for(const m of msgs){
+    if(chatShown.has(m.id)) continue;
+    chatShown.add(m.id);
+    const el = document.createElement("div");
+    if(m.sys){ el.className = "sys"; el.textContent = m.text; }
+    else { const p = P(m.pid), mineMsg = m.pid === me.pid;
+      el.className = "m" + (mineMsg ? " me" : "");
+      el.innerHTML = `${face(m.pid)}<div class="b">${mineMsg ? "" : `<span class="n ${p.team||""}">${esc(p.name)}</span>`}${esc(m.text)}</div>`; }
+    list.appendChild(el);
+  }
+  if(atEnd || list.dataset.first !== "1"){ list.scrollTop = list.scrollHeight; list.dataset.first = "1"; }
+  if(msgs.length){ chatSeen = msgs[msgs.length-1].id; store("cn:seen", chatSeen); }
+  // spymasters read along but can't type mid-game
+  const muted = isSpy() && ["clue","guess"].includes(room.phase);
+  box.querySelector("form").hidden = muted; box.querySelector(".muted-note").hidden = !muted;
+}
+function openChat(){
+  if(chatOpen) return;
+  chatOpen = true; chatShown.clear(); chatRoom = null;
+  const box = document.createElement("div"); box.className = "chatbox"; box.id = "chatBox";
+  box.innerHTML = `<header><b></b><button type="button" aria-label="Close chat">×</button></header><div class="msgs"></div>
+    <form><textarea rows="1" maxlength="200" placeholder="Message" enterkeyhint="send" aria-label="Message"></textarea><button type="submit" aria-label="Send">${SEND}</button></form>
+    <div class="muted-note" hidden>Spymasters can't chat mid-game. Your clues do the talking.</div>`;
+  document.body.appendChild(box);
+  const ta = box.querySelector("textarea"), btn = box.querySelector("form button");
+  const grow = ()=>{ ta.style.height = "38px"; ta.style.height = Math.min(ta.scrollHeight + 2, 110) + "px"; };
+  ta.oninput = grow;
+  ta.onkeydown = e=>{ if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); box.querySelector("form").requestSubmit(); } };
+  // keep the keyboard open when you tap send
+  btn.addEventListener("pointerdown", e=>e.preventDefault()); btn.addEventListener("mousedown", e=>e.preventDefault());
+  box.querySelector("form").onsubmit = async e=>{ e.preventDefault(); const t = ta.value.trim(); if(!t) return;
+    ta.value = ""; grow();
+    try{ await act("chat", {text:t}); }catch(err){ ta.value = t; grow(); toast(err.message); } };
+  box.querySelector("header button").onclick = closeChat;
+  fitChat(); renderChat();
+}
+function closeChat(){
+  if(!chatOpen) return;
+  chatOpen = false; $("#chatBox")?.remove(); renderChat();
+}
+// on iPhones the keyboard covers fixed panels, so lift the chat to sit on top of it
+function fitChat(){
+  const vv = window.visualViewport, box = $("#chatBox"); if(!vv || !box) return;
+  const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+  box.style.setProperty("--kb", kb + "px");
+  box.classList.toggle("typing", kb > 80 && window.innerWidth < 700);
+  box.style.setProperty("--kb-top", vv.offsetTop + "px");
+}
+window.visualViewport?.addEventListener("resize", fitChat);
+window.visualViewport?.addEventListener("scroll", fitChat);
 
 function tickTimer(){
   const el = $("#timer");

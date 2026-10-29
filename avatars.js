@@ -81,7 +81,7 @@
     scrim.querySelector(".av-grid").onclick = async e=>{
       const t = e.target.closest(".av-tile"); if(!t) return;
       search.blur();
-      try{ await act("avatar", {url: t.dataset.url}); close && close(); }catch(err){ alertish(err.message); }
+      try{ await act("avatar", {url: t.dataset.url}); remember({url: t.dataset.url}); close && close(); }catch(err){ alertish(err.message); }
     };
     chips(); grid(""); await load(); chips(); grid(search.value);
   }
@@ -92,7 +92,9 @@
       const img = await new Promise((res, rej)=>{ const i = new Image(); i.onload = ()=>res(i); i.onerror = ()=>rej(new Error("That file isn't a picture we can read.")); i.src = URL.createObjectURL(f); });
       const c = document.createElement("canvas"); c.width = c.height = 320; const x = c.getContext("2d");
       const m = Math.min(img.width, img.height); x.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 320, 320);
-      await act("photo", {img: c.toDataURL("image/jpeg", .85)});
+      const data = c.toDataURL("image/jpeg", .85);
+      await act("photo", {img: data});
+      remember({img: data});
       close && close();
     }catch(err){ alertish(err.message || "That picture didn't work. Try another one."); }
   };
@@ -101,8 +103,22 @@
     const m = document.querySelector(".av-grid"); if(m) m.insertAdjacentHTML("afterbegin", `<div class="av-msg" style="color:#ff9a9a;opacity:1">${esc(msg)}</div>`);
   }
 
+  /* your profile picture, saved on this device: whatever you pick last follows you into every game */
+  const KEY = "gn:avatar", applied = new Set();
+  function remember(v){ try{ localStorage.setItem(KEY, JSON.stringify(v)); }catch(e){} }
+  function saved(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+  function apply(actFn, player){
+    // a player with no picture in this room yet gets their saved one, once per room
+    if(!player || player.avatar || player.photo) return;
+    const s = saved(), k = location.pathname + location.search + player.name;
+    if(!s || applied.has(k)) return;
+    applied.add(k);
+    (s.url ? actFn("avatar", {url: s.url}) : actFn("photo", {img: s.img})).catch(()=>{});
+  }
+
   window.Avatars = {
-    open,
+    open, apply,
+    mine: ()=>{ const s = saved(); return s ? s.url || s.img : null; },
     src: p => p && (p.photo ? `/api/img/${p.photo}` : p.avatar || null),
   };
 })();

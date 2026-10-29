@@ -333,6 +333,7 @@ body.focus .dock .closetools{display:block}
 
 <script src="/avatars.js"></script>
 <script src="/backguard.js"></script>
+<script src="/theme.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -403,6 +404,7 @@ async function poll(gen, v){
       clockOffset = data.now - Date.now()/1000;
       const prev = room; room = data; v = data.version;
       if(me && !room.players[me.pid]){ me = null; store("draw:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       onChange(prev); render();
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }

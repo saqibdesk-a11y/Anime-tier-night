@@ -109,13 +109,14 @@ def clean_settings(b, old=None):
         "clueSec": max(0, min(300, int(pick("clueSec", 0)))),  # 0 = no timer
         "guessSec": max(0, min(300, int(pick("guessSec", 0)))),
         "aiSpy": bool(pick("aiSpy", True)),  # an AI spymaster fills a team's empty spymaster seat
+        "chat": pick("chat", "teams") if pick("chat", "teams") in ("teams", "all", "off") else "teams",
     }
 
 
 def create(room, b):
     room.update({"game": "codenames", "phase": "lobby", "settings": clean_settings(b), "deadline": None,
                  "cards": [], "turn": None, "clue": None, "log": [], "marks": {}, "winner": None, "why": None,
-                 "wins": {"red": 0, "blue": 0}, "aiThinking": None, "aiNote": None, "gameNo": 0})
+                 "wins": {"red": 0, "blue": 0}, "aiThinking": None, "aiNote": None, "gameNo": 0, "chat": []})
 
 
 def on_join(room, pid):
@@ -175,6 +176,12 @@ def clue_clash(room, word):
                 return (f'"{c["w"]}" is on the board. Pick another word.' if m == n
                         else f'"{word}" is too close to "{c["w"]}" on the board.')
     return None
+
+
+def say(room, text, ch="both", pid=None):
+    """Adds a chat line. ch is "all", a team, or "both" (game events everyone should see in their own chat)."""
+    room.setdefault("chat", []).append({"id": rid(6), "pid": pid, "ch": ch, "text": text, "at": time.time(), "sys": pid is None})
+    del room["chat"][:-150]
 
 
 def set_timer(room, secs):
@@ -274,6 +281,7 @@ def give_clue(room, word, n, by, targets=None):
                         "targets": targets or None, "right": 0, "id": room["clue"]["id"]})
     room["phase"] = "guess"
     room["aiThinking"] = None
+    say(room, f'{"AI spymaster" if by == "ai" else name(room, by)} gave {room["turn"].title()} the clue: {word} {"∞" if n == UNLIMITED else n}')
     set_timer(room, room["settings"]["guessSec"])
 
 
@@ -296,6 +304,8 @@ def reveal(room, i, pid):
     clue["guesses"] += 1
     room["log"].append({"kind": "guess", "team": team, "by": pid, "i": i, "w": c["w"], "key": c["key"]})
     room["lastReveal"] = {"i": i, "key": c["key"], "team": team, "id": rid(6)}
+    what = {"assassin": "the ASSASSIN", "neutral": "a bystander", team: "their own agent"}.get(c["key"], f"a {c['key'].title()} agent")
+    say(room, f"{name(room, pid)} locked {c['w']}: {what}")
     if c["key"] == "assassin":
         stat(room, pid, "assassin")
         win(room, other(team), "assassin")
@@ -413,6 +423,11 @@ def public(room, viewer):
     r["spymasters"] = {t: spymaster(room, t) for t in TEAMS}
     r["aiReady"] = bool(ai.BUILTIN_ORDER)
     r["packs"] = PACKS
+    # chat: everyone sees the "all" channel; with team chats you only see your own team's
+    team = me.get("team") if me else None
+    mode = room["settings"]["chat"]
+    r["chat"] = [] if mode == "off" else [m for m in room.get("chat", [])
+                                         if m["ch"] == "both" or (mode == "all" and m["ch"] == "all") or (mode == "teams" and m["ch"] == team)]
     return r
 
 
@@ -435,6 +450,20 @@ def player_action(room, action, b, pid):
         if role == "spy" and ph == "clue" and room["turn"] == team:  # a human takes over from the AI
             room["aiNote"] = room["aiFailed"] = room["aiThinking"] = None
             set_timer(room, room["settings"]["clueSec"])
+        return True
+    if action == "chat":
+        mode = room["settings"]["chat"]
+        if mode == "off":
+            raise Refuse("Chat is off in this game.")
+        if p.get("role") == "spy" and ph in ("clue", "guess"):
+            raise Refuse("Spymasters can't chat mid-game. Your clues do the talking.")
+        text = " ".join(str(b.get("text") or "").split())[:200]
+        if not text:
+            raise Refuse("Type a message.")
+        if time.time() - p.get("lastChat", 0) < .5:
+            raise Refuse("Slow down a little.")
+        p["lastChat"] = time.time()
+        say(room, text, "all" if mode == "all" else p.get("team"), pid)
         return True
     if action == "clue":
         if ph != "clue" or p.get("team") != room["turn"] or p.get("role") != "spy":
