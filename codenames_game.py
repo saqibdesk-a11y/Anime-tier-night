@@ -335,6 +335,7 @@ def ai_clue(code, tid):
         assassin = [desc(c) for c in live if c["key"] == "assassin"]
         past = [e["word"] for e in room["log"] if e["kind"] == "clue"]
         pics = room["settings"]["pack"] == "pictures"
+        theme = room["settings"]["custom"] if room["settings"]["pack"] == "custom" else ""
         cards = {norm(c["w"]): c["w"] for c in live}
     system = ("You are a brilliant Codenames spymaster. Give one clue word that links as many of your team's cards as "
               "you safely can, while steering clear of the other team's cards and above all the assassin. "
@@ -343,6 +344,7 @@ def ai_clue(code, tid):
     prompt = (f"Your team's cards: {', '.join(mine)}.\nOther team's cards: {', '.join(theirs)}.\n"
               f"Neutral cards: {', '.join(neutral) or 'none'}.\nASSASSIN (never point near it): {', '.join(assassin)}.\n"
               + (f"Clues already given: {', '.join(past)}.\n" if past else "")
+              + (f"Every card is about {theme}, so '{theme}' and words like it are useless as clues. Be more specific.\n" if theme else "")
               + "Aim for 2 or 3 cards when a link is strong; 1 is fine when only a weak link exists. "
               'Return only JSON: {"clue": "word", "number": 2, "targets": ["card", "card"]}')
     word = n = targets = None
