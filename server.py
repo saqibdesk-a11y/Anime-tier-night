@@ -246,7 +246,7 @@ def tvmaze(q, n):
 
 def app_store(q, n):
     d = get_json("https://itunes.apple.com/search?" + urllib.parse.urlencode({"term": q, "entity": "software", "limit": n, "country": "us"}))
-    return [{"mal_id": a.get("trackId"), "title": re.split(r" [-–:|] ", a.get("trackName") or "")[0],  # "TikTok - Videos, Shop & LIVE"
+    return [{"mal_id": a.get("trackId"), "title": re.split(r"\s*[:|]\s|\s[-–]\s", a.get("trackName") or "")[0],  # "TikTok - Videos, Shop & LIVE"
              "subtitle": a.get("sellerName"), "year": None, "type": "App",
              "members": 0, "img": a.get("artworkUrl512") or a.get("artworkUrl100"), "url": a.get("trackViewUrl")}
             for a in (d or {}).get("results", [])]
