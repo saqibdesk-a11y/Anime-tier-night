@@ -246,7 +246,8 @@ def tvmaze(q, n):
 
 def app_store(q, n):
     d = get_json("https://itunes.apple.com/search?" + urllib.parse.urlencode({"term": q, "entity": "software", "limit": n, "country": "us"}))
-    return [{"mal_id": a.get("trackId"), "title": re.split(r" [-–:|] ", a.get("trackName") or "")[0],  # "TikTok - Videos, Shop & LIVE" "subtitle": a.get("sellerName"), "year": None, "type": "App",
+    return [{"mal_id": a.get("trackId"), "title": re.split(r" [-–:|] ", a.get("trackName") or "")[0],  # "TikTok - Videos, Shop & LIVE"
+             "subtitle": a.get("sellerName"), "year": None, "type": "App",
              "members": 0, "img": a.get("artworkUrl512") or a.get("artworkUrl100"), "url": a.get("trackViewUrl")}
             for a in (d or {}).get("results", [])]
 
@@ -294,7 +295,10 @@ def lookup_worker():
             name = item["name"] if item else None
         if not name:
             continue
-        m = best_match(name, item.get("kind") or "anime")
+        try:
+            m = best_match(name, item.get("kind") or "anime")
+        except Exception:  # one odd result must never stop the pictures for everything after it
+            m = None
         with lock:
             room = rooms.get(code)
             item = find(room, aid)
@@ -302,7 +306,7 @@ def lookup_worker():
                 continue
             item["status"] = "ok" if m and m["img"] else "missing"
             if m:
-                item.update(title=m["title"], img=m["img"], url=m["url"], year=m["year"])
+                item.update(title=m.get("title") or item["title"], img=m.get("img"), url=m.get("url"), year=m.get("year"))
                 # two people typed the same show differently: keep one card, credit both
                 twin = next((x for x in room["anime"] if x is not item and x.get("url") == m["url"]), None)
                 if twin:
