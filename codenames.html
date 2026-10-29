@@ -192,7 +192,13 @@ select option{background:var(--bg2)}
 .card.can:hover .front{transform:translateY(-2px)}
 .card.can:active .front{transform:scale(.96)}
 .card.mine .front{box-shadow:0 0 0 3px var(--gold),0 0 22px -2px rgba(255,207,77,.7)}
-.card.mine .front::after{content:"TAP TO REVEAL";position:absolute;left:0;right:0;top:2px;font-size:clamp(5px,1.3vw,8px);font-weight:900;letter-spacing:.1em;color:#8a6200;animation:blink 1s infinite;z-index:2;text-align:center}
+/* your marked card gets a Lock in button; tapping the card itself again takes the mark off */
+.card .lock{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%) scale(.6);opacity:0;pointer-events:none;z-index:4;display:flex;align-items:center;gap:3px;white-space:nowrap;
+  background:var(--gold);color:#221800;border-radius:999px;padding:4px 9px;font:900 clamp(9px,2.4vw,11px)/1 var(--body);letter-spacing:.06em;text-transform:uppercase;box-shadow:0 6px 16px -4px rgba(0,0,0,.8),0 0 0 2px rgba(0,0,0,.35);transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .2s}
+.card .lock svg{width:11px;height:11px}
+.card.mine{z-index:5}  /* lifts the Lock in button over the row below */
+.card.mine .lock{opacity:1;transform:translateX(-50%) scale(1);pointer-events:auto;animation:lockpulse 1.4s 1s infinite}
+@keyframes lockpulse{50%{box-shadow:0 6px 16px -4px rgba(0,0,0,.8),0 0 0 5px rgba(255,207,77,.35)}}
 .card.mine .up{opacity:0}
 @media (max-width:600px){.card{aspect-ratio:1.18}.board.pics .card{aspect-ratio:.72}.card .word{font-size:calc(var(--fs,1) * clamp(10px,3.1vw,16px))}}
 .card .marks{position:absolute;right:-4px;top:-6px;display:flex;flex-direction:row-reverse;z-index:3}
@@ -564,7 +570,7 @@ function lobby(){
     <details class="panel" style="margin-top:14px"><summary style="font-weight:800;cursor:pointer">How to play</summary><p class="hint" style="margin-top:8px">
       Each team has a <b>spymaster</b> who sees the secret key: which cards are red agents, blue agents, innocent bystanders, and the <b>assassin</b>.<br><br>
       On your turn the spymaster gives <b>one word and a number</b>, like <i>OCEAN 2</i>, meaning "two of our cards connect to ocean". The clue can't be a word on the board.<br><br>
-      Guessers tap a card to <b>mark</b> it (your team sees your marks), then tap it again to <b>reveal</b>. Your agent: keep going, up to the number plus one. A bystander or the other team's agent ends your turn. The assassin loses the game on the spot.<br><br>
+      Guessers tap a card to <b>mark</b> it (your team sees your marks) and tap it again to unmark it. Press <b>Lock in</b> on your marked card to reveal it. Your agent: keep going, up to the number plus one. A bystander or the other team's agent ends your turn. The assassin loses the game on the spot.<br><br>
       A <b>0</b> or <b>∞</b> clue means guess as many as you like. First team to find all its agents wins.</p></details></div>`;
   $("#photoBtn").onclick = ()=>Avatars.open(act);
   if(H){
@@ -605,7 +611,7 @@ function game(){
       <div class="board ${pics?"pics":""}" id="board" style="--cols:${room.cards.length===16?4:5}">${room.cards.map((c,i)=>{
         const dx = (Math.random()*2-1)*120 + "px", dy = (220 + Math.random()*120) + "px", dr = (Math.random()*60-30) + "deg";
         return `<button class="card deal" data-i="${i}" style="--fs:${fsFor(c.w)};--dx:${dx};--dy:${dy};--dr:${dr};animation-delay:${i*35}ms" aria-label="${esc(c.w)}">
-          <div class="inner"><div class="f front">${c.img?`<img class="pic" src="${esc(c.img)}" alt="" referrerpolicy="no-referrer" loading="lazy">`:`<span class="up">${esc(c.w)}</span>`}<span class="word">${esc(c.w)}</span></div>${backHTML(c)}</div><span class="marks"></span></button>`; }).join("")}</div>
+          <div class="inner"><div class="f front">${c.img?`<img class="pic" src="${esc(c.img)}" alt="" referrerpolicy="no-referrer" loading="lazy">`:`<span class="up">${esc(c.w)}</span>`}<span class="word">${esc(c.w)}</span></div>${backHTML(c)}</div><span class="marks"></span><span class="lock" role="button" aria-label="Lock in ${esc(c.w)}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0110 0v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1zm2 0h6V7a3 3 0 00-6 0z"/></svg>Lock in</span></button>`; }).join("")}</div>
       <div id="awards"></div></div><aside class="side panel" id="sideLog"></aside>`;
     $("#board").onclick = onCard;
     setTimeout(()=>document.querySelectorAll(".card.deal").forEach(c=>c.classList.remove("deal")), 1600);
@@ -659,15 +665,17 @@ function updateBoard(){
 async function onCard(e){
   const el = e.target.closest(".card.can"); if(!el) return;
   const i = +el.dataset.i, marks = (room.marks || {})[i] || [];
-  if(marks.includes(me.pid)){
-    el.classList.remove("mine"); el.classList.add("revealing");
+  if(e.target.closest(".lock") && marks.includes(me.pid)){
+    // Lock in: reveal the card
+    el.classList.remove("mine"); el.classList.add("revealing"); buzz(40);
     try{ await act("reveal", {i}); }catch(err){ toast(err.message); }
-  } else {
-    SFX.tap(); buzz(15);
-    // show my mark right away; the server confirms on the next update
-    room.marks = {...(room.marks||{}), [i]: [...marks, me.pid]}; updateBoard();
-    try{ await act("mark", {i}); }catch(err){ toast(err.message); }
+    return;
   }
+  // tapping the card marks it, or takes your mark off again; the server confirms on the next update
+  SFX.tap(); buzz(15);
+  const had = marks.includes(me.pid);
+  room.marks = {...(room.marks||{}), [i]: had ? marks.filter(x=>x !== me.pid) : [...marks, me.pid]}; updateBoard();
+  try{ await act("mark", {i}); }catch(err){ toast(err.message); }
 }
 
 /* ---------- your controls ---------- */
@@ -685,7 +693,7 @@ function renderDock(){
       <p class="hint" id="clueHint">You have ${room.left[t]} agent${room.left[t]===1?"":"s"} left. The number is how many cards your clue points at.</p>`;
   } else if(ph === "guess" && myTurn && my.role === "op"){
     mode = "guess";
-    body = `<div class="row"><p class="hint" style="flex:1">Tap a card to mark it for your team. Tap your marked card again to reveal it.</p><button class="btn small" id="endTurn" ${room.clue?.guesses ? "" : "disabled"}>End turn</button></div>`;
+    body = `<div class="row"><p class="hint" style="flex:1">Tap a card to mark it, tap again to unmark. Press <b>Lock in</b> to reveal it.</p><button class="btn small" id="endTurn" ${room.clue?.guesses ? "" : "disabled"}>End turn</button></div>`;
   } else if(ph === "over"){
     mode = "over";
     body = H ? `<div class="row" style="flex-wrap:wrap;justify-content:center"><button class="btn primary" data-again="rotate">Play again · new spymasters</button><button class="btn small" data-again="same">Same roles</button><button class="btn small" data-host="tolobby">Lobby</button></div>`
