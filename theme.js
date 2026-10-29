@@ -113,7 +113,8 @@
     document.body.appendChild(scrim);
     close = ()=>{ scrim.remove(); close = null; };
     scrim.onclick = e=>{
-      const th = e.target.closest("[data-th]"), cd = e.target.closest("[data-cards]");
+      // buttons only: the page itself carries data-cards (the current card style), so a bare [data-cards] matches every tap
+      const th = e.target.closest("button[data-th]"), cd = e.target.closest("button[data-cards]");
       if(th){ theme = th.dataset.th; set("gn:theme", theme); apply(); draw(); return; }
       if(cd){ cards = cd.dataset.cards; set("gn:cards", cards); apply(); draw(); return; }
       if(e.target === scrim || e.target.closest(".th-close")) close();
