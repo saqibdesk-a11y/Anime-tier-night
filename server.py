@@ -16,12 +16,13 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import codenames_game
 import draw_game
 import imposter_game
 import media
 import werewolf_game
 
-GAMES = {"draw": draw_game, "werewolf": werewolf_game, "imposter": imposter_game}  # every game module has the same hooks
+GAMES = {"draw": draw_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game}  # every game module has the same hooks
 
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -1034,13 +1035,14 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/icon-192.png": ("image/png", "public, max-age=86400"),
     "/icon-512.png": ("image/png", "public, max-age=86400"),
 }
-PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html"}
+PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html"}
 
 
 def main():
     load()
     for game in GAMES.values():
         game.setup(rooms, lock, changed, rid)
+    codenames_game.gallery = avatar_gallery  # anime characters for the picture cards
     for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")
