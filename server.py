@@ -505,9 +505,64 @@ def finish(room):
     start_show(room)
 
 
+def start_ranking(room):
+    room["phase"] = "ranking"
+    room["autoStart"] = None
+    room["deadline"] = time.time() + room["timerSec"] + 3  # 3s for everyone's screen to switch
+    for p in room["players"].values():
+        p["tiers"], p["done"] = {t: [] for t in TIERS}, False
+
+
+def show_len(room):
+    return len(room["players"]) + 3  # intro, one per player, group verdict, awards
+
+
+def set_slide(room, i):
+    """Every screen shows slide i; the ticker moves on after its time unless the host paused."""
+    s = room["show"]
+    last = show_len(room) - 1
+    s["slide"] = max(0, min(i, last))
+    s["at"] = time.time()
+    s["dur"] = 9 if s["slide"] == 0 else 18 if s["slide"] == last else 14
+
+
+def tick_tierlist(room):
+    """The tier list runs itself: picks close when everyone is in, ranking ends on time or when all are done,
+    and the reveal show steps through its slides. Returns True if anything changed."""
+    now, ph, ps = time.time(), room.get("phase"), room["players"].values()
+    if ph == "submit" and room.get("mode") == "picks":
+        ready = len(ps) >= 2 and all(sum(1 for a in room["anime"] if pid in a.get("by", [])) >= room["picksPer"]
+                                     for pid in room["players"])
+        if ready and not room.get("autoStart"):
+            room["autoStart"] = now + 5  # a short countdown so nobody is surprised
+            return True
+        if not ready and room.get("autoStart"):
+            room["autoStart"] = None
+            return True
+        if ready and now >= room["autoStart"]:
+            start_ranking(room)
+            return True
+    if ph == "ranking" and room.get("deadline"):
+        all_done = ps and all(p.get("done") for p in ps)
+        if now > room["deadline"] + 2 or all_done:
+            finish(room)
+            return True
+    s = room.get("show")
+    if s and not s.get("done") and not s.get("paused") and s.get("at"):
+        waiting = s["slide"] == 0 and (room.get("roastState") or {}).get("status") == "working" and now - s["at"] < 45
+        if not waiting and now - s["at"] >= s.get("dur", 12):
+            if s["slide"] >= show_len(room) - 1:
+                s["done"] = True
+            else:
+                set_slide(room, s["slide"] + 1)
+            return True
+    return False
+
+
 def start_show(room):
     """Puts every screen on the Reveal Show and starts the AI roast in the background. Call with lock held."""
-    room["show"] = {"slide": 0, "done": False}
+    room["show"] = {"slide": 0, "done": False, "paused": False}
+    set_slide(room, 0)
     anyone_ranked = any(any(p["tiers"].get(t) for t in TIERS) for p in room["players"].values())
     if anyone_ranked and not room.get("roasts") and (room.get("roastState") or {}).get("status") != "working":
         room["roastState"] = {"status": "working", "error": None}
@@ -596,8 +651,7 @@ def ticker():
                     if GAMES[room["game"]].tick(room):
                         changed(room)
                     continue
-                if room.get("phase") == "ranking" and room.get("deadline") and time.time() > room["deadline"] + 2:
-                    finish(room)
+                if tick_tierlist(room):
                     changed(room)
 
 
@@ -739,9 +793,9 @@ class Handler(BaseHTTPRequestHandler):
                         "titleAuto": not b.get("title"), "category": category,
                         "catLabel": str(b.get("catLabel") or "").strip()[:40] if category == "custom" else "",
                         "aiTheme": str(b.get("aiTheme") or "").strip()[:120], "aiCount": max(5, min(40, int(b.get("aiCount") or 15))),
-                        "aiState": None, "mode": mode, "phase": "submit" if mode == "picks" else "ranking",
+                        "aiState": None, "mode": mode, "phase": "submit" if mode == "picks" else "lobby", "autoStart": None,
                         "picksPer": max(1, min(10, int(b.get("picksPer") or 5))),
-                        "timerSec": max(30, min(1800, int(b.get("timerSec") or 120))), "deadline": None,
+                        "timerSec": max(30, min(1800, int(b.get("timerSec") or (120 if mode == "picks" else 180)))), "deadline": None,
                         "spice": b.get("spice") if b.get("spice") in SPICE else "spicy", "show": None, "roastState": None,
                         "anime": [], "players": {}, "revealed": False, "tiers": TIERS, "roasts": [],
                         "created": time.time(), "version": 0}
@@ -833,9 +887,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.err("You're not in this room. Rejoin with your name.", 403)
 
             if action == "rank":
-                if room.get("mode") == "picks":
-                    if room["phase"] != "ranking" or (room["deadline"] and time.time() > room["deadline"] + 2):
-                        return self.err("Time's up. Rankings are locked.", 409)
+                if room.get("phase") == "lobby":
+                    return self.err("The ranking hasn't started yet.", 409)
+                if room.get("phase") != "ranking" or (room.get("deadline") and time.time() > room["deadline"] + 2):
+                    return self.err("Time's up. Rankings are locked.", 409)
                 player["tiers"] = clean_tiers(room, b.get("tiers"))
                 if "done" in b:
                     player["done"] = bool(b["done"])
@@ -884,7 +939,11 @@ class Handler(BaseHTTPRequestHandler):
             elif action == "slide":
                 if not room.get("show"):
                     return self.err("The show hasn't started.")
-                room["show"]["slide"] = max(0, int(b.get("to") or 0))
+                if "paused" in b:
+                    room["show"]["paused"] = bool(b["paused"])
+                    room["show"]["at"] = time.time()  # the slide gets its full time again after a pause
+                if "to" in b:
+                    set_slide(room, int(b.get("to") or 0))
                 room["show"]["done"] = bool(b.get("done"))
             elif action == "showagain":
                 start_show(room)
@@ -915,16 +974,13 @@ class Handler(BaseHTTPRequestHandler):
                         if not a["by"] and room.get("phase") == "submit":
                             room["anime"].remove(a)
             elif action == "start":
-                if room.get("phase") != "submit":
+                if room.get("phase") not in ("submit", "lobby"):
                     return self.err("The ranking already started.")
                 if not room["anime"]:
-                    return self.err("Nobody has submitted a pick yet.")
+                    return self.err("Nobody has submitted a pick yet." if room.get("phase") == "submit" else "The list is empty.")
                 if "timerSec" in b:
                     room["timerSec"] = max(30, min(1800, int(b["timerSec"])))
-                room["phase"] = "ranking"
-                room["deadline"] = time.time() + room["timerSec"] + 3  # 3s for everyone's screen to switch
-                for p in room["players"].values():
-                    p["tiers"], p["done"] = {t: [] for t in TIERS}, False
+                start_ranking(room)
             elif action == "addtime":
                 if room.get("phase") != "ranking" or not room.get("deadline"):
                     return self.err("No timer is running.")

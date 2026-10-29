@@ -237,6 +237,11 @@ select option{background:var(--panel-solid)}
 .showbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:rgba(6,10,19,.85);backdrop-filter:blur(16px);border-top:1px solid var(--line)}
 .showbar .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;min-width:70px;text-align:center}
 .showbar .btn.primary{padding:11px 28px}
+.sprog{flex-basis:100%;height:4px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;order:-1}
+.sprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s linear}
+.showbar .note{color:var(--muted);font-size:13px}
+.preview{display:flex;flex-wrap:wrap;gap:8px}
+.preview .card{width:calc(var(--card-w) * .8)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -274,10 +279,10 @@ select option{background:var(--panel-solid)}
         <div><label for="cTitle">Room name</label><input type="text" id="cTitle" placeholder="Leave empty and we'll name it" maxlength="80"></div>
         <div><label for="cSpice">AI roast at the end</label>
           <select id="cSpice"><option value="wholesome">Wholesome: friendly teasing</option><option value="spicy" selected>Spicy: proper roast</option><option value="unhinged">Unhinged: no mercy</option></select></div>
-        <div id="picksOpts" class="opts">
-          <div><label for="cPicks">Picks per person</label><input type="number" id="cPicks" min="1" max="10" value="5"></div>
+        <div class="opts">
+          <div id="picksOpts"><label for="cPicks">Picks per person</label><input type="number" id="cPicks" min="1" max="10" value="5"></div>
           <div><label for="cTimer">Ranking timer</label>
-            <select id="cTimer"><option value="60">1 minute</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option></select></div>
+            <select id="cTimer"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180" selected>3 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option></select></div>
         </div>
         <div id="classicOpts" hidden>
           <label for="cList" id="cListLabel">Your list, one per line</label>
@@ -338,6 +343,7 @@ select option{background:var(--panel-solid)}
             <div class="err" id="pickErr"></div>
             <div class="mypicks" id="myPicks"></div>
           </form>
+          <div class="panel" id="preview" hidden></div>
           <div class="panel" id="lobby"></div>
         </div>
       </div>
@@ -345,7 +351,7 @@ select option{background:var(--panel-solid)}
         <div class="banner" id="banner" hidden></div>
         <div class="board" id="myBoard"></div>
         <div class="pool" data-tier="pool"><h3 id="poolTitle">Unranked</h3><div class="drop" data-tier="pool" id="pool"></div></div>
-        <p class="hint">Drag posters into a tier. On a phone, tap a poster, then tap a tier letter or another poster to place it.</p>
+        <p class="hint">Drag posters into a tier. On a phone, tap a poster, then tap a tier letter or another poster to place it. The ranking ends when everyone taps I'm done, or when the timer runs out.</p>
         <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
           <button class="btn" id="doneBtn">I'm done ranking</button>
           <button class="btn small" id="resetBtn">Move everything back to unranked</button>
@@ -430,7 +436,8 @@ let myTiers = null, selected = null, dragging = null, saveTimer = null, pollGen 
 const serverNow = () => Date.now()/1000 + clockOffset;
 const isPicks = () => room && room.mode === "picks";
 // rankings are editable in classic rooms always, in picks rooms only while the clock runs
-const canRank = () => !isPicks() || (room.phase === "ranking" && (!room.deadline || serverNow() < room.deadline + 1));
+const canRank = () => room.phase === "ranking" && (!room.deadline || serverNow() < room.deadline + 1);
+const waiting = () => room && (room.phase === "submit" || room.phase === "lobby");
 
 function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2200); }
@@ -547,7 +554,7 @@ async function poll(gen, v){
       if(room && room.phase !== data.phase){
         myTiers = null; selected = null;
         if(data.phase === "ranking"){ switchTab("mine"); toast("Ranking started. Go!"); }
-        if(data.phase === "results" && data.mode === "picks"){ toast("Time's up! Boards revealed"); }
+        if(data.phase === "results"){ toast("Ranking's over! Here come the results"); }
       }
       room = data; v = data.version;
       if(me && !room.players[me.pid]){ me = null; myTiers = null; saveLocal(); toast("You were removed from this room by the host"); }      render();
@@ -607,6 +614,7 @@ function render(){
 function renderPlayers(){
   const submitting = isPicks() && room.phase === "submit";
   const total = room.anime.length;
+  $("#players").hidden = waiting();  // the waiting room lists everyone already
   $("#players").innerHTML = Object.entries(room.players).map(([pid,p])=>{
     const n = submitting ? p.picks : TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
     const of = submitting ? room.picksPer : total;
@@ -616,7 +624,10 @@ function renderPlayers(){
 }
 function tickTimer(){
   const el = $("#timer");
-  if(!room || !isPicks() || room.phase !== "ranking" || !room.deadline){ el.hidden = true; return; }
+  if(room && room.autoStart && $("#autoMsg")) $("#autoMsg").textContent = `Everyone's in! Ranking starts in ${Math.max(0, Math.ceil(room.autoStart - serverNow()))}…`;
+  const sp = $(".sprog i"), s = room?.show;
+  if(sp && s && s.at) sp.style.width = s.paused ? sp.style.width : Math.min(100, 100*(serverNow()-s.at)/(s.dur||12)) + "%";
+  if(!room || room.phase !== "ranking" || !room.deadline){ el.hidden = true; return; }
   const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
   el.hidden = false;
   el.textContent = left > 0 ? `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}` : "Time's up";
@@ -626,6 +637,21 @@ function tickTimer(){
 }
 setInterval(tickTimer, 250);
 function renderSubmit(){
+  const ps = Object.values(room.players);
+  $("#pickAdd").hidden = !isPicks(); $("#preview").hidden = isPicks();
+  if(!isPicks()){
+    const ais = room.mode === "ai" && room.aiState;
+    const status = ais && ais.status === "working" ? `<div class="banner" style="margin:0">The AI is picking ${room.anime.length ? "more " : ""}${esc(catName())}${room.aiTheme ? ` (${esc(room.aiTheme)})` : ""}… it takes a few seconds.</div>`
+      : ais && ais.status === "failed" ? `<div class="banner" style="margin:0">${esc(ais.error || "The AI couldn't make the list.")}${hostKey ? ` <button class="btn small primary" type="button" data-ai="more">Try again</button>` : " The host can try again."}</div>` : "";
+    $("#preview").innerHTML = `<h2>${room.mode === "ai" ? "The AI's pick" : "The list"} · ${room.anime.length}</h2>${status}
+      <p class="muted" style="margin:0">${room.anime.length ? "This is what everyone ranks. Get ready." : ""}</p>
+      <div class="preview">${room.anime.map(a=>cardHTML(a)).join("")}</div>`;
+    $("#lobby").innerHTML = `<h2>Waiting room</h2>
+      <div class="lobby-list">${ps.map(p=>`<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div>${esc(p.name)}${me&&room.players[me.pid]===p?" (you)":""}</div></div>`).join("")}</div>
+      <p class="muted" style="margin:0;font-size:14px">${ps.length} here. Ranking time: ${fmtTime(room.timerSec)}.</p>
+      ${hostKey ? `<button class="btn primary" type="button" id="startBtn" ${room.anime.length && room.aiState?.status !== "working" ? "" : "disabled"}>Start ranking (${fmtTime(room.timerSec)})</button>` : `<p class="muted" style="margin:0;font-size:14px">The host starts the ranking when everyone is here.</p>`}`;
+    return;
+  }
   const mine = (room.mine||[]).map(id=>room.anime.find(a=>a.id===id)).filter(Boolean);
   const left = room.picksPer - mine.length;
   $("#pickHead").textContent = `Your secret picks · ${mine.length}/${room.picksPer}`;
@@ -634,32 +660,25 @@ function renderSubmit(){
   if(room.category === "custom" && left > 0) $("#pickName").placeholder = `Add one of your ${room.catLabel || "picks"}`;
   $("#myPicks").innerHTML = mine.map(a=>`<div class="pk">${cardHTML(a)}<button type="button" data-unpick="${a.id}">Remove</button></div>`).join("")
     + Array.from({length:Math.max(0,left)},(_, i)=>`<div class="pk"><div class="slot">${mine.length+i+1}</div></div>`).join("");
-  const ps = Object.values(room.players);
   const ready = ps.filter(p=>p.picks >= room.picksPer).length;
   $("#lobby").innerHTML = `<h2>Waiting room</h2>
     <div><div class="bigstat">${room.poolSize||0}</div><div class="muted">in the pool so far · duplicates count once</div></div>
     <div class="lobby-list">${ps.map(p=>`<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div>${esc(p.name)}<div class="meter"><i style="width:${Math.min(100,100*p.picks/room.picksPer)}%"></i></div></div><span class="muted" style="font-variant-numeric:tabular-nums">${p.picks}/${room.picksPer}</span></div>`).join("")}</div>
-    <p class="muted" style="margin:0;font-size:14px">${ready} of ${ps.length} ready. Ranking time: ${fmtTime(room.timerSec)}.</p>
+    <p class="muted" style="margin:0;font-size:14px">${ready} of ${ps.length} ready. Ranking starts by itself once everyone's picks are in. Ranking time: ${fmtTime(room.timerSec)}.</p>
+    ${room.autoStart ? `<div class="banner" id="autoMsg" style="margin:0">Everyone's in!</div>` : ""}
     ${hostKey ? `<button class="btn primary" type="button" id="startBtn" ${room.poolSize?"":"disabled"}>Start ranking (${fmtTime(room.timerSec)})</button>` : `<p class="muted" style="margin:0;font-size:14px">The host starts the ranking when everyone is in.</p>`}`;
 }
 const fmtTime = s => s % 60 ? `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}` : `${s/60} min`;
 function renderMine(){
   const joined = me && room.players[me.pid];
-  const submitting = isPicks() && room.phase === "submit";
+  const submitting = waiting();
   $("#nameGate").hidden = !!joined; $("#myArea").hidden = !joined || submitting; $("#submitArea").hidden = !joined || !submitting;
   if(!joined) return;
   if(submitting){ renderSubmit(); return; }
   const locked = !canRank();
   $("#myArea").classList.toggle("locked", locked);
-  $("#banner").hidden = !(isPicks() && room.phase === "results");
-  $("#banner").textContent = "Time's up. Your board is locked. Check Everyone, Group verdict and the AI roast.";
-  const ais = room.mode === "ai" && room.aiState;
-  if(ais && ais.status !== "done"){
-    $("#banner").hidden = false;
-    $("#banner").innerHTML = ais.status === "working"
-      ? `The AI is picking ${room.anime.length ? "more " : ""}${esc(catName())}${room.aiTheme ? ` (${esc(room.aiTheme)})` : ""}… it takes a few seconds.`
-      : `${esc(ais.error || "The AI couldn't make the list.")}${hostKey ? ` <button class="btn small primary" type="button" data-ai="more">Try again</button>` : " The host can try again."}`;
-  }
+  $("#banner").hidden = room.phase !== "results";
+  $("#banner").textContent = "Ranking's over and your board is locked. Look through Everyone, Group verdict and the AI roast.";
   $("#doneBtn").hidden = $("#resetBtn").hidden = locked;
   ensureMyTiers();
   const byId = animeById();
@@ -794,15 +813,17 @@ $("#hostBtn").onclick = ()=>openDrawer(true);
 $("#closeDrawer").onclick = ()=>openDrawer(false);
 $("#scrim").onclick = ()=>{ openDrawer(false); $("#picker").hidden = true; };
 function renderHost(){
-  $("#revealSwitch").hidden = $("#addBox").hidden = isPicks();
+  $("#revealSwitch").hidden = true;  // the reveal happens by itself when the ranking ends
+  $("#addBox").hidden = isPicks() || room.phase !== "lobby";
   const ph = $("#phaseCtl");
-  if(!isPicks()) ph.innerHTML = room.mode !== "ai" ? "" : `<div class="switch" style="display:grid;gap:8px"><div><b>AI's pick</b><div class="muted" style="font-size:13px">${room.anime.length} ${esc(catName())}${room.aiTheme?` · ${esc(room.aiTheme)}`:""}${room.aiState?.status==="working"?" · picking…":""}</div></div>
+  const aiCtl = room.mode !== "ai" || room.phase !== "lobby" ? "" : `<div class="switch" style="display:grid;gap:8px"><div><b>AI's pick</b><div class="muted" style="font-size:13px">${room.anime.length} ${esc(catName())}${room.aiTheme?` · ${esc(room.aiTheme)}`:""}${room.aiState?.status==="working"?" · picking…":""}</div></div>
     <input type="text" id="hTheme" value="${esc(room.aiTheme||"")}" placeholder="Theme (optional)" maxlength="120">
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" data-ai="more" ${room.aiState?.status==="working"?"disabled":""}>Add ${room.aiCount} more</button><button class="btn small" data-ai="fresh" ${room.aiState?.status==="working"?"disabled":""}>New list (clears boards)</button></div></div>`;
-  else if(room.phase === "submit") ph.innerHTML = `<div class="switch"><div><b>Start the ranking</b><div class="muted" style="font-size:13px">${room.poolSize||0} in the pool. Picks close when you start.</div></div><div style="display:grid;gap:6px;min-width:120px"><select id="hTimer">${[60,120,180,300,600].map(s=>`<option value="${s}" ${s===room.timerSec?"selected":""}>${fmtTime(s)}</option>`).join("")}</select><button class="btn primary" data-ph="start" ${room.poolSize?"":"disabled"}>Start</button></div></div>`;
-  else if(room.phase === "ranking") ph.innerHTML = `<div class="switch"><div><b>Ranking in progress</b><div class="muted" style="font-size:13px">Boards reveal when the timer hits zero.</div></div><div style="display:flex;gap:6px"><button class="btn small" data-ph="addtime">+30s</button><button class="btn small" data-ph="end">End now</button></div></div>`;
-  else ph.innerHTML = `<div class="switch"><div><b>Round finished</b><div class="muted" style="font-size:13px">Boards are revealed.</div></div><button class="btn small primary" data-show="replay">Replay the show</button></div>`;
-  if(!isPicks() && room.show) ph.innerHTML = `<div class="switch"><div><b>Reveal show</b><div class="muted" style="font-size:13px">Put everyone back on the show screen.</div></div><button class="btn small primary" data-show="replay">Replay the show</button></div>`;
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" data-ai="more" ${room.aiState?.status==="working"?"disabled":""}>Add ${room.aiCount} more</button><button class="btn small" data-ai="fresh" ${room.aiState?.status==="working"?"disabled":""}>New list</button></div></div>`;
+  const timerSel = `<select id="hTimer">${[60,120,180,300,600].map(s=>`<option value="${s}" ${s===room.timerSec?"selected":""}>${fmtTime(s)}</option>`).join("")}</select>`;
+  const count = isPicks() ? room.poolSize||0 : room.anime.length;
+  if(waiting()) ph.innerHTML = `<div class="switch"><div><b>Start the ranking</b><div class="muted" style="font-size:13px">${isPicks() ? `${count} in the pool. It also starts by itself once everyone's picks are in.` : `${count} on the list.`}</div></div><div style="display:grid;gap:6px;min-width:120px">${timerSel}<button class="btn primary" data-ph="start" ${count && room.aiState?.status !== "working" ? "" : "disabled"}>Start</button></div></div>` + aiCtl;
+  else if(room.phase === "ranking") ph.innerHTML = `<div class="switch"><div><b>Ranking in progress</b><div class="muted" style="font-size:13px">Ends by itself when everyone is done or the timer hits zero.</div></div><div style="display:flex;gap:6px"><button class="btn small" data-ph="addtime">+30s</button><button class="btn small" data-ph="end">End now</button></div></div>`;
+  else ph.innerHTML = `<div class="switch"><div><b>Round finished</b><div class="muted" style="font-size:13px">Put everyone back on the reveal show.</div></div><button class="btn small primary" data-show="replay">Replay the show</button></div>`;
   $("#revealBtn").textContent = room.revealed ? "Hide again" : "Reveal";
   $("#revealBtn").className = "btn" + (room.revealed ? "" : " primary");
   const ps = Object.entries(room.players);
@@ -824,7 +845,7 @@ async function aiList(fresh){
   const body = {hostKey, fresh}; if($("#hTheme")) body.theme = $("#hTheme").value;
   try{ await api(`/api/rooms/${code}/ailist`, body); toast(fresh ? "The AI is making a new list" : "The AI is picking more"); }catch(err){ toast(err.message); }
 }
-$("#banner").onclick = e=>{ if(e.target.closest("[data-ai]")) aiList(false); };
+$("#submitArea").addEventListener("click", e=>{ if(e.target.closest("[data-ai]")) aiList(false); });
 $("#phaseCtl").onclick = async e=>{
   const ai = e.target.closest("[data-ai]"); if(ai){ aiList(ai.dataset.ai === "fresh"); return; }
   const b = e.target.closest("[data-ph]"); if(!b) return;
@@ -1000,7 +1021,10 @@ function slideHTML(kind){
 function renderShow(){
   const on = inShow();
   $("#stage").hidden = !on; $("#showbar").hidden = !on;
-  document.querySelector(".tabs").hidden = on;
+  // before the results there's only your own board, so no tabs to click through
+  const tabsOn = !on && room.phase === "results";
+  document.querySelector(".tabs").hidden = !tabsOn;
+  if(!tabsOn && !on && tab !== "mine") switchTab("mine");
   for(const t of ["mine","all","verdict","roast"]) $("#tab-"+t).hidden = on || t !== tab;
   if(!on){
     // the show just ended: land everyone on the boards instead of a locked editor
@@ -1013,10 +1037,15 @@ function renderShow(){
   // redraw only when the slide or roast changes, so animations play once
   const sig = [slides[i], (room.roasts||[])[0]?.id, rs.status, Object.keys(room.players).length].join("|");
   if(renderShow.sig !== sig){ renderShow.sig = sig; $("#stage").innerHTML = slideHTML(slides[i]); window.scrollTo({top:0}); }
-  const last = i === slides.length-1;
-  $("#showbar").innerHTML = hostKey
-    ? `<button class="btn" data-show="prev" ${i===0?"disabled":""}>Back</button><span class="count">${i+1} / ${slides.length}</span><button class="btn primary" data-show="${last?"finish":"next"}">${last?"Finish show":"Next"}</button><button class="btn small" data-show="finish" style="margin-left:8px">Skip show</button>`
-    : `<span class="count">${i+1} / ${slides.length}</span><span class="muted" style="font-size:14px">The host moves the show along</span>`;
+  const last = i === slides.length-1, paused = room.show.paused;
+  const holding = i === 0 && rs.status === "working";
+  const bsig = [i, slides.length, paused, holding, room.show.at].join("|");
+  if(renderShow.bsig === bsig) return;
+  renderShow.bsig = bsig;
+  $("#showbar").innerHTML = `<div class="sprog"><i></i></div>` + (hostKey
+    ? `<button class="btn" data-show="prev" ${i===0?"disabled":""}>Back</button><button class="btn" data-show="pause">${paused?"Play":"Pause"}</button><span class="count">${i+1} / ${slides.length}</span><button class="btn primary" data-show="${last?"finish":"next"}">${last?"Finish":"Next"}</button><button class="btn small" data-show="finish">Skip show</button>`
+    : `<span class="count">${i+1} / ${slides.length}</span><span class="note">${paused ? "The host paused the show" : holding ? "Waiting for the AI…" : "Next slide coming up"}</span>`);
+  tickTimer();
 }
 async function showAction(a){
   const i = Math.min(room.show?.slide||0, showSlides().length-1);
@@ -1027,6 +1056,7 @@ async function showAction(a){
     else if(a === "finish") await api(`/api/rooms/${code}/slide`, {hostKey, to:i, done:true});
     else if(a === "retry") await api(`/api/rooms/${code}/retryroast`, {hostKey});
     else if(a === "replay") await api(`/api/rooms/${code}/showagain`, {hostKey});
+    else if(a === "pause") await api(`/api/rooms/${code}/slide`, {hostKey, paused: !room.show.paused});
     else if(a === "ownkey"){ renderShow.after = "roast"; await api(`/api/rooms/${code}/slide`, {hostKey, to:i, done:true}); }
   }catch(err){ toast(err.message); }
 }
