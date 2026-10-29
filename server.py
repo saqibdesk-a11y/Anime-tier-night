@@ -109,10 +109,9 @@ CHARACTER_QUERY = """query ($q: String, $n: Int) { Page(perPage: $n) { character
   id siteUrl favourites name { full alternative } image { large } media(perPage: 1) { nodes { title { english romaji } } } } } }"""
 
 
-def anilist(q, n, kind="anime"):
-    query = (CHARACTER_QUERY if kind == "character" else
-             QUERY % ("MANGA, countryOfOrigin: KR" if kind == "manhwa" else "MANGA" if kind == "manga" else "ANIME"))
-    body = json.dumps({"query": query, "variables": {"q": q, "n": n}}).encode("utf-8")
+def anilist_post(query, variables):
+    """One AniList GraphQL call, spaced out from the others and retried when AniList is busy. Returns data or None."""
+    body = json.dumps({"query": query, "variables": variables}).encode("utf-8")
     for attempt in range(4):
         with _api_lock:  # AniList allows ~30-90 req/min; space calls out
             wait = 0.8 - (time.time() - _last_call[0])
@@ -124,16 +123,22 @@ def anilist(q, n, kind="anime"):
                 "Content-Type": "application/json", "Accept": "application/json",
                 "User-Agent": "AnimeTierNight/1.0"})
             with urllib.request.urlopen(req, timeout=15) as r:
-                page = json.loads(r.read().decode("utf-8"))["data"]["Page"]
-                return page.get("characters" if kind == "character" else "media") or []
+                return json.loads(r.read().decode("utf-8"))["data"]
         except urllib.error.HTTPError as e:
             if e.code == 429 or e.code >= 500:
-                time.sleep(int(e.headers.get("Retry-After") or 0) or 2 * (attempt + 1))
+                time.sleep(min(30, int(e.headers.get("Retry-After") or 0) or 2 * (attempt + 1)))
                 continue
-            return []
+            return None
         except Exception:
             time.sleep(1)
-    return []
+    return None
+
+
+def anilist(q, n, kind="anime"):
+    query = (CHARACTER_QUERY if kind == "character" else
+             QUERY % ("MANGA, countryOfOrigin: KR" if kind == "manhwa" else "MANGA" if kind == "manga" else "ANIME"))
+    page = (anilist_post(query, {"q": q, "n": n}) or {}).get("Page") or {}
+    return page.get("characters" if kind == "character" else "media") or []
 
 
 def to_option(a):
@@ -163,20 +168,19 @@ AVATAR_HOST = "https://s4.anilist.co/"
 
 
 def avatar_gallery():
-    """The 100 most-loved anime characters on AniList, cached for a day."""
+    """The 100 most-loved anime characters on AniList plus the featured shows, cached for a day.
+    If AniList was busy and only part of it loaded, that part is served but retried a few minutes later,
+    and a complete list is never swapped for a smaller one."""
     with _avatars_lock:
-        if _avatars["list"] and time.time() - _avatars["at"] < 86400:
+        fresh = 86400 if _avatars.get("complete") else 180
+        if _avatars["list"] and time.time() - _avatars["at"] < fresh:
             return _avatars["list"]
-        out = []
+        out, complete = [], True
         for page in (1, 2):
-            body = json.dumps({"query": CHAR_QUERY, "variables": {"p": page}}).encode("utf-8")
-            try:
-                req = urllib.request.Request("https://graphql.anilist.co", data=body, headers={
-                    "Content-Type": "application/json", "Accept": "application/json", "User-Agent": "AnimeTierNight/1.0"})
-                with urllib.request.urlopen(req, timeout=15) as r:
-                    chars = json.loads(r.read().decode("utf-8"))["data"]["Page"]["characters"]
-            except Exception:
-                break
+            chars = ((anilist_post(CHAR_QUERY, {"p": page}) or {}).get("Page") or {}).get("characters")
+            if not chars:
+                complete = False
+                continue
             for c in chars:
                 img = (c.get("image") or {}).get("large") or ""
                 show = ((((c.get("media") or {}).get("nodes") or [{}])[0] or {}).get("title") or {})
@@ -184,13 +188,9 @@ def avatar_gallery():
                     out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img})
         seen = {c["img"] for c in out}
         for media_id, show in FEATURED_SHOWS:
-            body = json.dumps({"query": SHOW_QUERY, "variables": {"id": media_id}}).encode("utf-8")
-            try:
-                req = urllib.request.Request("https://graphql.anilist.co", data=body, headers={
-                    "Content-Type": "application/json", "Accept": "application/json", "User-Agent": "AnimeTierNight/1.0"})
-                with urllib.request.urlopen(req, timeout=15) as r:
-                    nodes = json.loads(r.read().decode("utf-8"))["data"]["Media"]["characters"]["nodes"]
-            except Exception:
+            nodes = ((((anilist_post(SHOW_QUERY, {"id": media_id}) or {}).get("Media") or {}).get("characters") or {}).get("nodes"))
+            if not nodes:
+                complete = False
                 continue
             for c in nodes:
                 img, nm = (c.get("image") or {}).get("large") or "", (c.get("name") or {}).get("full") or ""
@@ -201,9 +201,12 @@ def avatar_gallery():
             if c["name"] in ALIASES:
                 c["alias"] = ALIASES[c["name"]]
                 c["name"] = f'{c["name"]} ({ALIASES[c["name"]]})'
-        if out:
-            _avatars.update(list=out, at=time.time())
-        return out
+        old = _avatars["list"] or []
+        if out and (complete or len(out) > len(old)):
+            _avatars.update(list=out, at=time.time(), complete=complete)
+        else:
+            _avatars["at"] = time.time()  # keep what we had; try again in a few minutes
+        return _avatars["list"] or out
 
 
 def character_option(c):
