@@ -188,20 +188,19 @@ def resolve_night(room):
             shot = random.choice(alive(room, "evil"))
             room["players"][shot]["alive"] = False
             dead.append(shot)
-            lines.append(f"With their last breath, {name(room, h)} the Hunter takes down {name(room, shot)}.")
     revived = None
     if n["necro"] and not blocked:
         t = n["necro"]
+        room["used"][f"revive:{n['necroBy']}"] = True  # used up even on an Evil corpse: roles are secret, so it's a gamble
         if not room["players"][t]["alive"] and team(room, t) == "good" and t not in dead:
             room["players"][t]["alive"] = True
             revived = t
-            room["used"][f"revive:{n['necroBy']}"] = True
     room["sirenNight"] = False
     for d in dead:
         if room["players"][d]["role"] == "jester":
             room["jesterWins"].append(d)
     if dead:
-        lines.insert(0, "Dawn breaks. " + ", ".join(f"{name(room, d)} ({role_name(room, d)})" for d in dead)
+        lines.insert(0, "Dawn breaks. " + ", ".join(name(room, d) for d in dead)
                      + (" was" if len(dead) == 1 else " were") + " found at first light.")
     for s in survived:
         lines.append(f"{name(room, s)} survived being attacked by the evil team.")
@@ -249,16 +248,12 @@ def resolve_vote(room):
     elif out:
         room["players"][out]["alive"] = False
         dead = [out]
-        story = f"The village has spoken. {name(room, out)} is cast out, and they were the {role_name(room, out)}."
+        story = f"The village has spoken. {name(room, out)} is cast out. Their role stays a secret until the game ends."
         role = room["players"][out]["role"]
         if role == "siren":
             room["sirenNight"] = True
-            story += " As the Siren falls, her song enchants the village. Good powers will fail tonight."
         elif role == "jester":
             room["jesterWins"].append(out)
-            story += " The Jester laughs all the way out. That's a win for the Jester!"
-        elif ROLES[role]["team"] == "evil":
-            story += " One of the evil team is gone!"
     else:
         story = "Accusations fly, nobody agrees, and the sun sets on a very suspicious village."
     room["events"].append({"day": room["day"], "kind": "vote", "dead": dead, "shielded": out if out and not dead else None})
@@ -335,11 +330,14 @@ def public(room, viewer):
     players = {}
     for pid, p in room["players"].items():
         q = {k: v for k, v in p.items() if k not in ("key", "role")}
-        revealed = not p.get("alive") and p.get("role")  # the dead are revealed to everyone
-        if pid == viewer or show_all or revealed or (my_team == "evil" and p.get("role") and ROLES[p["role"]]["team"] == "evil"):
+        # roles stay hidden after death; only ghosts, the final screen and the evil team (for each other) see them
+        if pid == viewer or show_all or (my_team == "evil" and p.get("role") and ROLES[p["role"]]["team"] == "evil"):
             q["role"] = p.get("role")
         players[pid] = q
     r["players"] = players
+    cur = room.get("current")
+    if cur and cur.get("roles"):
+        r["current"] = {**cur, "roles": {d: players[d].get("role") for d in cur["roles"] if d in players}}
     powers = {}
     if my_role:
         powers = {"assassin": my_role == "assassin" and has(room, viewer, "assassin"),
@@ -431,8 +429,8 @@ def night_action(room, p, pid, b):
             raise Refuse("Pick someone.")
         n[role] = None  # changed their mind: no kill or revival tonight
     elif role == "necro" and power and has(room, pid, "revive") and t in room["players"] and not room["players"][t].get("alive"):
-        if not room["players"][t].get("role") or team(room, t) != "good":
-            raise Refuse("You can only bring back someone from the Good team.")
+        if not room["players"][t].get("role"):
+            raise Refuse("They weren't in this game.")
         n["necro"], n["necroBy"] = t, pid
     elif t not in alive(room):
         raise Refuse("The Siren's song blocks your power tonight. Pick a suspect instead." if blocked and role == "necro"

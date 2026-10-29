@@ -7,6 +7,7 @@ import json
 import os
 import queue
 import random
+import re
 import string
 import threading
 import time
@@ -100,13 +101,17 @@ def changed(room):
 _api_lock = threading.Lock()
 _last_call = [0.0]
 
-QUERY = """query ($q: String, $n: Int) { Page(perPage: $n) { media(search: $q, type: ANIME, isAdult: false, sort: [POPULARITY_DESC]) {
+QUERY = """query ($q: String, $n: Int) { Page(perPage: $n) { media(search: $q, type: %s, isAdult: false, sort: [POPULARITY_DESC]) {
   id siteUrl format seasonYear popularity
   title { romaji english native } synonyms coverImage { extraLarge large } } } }"""
+CHARACTER_QUERY = """query ($q: String, $n: Int) { Page(perPage: $n) { characters(search: $q, sort: [FAVOURITES_DESC]) {
+  id siteUrl favourites name { full alternative } image { large } media(perPage: 1) { nodes { title { english romaji } } } } } }"""
 
 
-def anilist(q, n):
-    body = json.dumps({"query": QUERY, "variables": {"q": q, "n": n}}).encode("utf-8")
+def anilist(q, n, kind="anime"):
+    query = (CHARACTER_QUERY if kind == "character" else
+             QUERY % ("MANGA, countryOfOrigin: KR" if kind == "manhwa" else "MANGA" if kind == "manga" else "ANIME"))
+    body = json.dumps({"query": query, "variables": {"q": q, "n": n}}).encode("utf-8")
     for attempt in range(4):
         with _api_lock:  # AniList allows ~30-90 req/min; space calls out
             wait = 0.8 - (time.time() - _last_call[0])
@@ -118,7 +123,8 @@ def anilist(q, n):
                 "Content-Type": "application/json", "Accept": "application/json",
                 "User-Agent": "AnimeTierNight/1.0"})
             with urllib.request.urlopen(req, timeout=15) as r:
-                return json.loads(r.read().decode("utf-8"))["data"]["Page"]["media"]
+                page = json.loads(r.read().decode("utf-8"))["data"]["Page"]
+                return page.get("characters" if kind == "character" else "media") or []
         except urllib.error.HTTPError as e:
             if e.code == 429 or e.code >= 500:
                 time.sleep(int(e.headers.get("Retry-After") or 0) or 2 * (attempt + 1))
@@ -199,21 +205,81 @@ def avatar_gallery():
         return out
 
 
-def search(q, limit=12):
-    return [to_option(a) for a in anilist(q, limit)]
+def character_option(c):
+    show = ((c.get("media") or {}).get("nodes") or [{}])[0].get("title") or {}
+    return {"mal_id": c.get("id"), "title": (c.get("name") or {}).get("full"), "subtitle": show.get("english") or show.get("romaji"),
+            "year": None, "type": "Character", "members": c.get("favourites") or 0,
+            "img": (c.get("image") or {}).get("large"), "url": c.get("siteUrl")}
 
 
-def best_match(q):
-    items = anilist(q, 8)
-    if not items:
+def get_json(url, timeout=12):
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "TierNight/1.0 (friends' party game)", "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception:
         return None
+
+
+def wikipedia(q, n):
+    """Wikipedia covers almost anything (people, movies, food, places) and its lead image makes a fine card."""
+    d = get_json("https://en.wikipedia.org/w/api.php?" + urllib.parse.urlencode({
+        "action": "query", "format": "json", "generator": "search", "gsrsearch": q, "gsrlimit": n,
+        "prop": "pageimages|description", "piprop": "thumbnail", "pithumbsize": 500, "pilicense": "any"}))
+    pages = sorted(((d or {}).get("query") or {}).get("pages", {}).values(), key=lambda p: p.get("index", 99))
+    return [{"mal_id": p.get("pageid"), "title": re.sub(r"\s*\([^)]*\)$", "", p.get("title") or ""),  # "Interstellar (film)"
+             "subtitle": p.get("description"), "year": None, "type": None,
+             "members": 0, "img": (p.get("thumbnail") or {}).get("source"),
+             "url": "https://en.wikipedia.org/?curid=%s" % p.get("pageid")} for p in pages]
+
+
+def tvmaze(q, n):
+    out = []
+    for r in (get_json("https://api.tvmaze.com/search/shows?q=" + urllib.parse.quote(q)) or [])[:n]:
+        s = r.get("show") or {}
+        img = s.get("image") or {}
+        out.append({"mal_id": s.get("id"), "title": s.get("name"), "subtitle": ", ".join(s.get("genres") or []),
+                    "year": int(s["premiered"][:4]) if s.get("premiered") else None, "type": "TV",
+                    "members": 0, "img": img.get("original") or img.get("medium"), "url": s.get("url")})
+    return out
+
+
+def app_store(q, n):
+    d = get_json("https://itunes.apple.com/search?" + urllib.parse.urlencode({"term": q, "entity": "software", "limit": n, "country": "us"}))
+    return [{"mal_id": a.get("trackId"), "title": re.split(r" [-–:|] ", a.get("trackName") or "")[0],  # "TikTok - Videos, Shop & LIVE" "subtitle": a.get("sellerName"), "year": None, "type": "App",
+             "members": 0, "img": a.get("artworkUrl512") or a.get("artworkUrl100"), "url": a.get("trackViewUrl")}
+            for a in (d or {}).get("results", [])]
+
+
+KINDS = ("anime", "manga", "manhwa", "character", "movie", "show", "app", "other")
+
+
+def search(q, limit=12, kind="anime"):
+    if kind in ("anime", "manga", "manhwa"):
+        return [to_option(a) for a in anilist(q, limit, kind)]
+    if kind == "character":
+        return [character_option(c) for c in anilist(q, limit, "character")] + wikipedia(q, 4)
+    if kind == "show":
+        return tvmaze(q, limit) + wikipedia(q, 4)
+    if kind == "app":
+        return app_store(q, limit)
+    return wikipedia(q + " film" if kind == "movie" else q, limit)
+
+
+def best_match(q, kind="anime"):
     ql = q.strip().lower()
-    for a in items:
-        t = a.get("title") or {}
-        names = [t.get("romaji"), t.get("english"), t.get("native")] + (a.get("synonyms") or [])
-        if any(n and n.strip().lower() == ql for n in names):
-            return to_option(a)
-    return to_option(items[0])  # results are sorted by popularity
+    if kind in ("anime", "manga", "manhwa"):
+        items = anilist(q, 8, kind)
+        for a in items:
+            t = a.get("title") or {}
+            names = [t.get("romaji"), t.get("english"), t.get("native")] + (a.get("synonyms") or [])
+            if any(n and n.strip().lower() == ql for n in names):
+                return to_option(a)
+        return to_option(items[0]) if items else None  # results are sorted by popularity
+    found = [o for o in search(q, 5, kind) if o.get("img")]
+    if not found and kind != "other":
+        found = [o for o in wikipedia(q, 3) if o.get("img")]  # e.g. a western character AniList doesn't have
+    return next((o for o in found if (o["title"] or "").lower() == ql), found[0] if found else None)
 
 
 lookup_q = queue.Queue()
@@ -228,7 +294,7 @@ def lookup_worker():
             name = item["name"] if item else None
         if not name:
             continue
-        m = best_match(name)
+        m = best_match(name, item.get("kind") or "anime")
         with lock:
             room = rooms.get(code)
             item = find(room, aid)
@@ -249,7 +315,7 @@ def lookup_worker():
 
 # ---------- AI (shared with every game, see ai.py) ----------
 
-from ai import (AIError, BUILTIN_KEYS, BUILTIN_ORDER, BUSY, PROVIDER_NAMES, builtin_allowed,
+from ai import (AIError, BUILTIN_KEYS, BUILTIN_ORDER, BUSY, PROVIDER_NAMES, ask_builtin, builtin_allowed,
                 builtin_models, complete, list_models)
 
 
@@ -262,7 +328,10 @@ SPICE = {
 
 def roast_prompt(room, spice):
     by_id = {a["id"]: a for a in room["anime"]}
-    lines = [f'Room: "{room["title"]}". Mode: {"each person secretly submitted picks, then everyone ranked the combined pool" if room.get("mode") == "picks" else "host chose the list, everyone ranked it"}.']
+    mode = {"picks": "each person secretly submitted picks, then everyone ranked the combined pool",
+            "ai": "an AI chose the list" + (f' (theme: {room["aiTheme"]})' if room.get("aiTheme") else "") + ", everyone ranked it"
+            }.get(room.get("mode"), "host chose the list, everyone ranked it")
+    lines = [f'Room: "{room["title"]}". Ranking: {topic_of(room)}. Mode: {mode}.']
     for pid, p in room["players"].items():
         lines.append(f'\n## {p["name"]}')
         if room.get("mode") == "picks":
@@ -281,8 +350,8 @@ def roast_prompt(room, spice):
         if shared:
             lines.append("\nPicked by more than one person: " + ", ".join(shared))
     names = [p["name"] for p in room["players"].values()]
-    system = ("You are the hype-man and roaster in a friend group's anime tier list night, typing in their group chat "
-              "while they record a video. You know anime deeply: reference real plot points, characters, fandom "
+    system = (f"You are the hype-man and roaster in a friend group's tier list night ({topic_of(room)}), typing in their group chat "
+              "while they record a video. You know the subject deeply: reference real details, plot points, characters, fandom "
               "stereotypes and memes so the jokes land. " + SPICE.get(spice, SPICE["spicy"]) +
               " Never use slurs or attack real-world identity. Keep each message short like a chat text (1-3 sentences), "
               "casual, funny, no hashtags. Address people by name.")
@@ -310,8 +379,13 @@ def clean_name(raw):
     return raw.strip().lstrip("-*0123456789.) ").strip()[:120]
 
 
-def new_item(room, name, by=None):
-    item = {"id": rid(8), "name": name, "title": name, "img": None, "url": None, "year": None, "status": "searching"}
+CATEGORY_KIND = {"anime": "anime", "characters": "character", "manga": "manga", "manhwa": "manhwa",
+                 "movies": "movie", "shows": "show", "mix": "other", "custom": "other"}
+
+
+def new_item(room, name, by=None, kind=None):
+    kind = kind if kind in KINDS else CATEGORY_KIND.get(room.get("category"), "anime")
+    item = {"id": rid(8), "name": name, "title": name, "img": None, "url": None, "year": None, "status": "searching", "kind": kind}
     if by is not None:
         item["by"] = list(by)
     room["anime"].append(item)
@@ -319,14 +393,70 @@ def new_item(room, name, by=None):
     return item
 
 
-def add_anime(room, names):
+def add_anime(room, names, kinds=None):
     seen = {x["name"].lower() for x in room["anime"]}
-    for raw in names:
+    for i, raw in enumerate(names):
         name = clean_name(raw)
         if not name or name.lower() in seen or len(room["anime"]) >= 150:
             continue
         seen.add(name.lower())
-        new_item(room, name)
+        new_item(room, name, kind=(kinds or {}).get(i))
+
+
+def topic_of(room):
+    """What this tier list ranks, in words: 'anime', 'YouTubers', 'movies'..."""
+    return room.get("catLabel") or {"anime": "anime", "characters": "fictional characters", "manga": "manga", "manhwa": "manhwa",
+                                    "movies": "movies", "shows": "TV shows",
+                                    "mix": "a mix of anime, manga, manhwa, characters, movies and shows"}.get(room.get("category"), "anime")
+
+
+def ai_list(code):
+    """The AI's pick: it chooses what everyone ranks, from the host's category and theme."""
+    with lock:
+        room = rooms.get(code)
+        if not room:
+            return
+        cat, n, theme, topic = room.get("category"), room.get("aiCount", 15), room.get("aiTheme") or "", topic_of(room)
+        have = [a["name"] for a in room["anime"]]
+    mixed = cat in ("mix", "custom")
+    try:
+        out, _, _ = ask_builtin(
+            "You pick the items for a friend group's tier list night. Choose things most people in the group will know, "
+            "with a fun spread: some undisputed greats, some divisive, a couple of guilty pleasures that will start arguments.",
+            f"Pick {n} {topic}" + (f", theme: {theme}" if theme else "") + ". "
+            + (f"Don't repeat these: {', '.join(have[:60])}. " if have else "")
+            + "Use each item's best-known official name, exactly as it would be titled on "
+            + ("AniList" if cat in ("anime", "manga", "manhwa", "characters") else "Wikipedia") + " so a picture can be found. "
+            + ("For characters, use their full name. " if cat == "characters" else "")
+            + ("Tag each item with what it is: one of anime, manga, manhwa, character, movie, show, app, other. " if mixed else "")
+            + 'Return only JSON: {"title": "<short catchy name for this tier list>", "items": [{"name": "...", "kind": "..."}]}',
+            timeout=30, text_first=True)
+        items = [(clean_name(str(i.get("name") or "")), str(i.get("kind") or "").lower())
+                 for i in out.get("items", []) if isinstance(i, dict)]
+        items = [(nm, k) for nm, k in items if nm][:n]
+        if not items:
+            raise AIError("it sent back an empty list")
+    except (AIError, ValueError, TypeError, AttributeError) as e:
+        with lock:
+            room = rooms.get(code)
+            if room:
+                room["aiState"] = {"status": "failed", "error": f"The AI couldn't make the list: {str(e).rstrip('.')}."}
+                changed(room)
+        return
+    with lock:
+        room = rooms.get(code)
+        if not room:
+            return
+        add_anime(room, [nm for nm, _ in items], {i: k for i, (_, k) in enumerate(items)} if mixed else None)
+        if out.get("title") and room.get("titleAuto"):
+            room["title"] = str(out["title"]).strip()[:80] or room["title"]
+        room["aiState"] = {"status": "done", "error": None}
+        changed(room)
+
+
+def start_ai_list(room):
+    room["aiState"] = {"status": "working", "error": None}
+    threading.Thread(target=ai_list, args=(room["code"],), daemon=True).start()
 
 
 def hidden_phase(room):
@@ -549,8 +679,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_bytes(f.read(), ctype, cache)
 
         if parts[:2] == ["api", "search"]:
-            q = (qs.get("q") or [""])[0].strip()
-            return self.send_json({"results": search(q) if q else []})
+            q, kind = (qs.get("q") or [""])[0].strip(), (qs.get("kind") or ["anime"])[0]
+            return self.send_json({"results": search(q, 12, kind if kind in KINDS else "anime") if q else []})
 
         # long-poll: GET /api/rooms/CODE?v=N waits until version > N (max ~25s)
         if len(parts) == 3 and parts[:2] == ["api", "rooms"]:
@@ -599,9 +729,13 @@ class Handler(BaseHTTPRequestHandler):
                     rooms[code] = room
                     changed(room)
                     return self.send_json({"code": code, "hostKey": room["hostKey"]})
-                mode = "picks" if b.get("mode") == "picks" else "classic"
-                room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Anime Tier Night")[:80],
-                        "mode": mode, "phase": "submit" if mode == "picks" else "ranking",
+                mode = b.get("mode") if b.get("mode") in ("picks", "classic", "ai") else "classic"
+                category = b.get("category") if b.get("category") in CATEGORY_KIND else "anime"
+                room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Tier List Night")[:80],
+                        "titleAuto": not b.get("title"), "category": category,
+                        "catLabel": str(b.get("catLabel") or "").strip()[:40] if category == "custom" else "",
+                        "aiTheme": str(b.get("aiTheme") or "").strip()[:120], "aiCount": max(5, min(40, int(b.get("aiCount") or 15))),
+                        "aiState": None, "mode": mode, "phase": "submit" if mode == "picks" else "ranking",
                         "picksPer": max(1, min(10, int(b.get("picksPer") or 5))),
                         "timerSec": max(30, min(1800, int(b.get("timerSec") or 120))), "deadline": None,
                         "spice": b.get("spice") if b.get("spice") in SPICE else "spicy", "show": None, "roastState": None,
@@ -610,6 +744,8 @@ class Handler(BaseHTTPRequestHandler):
                 rooms[code] = room
                 if mode == "classic":
                     add_anime(room, b.get("list") or [])
+                elif mode == "ai":
+                    start_ai_list(room)
                 changed(room)
                 return self.send_json({"code": code, "hostKey": room["hostKey"]})
 
@@ -707,7 +843,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self.err("Picks are closed. The ranking has started.", 409)
                 name = clean_name(b.get("name") or "")
                 if not name:
-                    return self.err("Type an anime name.")
+                    return self.err("Type a name.")
                 pid = b.get("pid")
                 if sum(1 for a in room["anime"] if pid in a.get("by", [])) >= room["picksPer"]:
                     return self.err(f"You already have {room['picksPer']} picks. Remove one to swap it.")
@@ -748,6 +884,18 @@ class Handler(BaseHTTPRequestHandler):
                 room["show"]["done"] = bool(b.get("done"))
             elif action == "showagain":
                 start_show(room)
+            elif action == "ailist":  # the AI picks (more) items: a retry, or another batch on top
+                if room.get("mode") != "ai":
+                    return self.err("This room isn't an AI's-pick room.")
+                if (room.get("aiState") or {}).get("status") == "working":
+                    return self.err("The AI is still picking.")
+                if b.get("fresh"):
+                    room["anime"] = []
+                    for p in room["players"].values():
+                        p["tiers"], p["done"] = {t: [] for t in TIERS}, False
+                if "theme" in b:
+                    room["aiTheme"] = str(b.get("theme") or "").strip()[:120]
+                start_ai_list(room)
             elif action == "retryroast":
                 if (room.get("roastState") or {}).get("status") != "working":
                     room["roastState"] = {"status": "working", "error": None}
@@ -782,7 +930,7 @@ class Handler(BaseHTTPRequestHandler):
             elif action == "anime" and len(parts) == 5:
                 item = find(room, parts[4])
                 if not item:
-                    return self.err("That anime isn't in the room anymore.", 404)
+                    return self.err("That one isn't in the room anymore.", 404)
                 if b.get("remove"):
                     room["anime"].remove(item)
                     for p in room["players"].values():
