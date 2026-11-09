@@ -761,7 +761,7 @@ class Handler(BaseHTTPRequestHandler):
                 path = os.path.join(HERE, "sounds", f"{parts[1]}.{ext}")
                 if os.path.isfile(path):
                     with open(path, "rb") as f:
-                        return self.send_bytes(f.read(), ctype, "public, max-age=3600")
+                        return self.send_bytes(f.read(), ctype, "no-cache")  # swapped sounds show up right away
             return self.err("Not found", 404)
 
         if u.path in STATIC:

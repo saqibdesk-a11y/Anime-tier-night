@@ -2,8 +2,7 @@
 
 Every sound is built from scratch (filtered noise, formant filters, layered hits), so there are no
 third-party recordings to license. Run:  python art/sounds.py   (needs numpy and scipy)
-To use real recordings instead, put fart.mp3 (or .ogg) etc. into sounds/: the server prefers .mp3,
-then .ogg, over these .wav files.
+Sounds made from real recordings (listed in art/import_sounds.py) are skipped here.
 """
 import os
 
@@ -291,7 +290,11 @@ def fahhh():
 
 
 if __name__ == "__main__":
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from import_sounds import CLIPS  # these use real recordings (art/import_sounds.py); never overwrite them
     for name, fn in [("whoosh", whoosh), ("fart", fart), ("firecracker", firecracker), ("balloon", balloon),
                      ("curse", curse), ("goldfish", goldfish), ("takoyaki", takoyaki), ("hearts", hearts),
                      ("crown", crown), ("boo", boo), ("chill", chill), ("kiss", kiss), ("fahhh", fahhh)]:
-        save(name, fn())
+        if name not in CLIPS:
+            save(name, fn())

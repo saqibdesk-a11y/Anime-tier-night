@@ -78,7 +78,7 @@ def chat_post(game, room, pid, b):
 # change the game. A game may say which ones a player can throw with a prank_rules(room, pid) hook
 # returning {"kinds": [...]}; otherwise everyone gets LIVING. Kept in memory only.
 
-LIVING = ["fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "kiss", "fahhh", "hearts", "crown"]
+LIVING = ["fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "kiss", "fahhh", "booing", "hearts", "crown"]
 GHOSTLY = ["boo", "chill", "fart", "fahhh"]
 PRANK_KINDS = set(LIVING) | set(GHOSTLY)
 PRANKS = {}       # room code -> recent pranks

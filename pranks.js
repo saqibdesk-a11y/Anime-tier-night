@@ -15,6 +15,7 @@
     takoyaki:    {e:"🐙", name:"Takoyaki",      verb:"pelted takoyaki at"},
     kiss:        {e:"💋", name:"Kiss",          verb:"kissed"},
     fahhh:       {e:"😩", name:"Fahhh",         verb:"went FAHHH at"},
+    booing:      {e:"👎", name:"Boo them",      verb:"got the crowd to boo"},
     hearts:      {e:"💗", name:"Lantern hearts",verb:"sent hearts to"},
     crown:       {e:"👑", name:"Flower crown",  verb:"crowned"},
     boo:         {e:"👻", name:"Boo",           verb:"haunted"},
@@ -26,7 +27,7 @@
   .pk-fab.cool{background:conic-gradient(var(--gold,#D9A441) calc(var(--p,1) * 360deg),color-mix(in srgb,var(--gold,#D9A441) 35%,var(--night,#1B1F4B)) 0)}
   .pk-fab.cool span{opacity:.5}
   .pk-fab b{position:absolute;inset:0;display:grid;place-items:center;font:900 16px var(--body,system-ui);color:var(--ink,#1E1A2E)}
-  .pk-scrim{position:fixed;inset:0;z-index:60;background:rgba(8,9,24,.55);display:grid;align-items:end;justify-items:center;animation:pkfade .2s}
+  .pk-scrim{position:fixed;inset:0;z-index:67;background:rgba(8,9,24,.55);display:grid;align-items:end;justify-items:center;animation:pkfade .2s}
   @media (min-width:760px){.pk-scrim{align-items:center}}
   @keyframes pkfade{from{opacity:0}}
   .pk-sheet{width:min(520px,100%);max-height:86vh;overflow:auto;background:var(--paper,#F3EBDD);color:var(--ink,#1E1A2E);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));font-family:var(--body,system-ui);animation:pkup .28s cubic-bezier(.2,.9,.3,1)}
@@ -141,6 +142,7 @@
     goldfish(p, pid){ shake(pid); burst(p, ["💧"], 6, p.w*.7, 700); mark(pid, '<span style="position:absolute;left:50%;top:-30%;transform:translateX(-50%);font-size:26px;animation:pkbob 1s ease-in-out infinite">🐟</span>', 6000); },
     takoyaki(p, pid){ burst(p, ["🟤","🟫","🐙"], 10, p.w*.8, 900); mark(pid, '<span style="position:absolute;inset:18%;border-radius:50%;background:radial-gradient(circle at 30% 40%,#5a2e12 0 12%,transparent 13%),radial-gradient(circle at 65% 60%,#5a2e12 0 9%,transparent 10%),radial-gradient(circle at 50% 25%,#7a3e18 0 7%,transparent 8%)"></span>', 5000); },
     hearts(p){ burst(p, ["💗","💖","🏮"], 12, p.w, 1600, 60); },
+    booing(p, pid){ burst(p, ["👎","🍅"], 10, p.w*1.1, 1100, -20); shake(pid); },
     kiss(p, pid){ burst(p, ["💕","💗"], 6, p.w*.8, 1300, 40);
       mark(pid, '<span style="position:absolute;right:-6%;top:42%;font-size:22px;transform:rotate(-18deg)">💋</span>', 8000); },
     fahhh(p, pid){ shake(pid);
