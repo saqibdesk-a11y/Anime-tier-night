@@ -1,6 +1,7 @@
 """Makes the site's art with a local ComfyUI running Z-Image-Turbo. Offline tool: the site never runs it.
 
-Usage:  python art/gen.py art/prompts/characters.json [--only id1,id2] [--seed N]
+Usage:  python art/gen.py art/prompts/characters.json [--only id1,id2] [--seed N] [--resume]
+        --resume skips images that already exist, so a stopped run picks up where it left off.
 Each job in the JSON: {"id": "...", "out": "img/chars/x.webp", "w": 768, "h": 1024, "prompt": "...", "size": [384, 512]}
 A shared "style" string from the file is added to every prompt. Results are saved as WebP next to the pages.
 """
@@ -72,6 +73,8 @@ def main():
     for job in spec["jobs"]:
         if only and job["id"] not in only:
             continue
+        if "--resume" in sys.argv and os.path.isfile(os.path.join(HERE, job["out"])):
+            continue  # already made (e.g. before a power cut)
         seed = job.get("seed", base if base is not None else random.randrange(2**31))
         t = time.time()
         out = run(job, spec.get("style", ""), seed)
