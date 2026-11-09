@@ -428,6 +428,7 @@ select option{background:var(--panel-solid)}
 <script src="/backguard.js"></script>
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
+<script src="/pranks.js"></script>
 <script>
 const TIERS = ["S","A","B","C","D","F"];
 const SCORE = {S:6,A:5,B:4,C:3,D:2,F:1};
@@ -547,6 +548,7 @@ $("#nameGate").onsubmit = async e => {
 /* ---------- chat (shared with every game) ---------- */
 const chatAct = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {...(me||{}), ...extra});
 Chat.mount({act: chatAct});
+Pranks.mount({act: chatAct});
 
 /* ---------- live sync (long-poll) ---------- */
 async function poll(gen, v){
@@ -566,7 +568,7 @@ async function poll(gen, v){
       room = data; v = data.version;
       if(me && !room.players[me.pid]){ me = null; myTiers = null; saveLocal(); toast("You were removed from this room by the host"); }
       if(me) Avatars.apply(chatAct, room.players[me.pid]);  // your saved picture shows next to your chat messages
-      render(); Chat.update(room, me);
+      render(); Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -628,7 +630,7 @@ function renderPlayers(){
     const n = submitting ? p.picks : TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
     const of = submitting ? room.picksPer : total;
     const done = submitting ? p.picks >= room.picksPer : p.done;
-    return `<span class="chip ${me&&me.pid===pid?"me":""}"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}${me&&me.pid===pid?" (you)":""} <span class="n">${n}/${of}${submitting?" picks":""}</span>${done?'<span class="done" title="Done">✓</span>':""}</span>`;
+    return `<span class="chip ${me&&me.pid===pid?"me":""}" data-pid="${esc(pid)}"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}${me&&me.pid===pid?" (you)":""} <span class="n">${n}/${of}${submitting?" picks":""}</span>${done?'<span class="done" title="Done">✓</span>':""}</span>`;
   }).join("") || `<span class="muted">Nobody has joined yet. Share the invite link.</span>`;
 }
 function tickTimer(){

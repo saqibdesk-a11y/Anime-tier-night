@@ -1,9 +1,10 @@
 /* Pranks: things players throw at each other for fun. They fly from the thrower's seat to the target's,
    land with a sound and leave a short mark on the target's picture. They never change the game.
    The server says what you may throw (room.prankKinds) and sends recent throws (room.pranks).
-   Usage: Pranks.mount({act, seat: pid => element or null}); Pranks.update(room, me) after every update.
-   Tapping a seat that isn't part of a game move (class "off", or any seat in the lobby) opens the tray
-   aimed at that player. */
+   Usage: Pranks.mount({act, seat: pid => element or null}); Pranks.update(room, me, {hide}) after every
+   update. Without a seat function, a thrown thing lands on the first visible [data-pid] element.
+   In Werewolf, tapping a seat that isn't part of a game move opens the tray aimed at that player.
+   Sounds are files in /sounds (made by art/sounds.py). */
 (function(){
   const KINDS = {
     fart:        {e:"💨", name:"Fart",          verb:"farted on"},
@@ -12,6 +13,8 @@
     curse:       {e:"📜", name:"Curse charm",   verb:"cursed"},
     goldfish:    {e:"🐟", name:"Goldfish",      verb:"slapped a goldfish on"},
     takoyaki:    {e:"🐙", name:"Takoyaki",      verb:"pelted takoyaki at"},
+    kiss:        {e:"💋", name:"Kiss",          verb:"kissed"},
+    fahhh:       {e:"😩", name:"Fahhh",         verb:"went FAHHH at"},
     hearts:      {e:"💗", name:"Lantern hearts",verb:"sent hearts to"},
     crown:       {e:"👑", name:"Flower crown",  verb:"crowned"},
     boo:         {e:"👻", name:"Boo",           verb:"haunted"},
@@ -20,7 +23,9 @@
   const css = `
   .pk-fab{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(var(--chat-lift,0px) + 16px + env(safe-area-inset-bottom,0px));z-index:35;width:56px;height:56px;border-radius:50%;border:2px solid var(--night,#1B1F4B);background:var(--gold,#D9A441);color:var(--ink,#1E1A2E);display:grid;place-items:center;cursor:pointer;font-size:26px;box-shadow:0 10px 26px -8px rgba(0,0,0,.7);transition:transform .15s}
   .pk-fab:active{transform:scale(.92)}
-  .pk-fab[disabled]{opacity:.55}
+  .pk-fab.cool{background:conic-gradient(var(--gold,#D9A441) calc(var(--p,1) * 360deg),color-mix(in srgb,var(--gold,#D9A441) 35%,var(--night,#1B1F4B)) 0)}
+  .pk-fab.cool span{opacity:.5}
+  .pk-fab b{position:absolute;inset:0;display:grid;place-items:center;font:900 16px var(--body,system-ui);color:var(--ink,#1E1A2E)}
   .pk-scrim{position:fixed;inset:0;z-index:60;background:rgba(8,9,24,.55);display:grid;align-items:end;justify-items:center;animation:pkfade .2s}
   @media (min-width:760px){.pk-scrim{align-items:center}}
   @keyframes pkfade{from{opacity:0}}
@@ -30,10 +35,13 @@
   .pk-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
   .pk-head h2{font:400 24px/1.1 var(--display,serif);margin:0;flex:1}
   .pk-head button{border:0;background:rgba(30,26,46,.08);color:inherit;border-radius:999px;height:38px;min-width:38px;padding:0 12px;font:700 14px var(--body,system-ui);cursor:pointer}
-  .pk-items{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .pk-items{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  @media (max-width:420px){.pk-items{grid-template-columns:repeat(4,1fr)}}
   .pk-items button{border:2px solid transparent;background:#fff;border-radius:14px;padding:10px 4px 8px;display:grid;justify-items:center;gap:2px;cursor:pointer;font:700 13px/1.2 var(--body,system-ui);color:inherit}
   .pk-items button span{font-size:30px;line-height:1.1}
   .pk-items button.on{border-color:var(--lantern,#F2603A)}
+  .pk-items button:disabled,.pk-people button:disabled{opacity:.45;cursor:not-allowed}
+  .pk-wait{font:700 14px var(--body,system-ui);color:var(--ink-2,#5B5670);margin:-4px 0 10px}
   .pk-sheet h3{font:700 15px var(--body,system-ui);margin:16px 0 8px;color:var(--ink-2,#5B5670)}
   .pk-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px}
   .pk-people button{border:0;background:none;padding:0;display:grid;justify-items:center;gap:4px;cursor:pointer;font:700 13px var(--body,system-ui);color:inherit;min-width:0}
@@ -58,51 +66,40 @@
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const calm = () => matchMedia("(prefers-reduced-motion:reduce)").matches;
 
-  let act = null, seatOf = () => null, room = null, me = null, seen = null, close = null, backBtn = null;
+  let act = null, seatOf = pid => anyFace(pid), room = null, me = null, seen = null, close = null, backBtn = null;
   const fab = document.createElement("button");
   fab.className = "pk-fab"; fab.type = "button"; fab.hidden = true; fab.title = "Prank someone"; fab.setAttribute("aria-label", "Prank someone");
-  fab.textContent = "🧨";
+  fab.innerHTML = '<span>🧨</span><b hidden></b>';
   const feed = document.createElement("div"); feed.className = "pk-feed"; feed.setAttribute("aria-live", "polite");
 
-  /* ---------- sound: tiny synth blips, no files ---------- */
+  /* ---------- sound: effects from /sounds, played through Web Audio ---------- */
   let sound = (()=>{ try{ return localStorage.getItem("gn:prankSound") !== "off"; }catch(e){ return true; } })(), ctx = null;
-  function tone(f, dur, type="sine", vol=.07, slide=1, delay=0){
-    if(!sound) return;
-    try{
-      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-      const t = ctx.currentTime + delay, o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = type; o.frequency.setValueAtTime(f, t); if(slide !== 1) o.frequency.exponentialRampToValueAtTime(Math.max(30, f*slide), t+dur);
-      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t+dur);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+dur+.02);
-    }catch(e){}
+  const buffers = {}, VOL = {whoosh:.35};
+  function audio(){
+    if(!ctx){ try{ ctx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
+    if(ctx.state === "suspended") ctx.resume().catch(()=>{});
+    return ctx;
   }
-  function noise(dur, vol=.12, delay=0, lowpass=900){
-    if(!sound) return;
-    try{
-      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-      const t = ctx.currentTime + delay, n = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
-      for(let i = 0; i < n; i++) d[i] = (Math.random()*2-1) * (1 - i/n);
-      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-      f.type = "lowpass"; f.frequency.value = lowpass; g.gain.value = vol;
-      src.buffer = buf; src.connect(f); f.connect(g); g.connect(ctx.destination); src.start(t);
-    }catch(e){}
+  // phones only allow sound after the first tap on the page
+  ["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, () => audio(), {once:true, capture:true}));
+  function load(name){
+    if(!buffers[name]) buffers[name] = fetch(`/sounds/${name}.wav`).then(r => r.arrayBuffer()).then(b => audio().decodeAudioData(b)).catch(() => null);
+    return buffers[name];
   }
-  const SOUND = {
-    fart: ()=>{ for(let i = 0; i < 7; i++) tone(70 + Math.random()*40, .07, "sawtooth", .09, .8, i*.055); },
-    firecracker: ()=>{ noise(.25, .25, 0, 3000); noise(.15, .2, .18, 2500); noise(.12, .15, .32, 2000); },
-    balloon: ()=>{ noise(.35, .18, 0, 1400); tone(500, .2, "sine", .04, .4); },
-    curse: ()=>{ tone(220, .5, "triangle", .06, .5); tone(233, .5, "triangle", .05, .5, .05); },
-    goldfish: ()=>{ tone(600, .05, "square", .05, .6); tone(500, .05, "square", .05, .6, .12); tone(650, .05, "square", .05, .6, .24); },
-    takoyaki: ()=>{ [0,.09,.18].forEach(d=>noise(.08, .18, d, 700)); },
-    hearts: ()=>{ [523, 659, 784].forEach((f,i)=>tone(f, .25, "triangle", .05, 1, i*.1)); },
-    crown: ()=>{ [784, 988, 1175, 1568].forEach((f,i)=>tone(f, .2, "sine", .05, 1, i*.07)); },
-    boo: ()=>{ tone(300, .9, "sine", .07, .5); tone(310, .9, "sine", .04, .45, .1); },
-    chill: ()=>{ [1800, 2200, 1600, 2400].forEach((f,i)=>tone(f, .15, "sine", .025, 1, i*.08)); },
-    whoosh: ()=>noise(.35, .05, 0, 1800),
-  };
+  async function playSound(name){
+    if(!sound) return;
+    const c = audio(); if(!c) return;
+    const buf = await load(name); if(!buf) return;
+    const src = c.createBufferSource(), g = c.createGain();
+    src.buffer = buf; g.gain.value = VOL[name] ?? 1;
+    src.connect(g); g.connect(c.destination); src.start();
+  }
+  const SOUND = new Proxy({}, {get: (_, name) => () => playSound(name)});
 
   /* ---------- where things are on screen ---------- */
   function center(el){ const r = el.getBoundingClientRect(); return {x: r.left + r.width/2, y: r.top + r.height/2, w: r.width}; }
+  const visible = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; };
+  const anyFace = pid => [...document.querySelectorAll(`[data-pid="${CSS.escape(pid)}"]`)].find(visible) || null;
   function fromPoint(pid){ const el = seatOf(pid); if(el) return center(el); return {x: window.innerWidth/2, y: window.innerHeight + 40, w: 60}; }
   function toPoint(pid){ const el = seatOf(pid); if(el) return center(el); return {x: window.innerWidth/2, y: window.innerHeight*.35, w: 80}; }
   function spawn(cls, text, x, y, size){
@@ -144,11 +141,15 @@
     goldfish(p, pid){ shake(pid); burst(p, ["💧"], 6, p.w*.7, 700); mark(pid, '<span style="position:absolute;left:50%;top:-30%;transform:translateX(-50%);font-size:26px;animation:pkbob 1s ease-in-out infinite">🐟</span>', 6000); },
     takoyaki(p, pid){ burst(p, ["🟤","🟫","🐙"], 10, p.w*.8, 900); mark(pid, '<span style="position:absolute;inset:18%;border-radius:50%;background:radial-gradient(circle at 30% 40%,#5a2e12 0 12%,transparent 13%),radial-gradient(circle at 65% 60%,#5a2e12 0 9%,transparent 10%),radial-gradient(circle at 50% 25%,#7a3e18 0 7%,transparent 8%)"></span>', 5000); },
     hearts(p){ burst(p, ["💗","💖","🏮"], 12, p.w, 1600, 60); },
+    kiss(p, pid){ burst(p, ["💕","💗"], 6, p.w*.8, 1300, 40);
+      mark(pid, '<span style="position:absolute;right:-6%;top:42%;font-size:22px;transform:rotate(-18deg)">💋</span>', 8000); },
+    fahhh(p, pid){ shake(pid);
+      mark(pid, '<span style="position:absolute;left:50%;bottom:104%;transform:translateX(-50%);white-space:nowrap;background:var(--paper,#F3EBDD);color:var(--ink,#1E1A2E);border-radius:14px;padding:4px 12px;font:400 22px/1.1 var(--display,serif);box-shadow:0 6px 16px rgba(0,0,0,.5);animation:pkfah .5s cubic-bezier(.3,1.7,.5,1)">FAHHH</span>', 2600); },
     crown(p, pid){ burst(p, ["🌸","✨"], 8, p.w*.9, 1200); mark(pid, '<span style="position:absolute;left:50%;top:-34%;transform:translateX(-50%);font-size:30px">👑</span>', 8000); },
     boo(p, pid){ burst(p, ["👻","🕯️"], 5, p.w, 1600, 40); mark(pid, '<span style="position:absolute;inset:0;border-radius:50%;backdrop-filter:grayscale(1) blur(1px);background:rgba(200,200,255,.15)"></span>', 4000); },
     chill(p, pid){ burst(p, ["❄️","✳️"], 10, p.w, 1300); mark(pid, '<span style="position:absolute;inset:-6%;border-radius:50%;box-shadow:inset 0 0 0 4px rgba(190,230,255,.9),0 0 18px rgba(190,230,255,.8);background:rgba(190,230,255,.2)"></span>', 6000); },
   };
-  style.textContent += `@keyframes pkbob{50%{translate:0 -5px;rotate:12deg}} .pk-soot::after{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 40% 45%,rgba(20,15,10,.75) 0 18%,transparent 40%),radial-gradient(circle at 65% 60%,rgba(20,15,10,.6) 0 12%,transparent 30%)}`;
+  style.textContent += `@keyframes pkfah{from{transform:translateX(-50%) scale(.3)}} @keyframes pkbob{50%{translate:0 -5px;rotate:12deg}} .pk-soot::after{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 40% 45%,rgba(20,15,10,.75) 0 18%,transparent 40%),radial-gradient(circle at 65% 60%,rgba(20,15,10,.6) 0 12%,transparent 30%)}`;
 
   function play(x){
     const k = KINDS[x.kind]; if(!k) return;
@@ -184,8 +185,23 @@
     };
   }
 
+  // cooldown: the server says how long until you can throw again; the button fills back up meanwhile
+  let readyAt = 0, coolTotal = 6;
+  const waitLeft = () => Math.max(0, readyAt - Date.now()) / 1000;
+  function tickCool(){
+    const left = waitLeft();
+    fab.classList.toggle("cool", left > 0);
+    fab.style.setProperty("--p", 1 - left / coolTotal);
+    const b = fab.querySelector("b"); b.hidden = !(left > 0); b.textContent = Math.ceil(left);
+    fab.setAttribute("aria-label", left > 0 ? `Prank someone (ready in ${Math.ceil(left)} seconds)` : "Prank someone");
+    const w = document.querySelector(".pk-wait");
+    if(w){ w.hidden = !(left > 0); w.textContent = `Reloading. Ready in ${Math.ceil(left)}s.`; document.querySelectorAll(".pk-items button, .pk-people button").forEach(x => x.disabled = left > 0); }
+    if(left > 0) requestAnimationFrame(tickCool);
+  }
+  function startCool(sec){ readyAt = Date.now() + sec * 1000; tickCool(); }
   async function send(kind, to, back=false){
-    try{ await act("prank", {kind, to, back}); return null; }
+    if(waitLeft() > 0) return `Reloading. Ready in ${Math.ceil(waitLeft())}s.`;
+    try{ await act("prank", {kind, to, back}); startCool(coolTotal); return null; }
     catch(err){ return err.message; }
   }
 
@@ -201,12 +217,13 @@
       const t = target && room.players[target];
       scrim.innerHTML = `<div class="pk-sheet" role="dialog" aria-label="Prank someone"><div class="pk-head"><h2>${t ? `Prank ${esc(t.name)}` : "Prank someone"}</h2>
         <button type="button" data-sound aria-pressed="${sound}">${sound ? "Sound on" : "Sound off"}</button><button type="button" data-close aria-label="Close">×</button></div>
-        <div class="pk-items">${kinds.map(k => `<button type="button" data-kind="${k}" class="${!t && k === pick ? "on" : ""}"><span>${KINDS[k].e}</span>${KINDS[k].name}</button>`).join("")}</div>
+        <div class="pk-wait" hidden></div><div class="pk-items">${kinds.map(k => `<button type="button" data-kind="${k}" class="${!t && k === pick ? "on" : ""}"><span>${KINDS[k].e}</span>${KINDS[k].name}</button>`).join("")}</div>
         ${t ? "" : `<h3>Then tap who gets it</h3><div class="pk-people">${people.map(([pid, p]) => `<button type="button" data-to="${pid}"><span class="pic">${pic(p)}</span><b>${esc(p.name)}</b></button>`).join("")}</div>`}
         <div class="pk-err" role="alert"></div></div>`;
     };
     draw();
     document.body.appendChild(scrim);
+    tickCool();
     close = () => { scrim.remove(); close = null; };
     const fire = async (kind, to) => {
       const err = await send(kind, to);
@@ -215,7 +232,7 @@
     };
     scrim.onclick = e => {
       if(e.target === scrim || e.target.closest("[data-close]")){ close(); return; }
-      if(e.target.closest("[data-sound]")){ sound = !sound; try{ localStorage.setItem("gn:prankSound", sound ? "on" : "off"); }catch(err){} draw(); return; }
+      if(e.target.closest("[data-sound]")){ sound = !sound; try{ localStorage.setItem("gn:prankSound", sound ? "on" : "off"); }catch(err){} draw(); tickCool(); return; }
       const k = e.target.closest("[data-kind]");
       if(k){ if(target) fire(k.dataset.kind, target); else { pick = k.dataset.kind; draw(); } return; }
       const to = e.target.closest("[data-to]");
@@ -235,10 +252,12 @@
     });
     if(window.BackGuard) BackGuard.onBack(() => { if(!close) return false; close(); return true; });
   }
-  function update(r, m){
+  function update(r, m, opts={}){
     room = r; me = m;
     const joined = !!(me && room && room.players && room.players[me.pid]);
-    fab.hidden = !joined || !(room.prankKinds || []).length;
+    fab.hidden = !joined || !(room.prankKinds || []).length || !!opts.hide || Object.keys(room.players).length < 2;
+    if(room.prankCooldown) coolTotal = room.prankCooldown;
+    if(room.prankWait > 0 && Math.abs(Date.now() + room.prankWait * 1000 - readyAt) > 1500) startCool(room.prankWait);
     const list = (room && room.pranks) || [];
     if(seen === null){ seen = new Set(list.map(x => x.id)); return; }  // don't replay what happened before you arrived
     for(const x of list){

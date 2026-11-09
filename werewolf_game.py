@@ -320,15 +320,11 @@ def chat_rules(room, pid):
             "why": "The village is asleep. No talking until dawn." if room["phase"] == "night" else "Only the evil team can talk there."}
 
 
-LIVING_PRANKS = ["fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "hearts", "crown"]
-GHOST_PRANKS = ["boo", "chill", "fart"]
-
-
 def prank_rules(room, pid):
     """Everyone can prank at any time. Ghosts and spectators get the spooky ones."""
     p = room["players"].get(pid) or {}
     ghost = room["phase"] not in ("lobby", "final") and (not p.get("role") or not p.get("alive"))
-    return {"kinds": GHOST_PRANKS if ghost else LIVING_PRANKS}
+    return {"kinds": media.GHOSTLY if ghost else media.LIVING}
 
 
 # ---------- what each viewer sees ----------

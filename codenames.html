@@ -316,6 +316,7 @@ body.quake .stage{animation:quake .6s}
 <script src="/backguard.js"></script>
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
+<script src="/pranks.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -336,7 +337,7 @@ const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
-const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
+const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
 const botFace = (cls="face") => `<span class="${cls} ai" style="background:var(--night-3);color:var(--gold)"><svg width="60%" height="60%"><use href="#bot"/></svg></span>`;
 const TEAM = {red:"Lantern", blue:"Shrine"};
 const other = t => t === "red" ? "blue" : "red";
@@ -402,6 +403,7 @@ function openRoom(c){
 }
 BackGuard.onBack(()=>{ if(sheet){ closeSheet(); return true; } return false; });
 Chat.mount({act});
+Pranks.mount({act});
 // a new card style redraws the turned cards with its own pictures
 if(window.Theme) Theme.onChange(()=>{ if(view === "game") updateBoard(); });
 
@@ -420,7 +422,7 @@ async function poll(gen, v){
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       render();
       moments();
-      Chat.update(room, me);
+      Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
   }
 }

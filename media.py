@@ -74,34 +74,50 @@ def chat_post(game, room, pid, b):
 
 
 # ---------- pranks ----------
-# Things players throw at each other for fun (a fart, a water balloon, a curse charm...). They never
-# change the game. A game says which ones a player may throw with a prank_rules(room, pid) hook
-# returning {"kinds": [...]}; without one, a game has no pranks. Kept in memory only.
+# Things players throw at each other for fun (a fart, a water balloon, a kiss, a "FAHHH"...). They never
+# change the game. A game may say which ones a player can throw with a prank_rules(room, pid) hook
+# returning {"kinds": [...]}; otherwise everyone gets LIVING. Kept in memory only.
 
-PRANK_KINDS = {"fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "hearts", "crown", "boo", "chill"}
+LIVING = ["fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "kiss", "fahhh", "hearts", "crown"]
+GHOSTLY = ["boo", "chill", "fart", "fahhh"]
+PRANK_KINDS = set(LIVING) | set(GHOSTLY)
 PRANKS = {}       # room code -> recent pranks
 PRANK_STATS = {}  # room code -> {"sent": {pid: n}, "got": {pid: n}, "kinds": {pid: {kind: n}}}
 PRANK_SHOW = 12   # seconds a prank stays in the room view (long enough for every phone to see it)
+COOLDOWN = 6      # seconds between your throws
+BURST = (4, 30)   # at most 4 throws in 30 seconds per player, even with the cooldown
+TARGET = (6, 20)  # nobody gets hit more than 6 times in 20 seconds
+
+
+def _kinds(game, room, pid):
+    hook = getattr(game, "prank_rules", None) if game else None
+    return hook(room, pid)["kinds"] if hook else LIVING
+
+
+def _ready_at(room, pid, now):
+    """When this player may throw again: the cooldown, or the burst limit, whichever is later."""
+    p = room["players"].get(pid) or {}
+    mine = sorted(x["t"] for x in PRANKS.get(room["code"], []) if x["from"] == pid and now - x["t"] < BURST[1])
+    ready = p.get("lastPrank", 0) + COOLDOWN
+    if len(mine) >= BURST[0]:
+        ready = max(ready, mine[-BURST[0]] + BURST[1])
+    return ready
 
 
 def prank_post(game, room, pid, b):
-    hook = getattr(game, "prank_rules", None) if game else None
-    if not hook:
-        raise Refuse("No pranks in this game.")
-    kinds = hook(room, pid)["kinds"]
     kind, to = str(b.get("kind") or ""), str(b.get("to") or "")
-    if kind not in PRANK_KINDS or kind not in kinds:
+    if kind not in PRANK_KINDS or kind not in _kinds(game, room, pid):
         raise Refuse("You can't throw that right now.", 409)
     if to == pid or to not in room["players"]:
         raise Refuse("Pick someone else to prank.")
     now = time.time()
-    p = room["players"][pid]
-    if now - p.get("lastPrank", 0) < 2:
-        raise Refuse("Reloading. Try again in a second.", 429)
+    wait = _ready_at(room, pid, now) - now
+    if wait > 0:
+        raise Refuse(f"Reloading. Ready in {int(wait) + 1}s.", 429)
     log = [x for x in PRANKS.get(room["code"], []) if now - x["t"] < 60]
-    if sum(1 for x in log if x["to"] == to and now - x["t"] < 15) >= 8:
-        raise Refuse(f'{room["players"][to]["name"]} has had enough for now.', 429)
-    p["lastPrank"] = now
+    if sum(1 for x in log if x["to"] == to and now - x["t"] < TARGET[1]) >= TARGET[0]:
+        raise Refuse(f'{room["players"][to]["name"]} has had enough for now. Pick someone else.', 429)
+    room["players"][pid]["lastPrank"] = now
     log.append({"id": _rid(8), "from": pid, "to": to, "kind": kind, "t": now, "back": bool(b.get("back"))})
     PRANKS[room["code"]] = log[-40:]
     st = PRANK_STATS.setdefault(room["code"], {"sent": {}, "got": {}, "kinds": {}})
@@ -111,12 +127,12 @@ def prank_post(game, room, pid, b):
 
 
 def prank_view(game, room, viewer):
-    hook = getattr(game, "prank_rules", None) if game else None
-    if not hook:
-        return {}
     now = time.time()
+    joined = viewer in room["players"]
     return {"pranks": [x for x in PRANKS.get(room["code"], []) if now - x["t"] < PRANK_SHOW],
-            "prankKinds": hook(room, viewer)["kinds"] if viewer in room["players"] else [],
+            "prankKinds": _kinds(game, room, viewer) if joined else [],
+            "prankWait": max(0, _ready_at(room, viewer, now) - now) if joined else 0,
+            "prankCooldown": COOLDOWN,
             "prankStats": PRANK_STATS.get(room["code"], {"sent": {}, "got": {}, "kinds": {}})}
 
 

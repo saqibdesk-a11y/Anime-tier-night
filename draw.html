@@ -335,6 +335,7 @@ body.focus .dock .closetools{display:block}
 <script src="/backguard.js"></script>
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
+<script src="/pranks.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -358,6 +359,7 @@ let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
+Pranks.mount({act});
 const cur = () => room && room.round >= 0 ? room.roundData[room.round] : null;
 
 /* ---------- home ---------- */
@@ -407,7 +409,7 @@ async function poll(gen, v){
       const prev = room; room = data; v = data.version;
       if(me && !room.players[me.pid]){ me = null; store("draw:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
-      onChange(prev); render(); Chat.update(room, me);
+      onChange(prev); render(); Chat.update(room, me); Pranks.update(room, me, {hide: room.phase === "drawing"});
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -449,7 +451,7 @@ function renderPlayers(){
     if(room.phase === "drawing" && rd && (rd.done||[]).includes(owner)) st = '<span class="ok" title="Done">✓</span>';
     if(room.phase === "rating" && room.rateProgress && room.rateProgress[pid]){ const [got, need] = room.rateProgress[pid]; st = got >= need ? '<span class="ok" title="Done rating">✓</span>' : `<span class="muted">${got}/${need}</span>`; }
     const team = room.mode === "team" && p.team ? `<i style="width:8px;height:8px;border-radius:50%;background:${TEAM_COLORS[p.team]}"></i>` : "";
-    return `<span class="chip ${me&&me.pid===pid?"me":""}">${avatar(p.name)}${esc(p.name)}${me&&me.pid===pid?" (you)":""}${team}${st}</span>`;
+    return `<span class="chip ${me&&me.pid===pid?"me":""}" data-pid="${esc(pid)}">${avatar(p.name)}${esc(p.name)}${me&&me.pid===pid?" (you)":""}${team}${st}</span>`;
   }).join("") || '<span class="muted">Nobody here yet. Share the invite link.</span>';
 }
 function renderHostStrip(){

@@ -743,6 +743,14 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_bytes(f.read(), "image/webp", "public, max-age=604800")
             return self.err("Not found", 404)
 
+        # prank sound effects (made offline, see art/sounds.py)
+        if len(parts) == 2 and parts[0] == "sounds" and re.fullmatch(r"[a-z]+\.wav", parts[1]):
+            path = os.path.join(HERE, "sounds", parts[1])
+            if os.path.isfile(path):
+                with open(path, "rb") as f:
+                    return self.send_bytes(f.read(), "audio/wav", "public, max-age=604800")
+            return self.err("Not found", 404)
+
         if u.path in STATIC:
             ctype, cache = STATIC[u.path]
             with open(os.path.join(HERE, u.path.lstrip("/")), "rb") as f:

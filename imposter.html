@@ -181,6 +181,7 @@ details summary{cursor:pointer;font-weight:800}
 <script src="/backguard.js"></script>
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
+<script src="/pranks.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -199,9 +200,10 @@ let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, opene
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
+Pranks.mount({act});
 const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc(p.name[0].toUpperCase()); };
-const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
+const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
 const rd = () => room.round >= 0 ? room.roundData[room.round] : null;
 
 /* ---------- home ---------- */
@@ -245,7 +247,7 @@ async function poll(gen, v){
       if(prev && prev.turnPid !== room.turnPid && room.turnPid === me?.pid) buzz([80,60,80]);
       render();
       document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
-      Chat.update(room, me);
+      Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
