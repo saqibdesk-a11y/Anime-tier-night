@@ -1,18 +1,10 @@
-"""Bits every game shares: uploaded pictures (drawings, player photos), the festival characters
-players can pick as avatars, the room chat, and the error a game raises to refuse a move."""
-import json
-import os
+"""Bits every game shares: uploaded pictures (drawings, player photos), the room chat, and the
+error a game raises to refuse a move."""
 import random
 import string
 import time
 
-HERE = os.path.dirname(os.path.abspath(__file__))
 IMAGES = {}  # image id -> jpeg bytes, kept in memory only (gone when the server restarts)
-
-# the original festival characters (art in img/chars): avatars, and the Codenames picture cards
-with open(os.path.join(HERE, "img", "chars", "characters.json"), encoding="utf-8") as _f:
-    CHARACTERS = [dict(c, img=f"/img/chars/{c['id']}.webp") for c in json.load(_f)]
-AVATAR_URLS = {c["img"] for c in CHARACTERS}
 
 
 class Refuse(Exception):

@@ -276,7 +276,7 @@ function lobby(){
   $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"}</h1>
     <p class="sub">Share the code <b style="font-family:var(--type);letter-spacing:.2em;color:var(--amber)">${room.code}</b>. You need at least 3 players.</p></div>
     <div class="panel" style="margin-top:16px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Choose your avatar">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
-      <div><b>${esc(mine.name)}</b><p class="hint">${Avatars.src(mine) ? "Tap to change your picture." : "Pick a festival character or a photo. It goes on your envelope."}</p></div></div></div>
+      <div><b>${esc(mine.name)}</b><p class="hint">${Avatars.src(mine) ? "Tap to change your picture." : "Pick an anime character or a photo. It goes on your envelope."}</p></div></div></div>
     <div class="ring">${ps.map(pid=>`<div class="tok fadeup">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span>${H&&pid!==me.pid?`<button class="btn small" data-kick="${pid}" style="padding:2px 10px;font-size:11px">Kick</button>`:""}</div>`).join("")}</div>
     <div class="panel" style="margin-top:18px"><h2>${H ? "Set up the case" : "The case"}</h2>
       <div><label>Mode</label><div class="seg">

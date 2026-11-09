@@ -475,13 +475,13 @@ function lobby(){
   $("#stage").innerHTML = `<div class="main" style="max-width:640px;margin:0 auto;width:100%"><div class="fadeup"><div class="eyebrow">Room code <b style="color:var(--gold)">${room.code}</b></div><h1 class="title">Pick your sides</h1>
     <p class="sub">Each team needs at least one guesser. ${room.aiReady && s.aiSpy ? "An empty spymaster seat is taken by the AI, so even two of you can play." : "Each team needs a spymaster."}</p></div>
     <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Choose your avatar">${Avatars.src(my)?picOf(my):"Choose"}</button>
-      <div><b>Agent ${esc(my.name)}</b><p class="hint">${Avatars.src(my) ? "Tap to change your picture." : "Pick a festival character or a photo. It shows when you mark cards."}</p></div></div></div>
+      <div><b>Agent ${esc(my.name)}</b><p class="hint">${Avatars.src(my) ? "Tap to change your picture." : "Pick an anime character or a photo. It shows when you mark cards."}</p></div></div></div>
     <div class="teams">${teamHTML("red")}${teamHTML("blue")}</div>
     ${H ? `<div class="tools" style="margin-top:10px"><button class="btn small" data-host="shuffle">Shuffle teams</button><button class="btn small" data-shuffle-spies="1">Shuffle with spymasters</button></div>` : ""}
     <div class="panel" style="margin-top:14px"><h2>${H ? "Settings" : "Settings (the host picks)"}</h2>
       <div><label>Words</label><div class="chips">${packs.map(([v,t])=>`<button type="button" class="${s.pack===v?"on":""}" data-pack="${v}" ${H?"":"disabled"}>${esc(t)}</button>`).join("")}</div></div>
       ${s.pack==="custom" ? `<div><label for="sCustom">Words about</label><input type="text" id="sCustom" maxlength="200" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Marvel, football, our school, Pakistan"><p class="hint" style="margin-top:6px">The AI makes a fresh board on this topic every game.</p></div>` : ""}
-      ${s.pack==="pictures" ? `<p class="hint">The cards are festival characters. Clue by their look, what they hold or what they do.</p>` : ""}
+      ${s.pack==="pictures" ? `<p class="hint">The cards are anime characters. Clue by their show, powers, look or vibe.</p>` : ""}
       <div><label>Board</label><div class="seg">
         <button type="button" class="${s.size===25?"on":""}" data-size="25" ${H?"":"disabled"}><b>5 × 5 classic</b><small>9 vs 8 agents</small></button>
         <button type="button" class="${s.size===16?"on":""}" data-size="16" ${H?"":"disabled"}><b>4 × 4 quick</b><small>6 vs 5 agents, faster games</small></button></div></div>
@@ -519,7 +519,7 @@ function starting(){
   view = "starting";
   const s = room.settings;
   $("#stage").innerHTML = `<div class="main"><div class="hero fadeup" style="margin-top:12vh">${heroGrid()}<h1 style="font-size:clamp(34px,8vw,52px)">Dealing the board</h1>
-    <p class="sub">${s.pack==="custom" ? `The AI is writing words about ${esc(s.custom||"anything")}…` : s.pack==="pictures" ? "Calling the festival crowd…" : "Shuffling the codenames…"}</p></div></div>`;
+    <p class="sub">${s.pack==="custom" ? `The AI is writing words about ${esc(s.custom||"anything")}…` : s.pack==="pictures" ? "Recruiting anime characters…" : "Shuffling the codenames…"}</p></div></div>`;
 }
 
 /* ---------- the game ---------- */

@@ -2,7 +2,7 @@
 secret key and gives one-word clues with a number; their operatives tap cards to guess. Hit the
 assassin and your team loses on the spot.
 
-Extras: anime packs and festival-character picture cards, AI-made boards on any topic, an AI spymaster for a team
+Extras: anime packs and anime picture cards, AI-made boards on any topic, an AI spymaster for a team
 without one (so even 2 people can play), timers, guess marks your team can see, and a series score.
 
 server.py owns rooms, the lock and HTTP; this module owns the game's rules."""
@@ -88,7 +88,7 @@ WORDS = {
         Zombie Crafting Farm Village Trade Raid Clan Lobby Ranked Elo Smurf Tryhard Clutch Ace GG""",
 }
 WORDS["mix"] = " ".join(WORDS.values())
-PACKS = {"classic": "Classic", "anime": "Anime", "pictures": "Festival characters (pictures)", "pop": "Pop culture",
+PACKS = {"classic": "Classic", "anime": "Anime", "pictures": "Anime characters (pictures)", "pop": "Pop culture",
          "food": "Food", "games": "Video games", "mix": "Mix of everything", "custom": "Custom (AI)"}
 
 
@@ -183,6 +183,9 @@ def say(room, text):
     media.chat_say(room, text)
 
 
+gallery = None  # server.py plugs in the anime character list for picture cards
+
+
 TEAM_NAME = {"red": "Lantern", "blue": "Shrine"}
 
 
@@ -231,10 +234,10 @@ def make_words(settings, n):
             pass
         pack = "mix"
     if pack == "pictures":
-        chars = media.CHARACTERS
+        chars = [c for c in (gallery() if gallery else []) if c.get("img")]
         if len(chars) >= n:
             picked = random.sample(chars, n)
-            return [{"w": c["name"], "img": c["img"], "show": c["tag"]} for c in picked]
+            return [{"w": (c.get("alias") or c["name"].split(" (")[0]), "img": c["img"], "show": c.get("show", "")} for c in picked]
         pack = "anime"
     pool, seen = [], set()
     for w in re.findall(r"[^\s]+", WORDS[pack]):
@@ -365,7 +368,7 @@ def ai_clue(code, tid):
     system = ("You are a brilliant Codenames spymaster. Give one clue word that links as many of your team's cards as "
               "you safely can, while steering clear of the other team's cards and above all the assassin. "
               "The clue must be a single word (a well-known name is fine), not any word on the board and not part of one. "
-              + ("The cards are original festival characters; what they are known for is in brackets. Clues can be about that, their look or their vibe. " if pics else ""))
+              + ("The cards are anime characters; their show is in brackets. Clues can be about their show, powers, looks or personality. " if pics else ""))
     prompt = (f"Your team's cards: {', '.join(mine)}.\nOther team's cards: {', '.join(theirs)}.\n"
               f"Neutral cards: {', '.join(neutral) or 'none'}.\nASSASSIN (never point near it): {', '.join(assassin)}.\n"
               + (f"Clues already given: {', '.join(past)}.\n" if past else "")
