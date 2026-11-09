@@ -1,0 +1,445 @@
+{
+ "style": "Anime illustration, clean confident ink linework, flat cel shading with soft painted highlights, warm paper-lantern light from one side, deep indigo night background with blurred orange lantern bokeh. Half-body portrait, facing the viewer, centered, head and shoulders fully in frame with space above the head. Original character design. No text, no letters, no watermark.",
+ "jobs": [
+  {
+   "id": "hana",
+   "out": "img/chars/hana.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A cheerful teenage girl with a short choppy silver bob and a white fox mask pushed to the side of her head, indigo yukata with orange goldfish pattern, holding a sparkler."
+  },
+  {
+   "id": "ren",
+   "out": "img/chars/ren.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A tall calm young man with messy dark green hair tied back and round glasses, dark grey jinbei with gold thread, holding a paper fan, slight smirk."
+  },
+  {
+   "id": "gen",
+   "out": "img/chars/gen.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "An old festival stall keeper with a bushy white beard, a twisted white headband, red happi coat, laughing, holding a skewer of grilled squid."
+  },
+  {
+   "id": "mio",
+   "out": "img/chars/mio.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A sporty girl with a high black ponytail and a sweatband, sleeveless white happi coat with red trim, holding two taiko drumsticks crossed, fierce grin."
+  },
+  {
+   "id": "kaito",
+   "out": "img/chars/kaito.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A small spiky-haired boy with a bandage on his nose, orange tank top and shorts, holding an unlit firework rocket with sparkling eyes."
+  },
+  {
+   "id": "yuki",
+   "out": "img/chars/yuki.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A gentle girl with long pale blue hair in a low braid, white yukata with blue snowflake pattern, holding a blue shaved-ice cup with a spoon."
+  },
+  {
+   "id": "taro",
+   "out": "img/chars/taro.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A chubby friendly young man with a buzz cut and a towel around his neck, black apron, holding a tray of takoyaki and a pick."
+  },
+  {
+   "id": "sora",
+   "out": "img/chars/sora.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A dreamy androgynous teen with fluffy sky-blue hair and freckles, oversized cream hoodie under a light haori, holding a string to a paper kite."
+  },
+  {
+   "id": "aya",
+   "out": "img/chars/aya.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A serious young woman with straight black hair and a red hair tie, white and red shrine maiden robes, holding a wooden ema plaque."
+  },
+  {
+   "id": "jin",
+   "out": "img/chars/jin.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A cocky teen boy with bleached spiky hair and a gold stud earring, open black yukata over a tee, spinning a ring on one finger."
+  },
+  {
+   "id": "nana",
+   "out": "img/chars/nana.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A bubbly little girl with pink twin buns, pink yukata with white rabbit pattern, holding a huge cloud of cotton candy bigger than her head."
+  },
+  {
+   "id": "kenji",
+   "out": "img/chars/kenji.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A broad-shouldered man in his forties with a stubbly jaw and a navy cap, festival security vest, holding a glowing traffic baton, stern but kind."
+  },
+  {
+   "id": "rina",
+   "out": "img/chars/rina.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A mysterious young woman with violet hair covering one eye, dark purple haori with stars, holding a bamboo cup of fortune sticks."
+  },
+  {
+   "id": "toma",
+   "out": "img/chars/toma.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A quiet young man with shaggy brown hair and a carving knife tucked in his sash, wood shavings on his sleeves, holding a half-carved wooden mask."
+  },
+  {
+   "id": "emi",
+   "out": "img/chars/emi.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A grinning girl with a short brown pixie cut and a backwards cap, striped shirt, holding a vintage instant camera up to the viewer."
+  },
+  {
+   "id": "daichi",
+   "out": "img/chars/daichi.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A huge cheerful teen with a topknot, green jinbei, holding three skewers of yakitori in each hand."
+  },
+  {
+   "id": "fumi",
+   "out": "img/chars/fumi.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A elegant older woman with grey hair in a neat bun, black kimono with white cranes, holding a large ink brush dripping black ink."
+  },
+  {
+   "id": "haru",
+   "out": "img/chars/haru.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A lanky teen boy with tousled orange hair and a smudge of soot on his cheek, holding a long pole lighter up toward a lantern."
+  },
+  {
+   "id": "kiko",
+   "out": "img/chars/kiko.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A shy girl with round thick glasses and a short black bob, mint yukata, holding a clear bag with one orange goldfish close to her face."
+  },
+  {
+   "id": "shin",
+   "out": "img/chars/shin.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A sharp-eyed young man with a black undercut and a scar through one eyebrow, black hoodie and a red fox mask hanging from his neck."
+  },
+  {
+   "id": "momo",
+   "out": "img/chars/momo.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A sunny middle-aged woman with curly auburn hair under a headscarf, peach-colored apron, holding a basket of peaches."
+  },
+  {
+   "id": "riku",
+   "out": "img/chars/riku.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A hyper kid with a cowlick and a missing front tooth, blue tee, doing a trick with a water balloon yo-yo."
+  },
+  {
+   "id": "sae",
+   "out": "img/chars/sae.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A graceful young woman with long wavy black hair and a flower hairpin, light pink yukata with wide sleeves mid-dance, folding fan open."
+  },
+  {
+   "id": "goro",
+   "out": "img/chars/goro.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A grumpy old man with a big grey mustache and a flat cap, brown cardigan, holding a fat orange cat in his arms."
+  },
+  {
+   "id": "ichika",
+   "out": "img/chars/ichika.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A proud teen girl with long straight blonde hair and a black headband, school blazer, holding a thick book against her chest, one eyebrow raised."
+  },
+  {
+   "id": "yuto",
+   "out": "img/chars/yuto.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A soft-spoken teen boy with long dark bangs over his eyes, plaid shirt, acoustic guitar strapped on his back, holding a guitar pick."
+  },
+  {
+   "id": "chiyo",
+   "out": "img/chars/chiyo.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A tiny serene grandmother with white hair in a bun and a calm smile, lavender kimono, holding a tea bowl with both hands."
+  },
+  {
+   "id": "kai",
+   "out": "img/chars/kai.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A tanned athletic young man with salt-wet wavy hair and a whistle around his neck, red lifeguard shirt, sunglasses pushed up on his head."
+  },
+  {
+   "id": "noa",
+   "out": "img/chars/noa.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A sleepy-eyed girl with long navy hair dotted with tiny star clips, dark blue yukata with constellations, holding a small brass telescope."
+  },
+  {
+   "id": "benji",
+   "out": "img/chars/benji.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A grinning boy with curly black hair, arms full of stuffed toy prizes from game stalls, a paper crown on his head."
+  },
+  {
+   "id": "rei",
+   "out": "img/chars/rei.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A cool young woman with a short white undercut and sharp gold eyes, black hakama and chest guard, holding a long bow."
+  },
+  {
+   "id": "ojii",
+   "out": "img/chars/ojii.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A tiny old man with a long thin white beard and bushy eyebrows, sitting cross-legged, holding a picture-story paper frame, eyes twinkling."
+  },
+  {
+   "id": "asuka",
+   "out": "img/chars/asuka.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A tough young woman with a messy red ponytail and a scooter helmet under her arm, orange delivery jacket, holding a stack of bento boxes."
+  },
+  {
+   "id": "pip",
+   "out": "img/chars/pip.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A person in a round fluffy tanuki mascot costume with the head held under one arm, sweaty happy face of a young man with short blue hair."
+  },
+  {
+   "id": "mai",
+   "out": "img/chars/mai.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A cheerful young woman with a messy brown bun and a red bandana, holding up a shiny red candy apple on a stick."
+  },
+  {
+   "id": "sho",
+   "out": "img/chars/sho.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A slick young man with slicked-back purple hair and a toothpick in his mouth, dark vest over a white shirt, fanning out playing cards."
+  },
+  {
+   "id": "rin",
+   "out": "img/chars/rin.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A small solemn child with a straight black bob and huge eyes, white robe, holding a cluster of golden shrine bells."
+  },
+  {
+   "id": "tetsu",
+   "out": "img/chars/tetsu.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A muscular bald man with a thick black beard and burn marks on his apron, holding a glowing horseshoe with tongs, proud grin."
+  },
+  {
+   "id": "lulu",
+   "out": "img/chars/lulu.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A whimsical teen girl with fluffy lilac hair in two puffs and star stickers on her cheeks, blowing big soap bubbles with a wand."
+  },
+  {
+   "id": "akane",
+   "out": "img/chars/akane.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    384,
+    512
+   ],
+   "prompt": "A fierce young woman with crimson hair braided with gold rings, black and red outfit, spinning two flaming poi on chains."
+  }
+ ]
+}

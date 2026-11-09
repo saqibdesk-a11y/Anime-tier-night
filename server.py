@@ -156,57 +156,9 @@ def to_option(a):
     }
 
 
-CHAR_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { characters(sort: [FAVOURITES_DESC]) {
-  name { full } image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } } } } } }"""
-SHOW_QUERY = """query ($id: Int) { Media(id: $id) { characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } image { large } } } } }"""
-FEATURED_SHOWS = [(235, "Detective Conan"), (813, "Dragon Ball Z")]  # AniList ids, picked by request
-SKIP_CHARACTERS = {"Narrator", "Lum"}
-ALIASES = {"Ai Haibara": "Sherry"}  # Sherry is Ai Haibara's Black Organization codename; AniList has no separate entry
-_avatars = {"list": None, "at": 0}
-_avatars_lock = threading.Lock()
-AVATAR_HOST = "https://s4.anilist.co/"
-
-
 def avatar_gallery():
-    """The 100 most-loved anime characters on AniList plus the featured shows, cached for a day.
-    If AniList was busy and only part of it loaded, that part is served but retried a few minutes later,
-    and a complete list is never swapped for a smaller one."""
-    with _avatars_lock:
-        fresh = 86400 if _avatars.get("complete") else 180
-        if _avatars["list"] and time.time() - _avatars["at"] < fresh:
-            return _avatars["list"]
-        out, complete = [], True
-        for page in (1, 2):
-            chars = ((anilist_post(CHAR_QUERY, {"p": page}) or {}).get("Page") or {}).get("characters")
-            if not chars:
-                complete = False
-                continue
-            for c in chars:
-                img = (c.get("image") or {}).get("large") or ""
-                show = ((((c.get("media") or {}).get("nodes") or [{}])[0] or {}).get("title") or {})
-                if img.startswith(AVATAR_HOST) and "default" not in img:
-                    out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img})
-        seen = {c["img"] for c in out}
-        for media_id, show in FEATURED_SHOWS:
-            nodes = ((((anilist_post(SHOW_QUERY, {"id": media_id}) or {}).get("Media") or {}).get("characters") or {}).get("nodes"))
-            if not nodes:
-                complete = False
-                continue
-            for c in nodes:
-                img, nm = (c.get("image") or {}).get("large") or "", (c.get("name") or {}).get("full") or ""
-                if img.startswith(AVATAR_HOST) and "default" not in img and nm not in SKIP_CHARACTERS and img not in seen:
-                    out.append({"name": nm, "show": show, "img": img})
-                    seen.add(img)
-        for c in out:
-            if c["name"] in ALIASES:
-                c["alias"] = ALIASES[c["name"]]
-                c["name"] = f'{c["name"]} ({ALIASES[c["name"]]})'
-        old = _avatars["list"] or []
-        if out and (complete or len(out) > len(old)):
-            _avatars.update(list=out, at=time.time(), complete=complete)
-        else:
-            _avatars["at"] = time.time()  # keep what we had; try again in a few minutes
-        return _avatars["list"] or out
+    """The original festival characters players can pick as their avatar."""
+    return media.CHARACTERS
 
 
 def character_option(c):
@@ -735,6 +687,14 @@ class Handler(BaseHTTPRequestHandler):
         if parts == ["api", "avatars"]:
             return self.send_json({"avatars": avatar_gallery()})
 
+        # the site's art: festival characters, role cards, scenes (all made offline, see art/gen.py)
+        if len(parts) == 3 and parts[0] == "img" and parts[1] in IMG_DIRS and re.fullmatch(r"[a-z0-9-]+\.webp", parts[2]):
+            path = os.path.join(HERE, "img", parts[1], parts[2])
+            if os.path.isfile(path):
+                with open(path, "rb") as f:
+                    return self.send_bytes(f.read(), "image/webp", "public, max-age=604800")
+            return self.err("Not found", 404)
+
         if u.path in STATIC:
             ctype, cache = STATIC[u.path]
             with open(os.path.join(HERE, u.path.lstrip("/")), "rb") as f:
@@ -762,7 +722,9 @@ class Handler(BaseHTTPRequestHandler):
                 p = room["players"].get(pid)
                 viewer = pid if p and p["key"] == key else None
                 game = GAMES.get(room.get("game"))
-                return self.send_json(game.public(room, viewer) if game else public(room, viewer))
+                out = game.public(room, viewer) if game else public(room, viewer)
+                out.update(media.chat_view(game, room, viewer))
+                return self.send_json(out)
 
         self.err("Not found", 404)
 
@@ -845,12 +807,22 @@ class Handler(BaseHTTPRequestHandler):
                 changed(room)
                 return self.send_json({"pid": pid, "key": room["players"][pid]["key"]})
 
-            if room.get("game") in GAMES and action in ("photo", "avatar"):
+            if action == "chat":  # one chat for every game; each game says who may talk where
+                if not player:
+                    return self.err("You're not in this room. Rejoin with your name.", 403)
+                try:
+                    media.chat_post(GAMES.get(room.get("game")), room, b.get("pid"), b)
+                except media.Refuse as e:
+                    return self.err(str(e), e.status)
+                changed(room)
+                return self.send_json({"ok": True})
+
+            if action in ("photo", "avatar"):
                 if not player:
                     return self.err("You're not in this room. Rejoin with your name.", 403)
                 if action == "avatar":
                     url = str(b.get("url") or "")
-                    if not url.startswith(media.AVATAR_HOST):
+                    if url not in media.AVATAR_URLS:
                         return self.err("Pick one of the characters.")
                     media.IMAGES.pop(player.get("photo"), None)
                     player.update(avatar=url[:300], photo=None)
@@ -1035,10 +1007,13 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/avatars.js": ("text/javascript; charset=utf-8", "no-store"),
     "/backguard.js": ("text/javascript; charset=utf-8", "no-store"),
     "/theme.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/chat.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/festival.css": ("text/css; charset=utf-8", "no-store"),
     "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),
     "/icon-192.png": ("image/png", "public, max-age=86400"),
     "/icon-512.png": ("image/png", "public, max-age=86400"),
 }
+IMG_DIRS = {"chars", "roles", "scenes"}
 PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html"}
 
 
@@ -1046,7 +1021,6 @@ def main():
     load()
     for game in GAMES.values():
         game.setup(rooms, lock, changed, rid)
-    codenames_game.gallery = avatar_gallery  # anime characters for the picture cards
     for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")

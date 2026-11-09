@@ -1,44 +1,31 @@
-/* Shared avatar picker for every game: pick an anime character, or upload a picture from your
-   gallery. Usage: Avatars.open(act) where act(action, body) posts to the room; Avatars.src(player)
+/* Shared avatar picker for every game: pick one of the original festival characters, or upload a
+   picture from your gallery. Usage: Avatars.open(act) where act(action, body) posts to the room; Avatars.src(player)
    gives the picture URL (or null). */
 (function(){
   const css = `
-  .av-scrim{position:fixed;left:0;right:0;top:var(--vv-top,0px);height:var(--vv-h,100dvh);z-index:100;background:rgba(4,4,10,.72);backdrop-filter:blur(6px);display:grid;place-items:stretch;animation:avfade .2s}
+  .av-scrim{position:fixed;left:0;right:0;top:var(--vv-top,0px);height:var(--vv-h,100dvh);z-index:100;background:rgba(8,9,24,.7);display:grid;place-items:stretch;animation:avfade .2s}
   @media (min-width:700px){.av-scrim{place-items:center}}
   @keyframes avfade{from{opacity:0}}
-  .av-sheet{width:100%;height:100%;min-height:0;display:grid;grid-template-rows:auto auto auto 1fr;background:#14131d;color:#f1eef8;font-family:Manrope,system-ui,sans-serif;animation:avup .3s cubic-bezier(.2,.9,.3,1);padding-top:env(safe-area-inset-top,0px)}
-  @media (min-width:700px){.av-sheet{width:min(720px,100%);height:auto;max-height:88vh;border:1px solid rgba(255,255,255,.12);border-radius:22px;box-shadow:0 -20px 60px rgba(0,0,0,.6);padding-top:0}}
+  .av-sheet{width:100%;height:100%;min-height:0;display:grid;grid-template-rows:auto auto 1fr;background:var(--paper,#F3EBDD);color:var(--ink,#1E1A2E);font-family:var(--body,system-ui);animation:avup .3s cubic-bezier(.2,.9,.3,1);padding-top:env(safe-area-inset-top,0px)}
+  @media (min-width:700px){.av-sheet{width:min(720px,100%);height:auto;max-height:88vh;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);padding-top:0}}
   @keyframes avup{from{transform:translateY(40px);opacity:0}}
-  .av-head{display:flex;align-items:center;gap:10px;padding:16px 18px 10px}
-  .av-head h2{margin:0;font-size:19px;flex:1;font-family:inherit;font-weight:800;letter-spacing:0;text-transform:none}
-  .av-x{border:0;background:rgba(255,255,255,.08);color:inherit;border-radius:999px;width:36px;height:36px;font-size:18px;cursor:pointer}
-  .av-tools{display:flex;gap:8px;padding:0 18px 8px;flex-wrap:wrap}
-  .av-chips{display:flex;gap:6px;padding:0 18px 10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,#000 88%,transparent)}
-  .av-chips button{flex:none;border:1px solid rgba(255,255,255,.16);background:none;color:inherit;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-  .av-chips button.on{background:#ffd166;color:#2a1c00;border-color:#ffd166}
-  .av-tools input{flex:1;min-width:150px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;color:inherit;font:inherit;font-size:16px;outline:none}
-  .av-tools input:focus{border-color:#ffd166}
-  .av-up{border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:800;background:#ffd166;color:#2a1c00;cursor:pointer}
-  .av-grid{overflow:auto;min-height:0;overscroll-behavior:contain;padding:4px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px;align-content:start}
-  .av-tile{border:2px solid transparent;background:rgba(255,255,255,.05);border-radius:14px;padding:6px;cursor:pointer;color:inherit;font:inherit;display:grid;gap:4px;text-align:center;transition:transform .12s,border-color .15s}
-  .av-tile:hover{transform:translateY(-2px);border-color:rgba(255,209,102,.6)}
-  .av-tile img{width:100%;aspect-ratio:1;object-fit:cover;object-position:top;border-radius:50%;background:#222;display:block}
-  .av-tile b{font-size:11.5px;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
-  .av-tile small{font-size:10px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .av-msg{grid-column:1/-1;opacity:.7;text-align:center;padding:20px}`;
+  .av-head{display:flex;align-items:center;gap:10px;padding:18px 18px 10px}
+  .av-head h2{margin:0;font:400 26px/1.1 var(--display,serif);flex:1}
+  .av-x{border:0;background:rgba(30,26,46,.08);color:inherit;border-radius:999px;width:40px;height:40px;font-size:20px;cursor:pointer}
+  .av-tools{display:flex;gap:8px;padding:0 18px 12px;flex-wrap:wrap}
+  .av-tools input{flex:1;min-width:150px;background:#fff;border:1px solid rgba(30,26,46,.2);border-radius:999px;padding:10px 16px;color:inherit;font:inherit;font-size:16px;outline:none}
+  .av-tools input:focus{border-color:var(--lantern,#F2603A)}
+  .av-up{border:0;border-radius:999px;padding:10px 16px;font:inherit;font-weight:700;background:var(--ink,#1E1A2E);color:var(--paper,#F3EBDD);cursor:pointer}
+  .av-grid{overflow:auto;min-height:0;overscroll-behavior:contain;padding:4px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;align-content:start}
+  .av-tile{border:0;background:none;padding:0;cursor:pointer;color:inherit;font:inherit;display:grid;gap:4px;text-align:center}
+  .av-tile img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;border-radius:12px;background:var(--night,#1B1F4B);display:block;box-shadow:0 0 0 0 var(--lantern,#F2603A);transition:box-shadow .15s,transform .15s}
+  .av-tile:hover img,.av-tile:focus-visible img{box-shadow:0 0 0 3px var(--lantern,#F2603A);transform:translateY(-2px)}
+  .av-tile b{font-size:14px;line-height:1.2}
+  .av-tile small{font-size:12px;color:var(--ink-2,#5B5670);line-height:1.2}
+  .av-msg{grid-column:1/-1;color:var(--ink-2,#5B5670);text-align:center;padding:20px}`;
   const style = document.createElement("style"); style.textContent = css; document.head.appendChild(style);
   const file = document.createElement("input"); file.type = "file"; file.accept = "image/*"; file.hidden = true; document.body.appendChild(file);
-  let list = null, act = null, close = null, show = "";
-  // one filter per show in the list, the shows with the most characters first
-  function shows(){
-    const n = {};
-    (list||[]).forEach(c=>{ if(c.show) n[c.show] = (n[c.show]||0) + 1; });
-    return [["", "All"], ...Object.keys(n).sort((a,b)=>n[b]-n[a] || a.localeCompare(b)).map(s=>[s, `${s} · ${n[s]}`])];
-  }
-  function chips(){
-    const el = document.querySelector(".av-chips"); if(!el) return;
-    el.innerHTML = shows().map(([v,t])=>`<button data-show="${esc(v)}" class="${v===show?"on":""}">${esc(t)}</button>`).join("");
-  }
+  let list = null, act = null, close = null;
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   async function load(){
@@ -51,19 +38,19 @@
   function grid(q){
     const g = document.querySelector(".av-grid"); if(!g) return;
     const ql = q.trim().toLowerCase();
-    const items = (list||[]).filter(c=>(!show || c.show === show) && (!ql || c.name.toLowerCase().includes(ql) || c.show.toLowerCase().includes(ql) || (c.alias||"").toLowerCase().includes(ql)));
+    const items = (list||[]).filter(c=>!ql || c.name.toLowerCase().includes(ql) || c.tag.toLowerCase().includes(ql));
     g.scrollTop = 0;  // new results start at the top, right under the search box
     g.innerHTML = list === null ? '<div class="av-msg">Loading characters…</div>'
-      : items.length ? items.map(c=>`<button class="av-tile" data-url="${esc(c.img)}" title="${esc(c.name)} · ${esc(c.show)}"><img src="${esc(c.img)}" alt="" loading="lazy" referrerpolicy="no-referrer"><b>${esc(c.name)}</b><small>${esc(c.show)}</small></button>`).join("")
-      : `<div class="av-msg">${list.length ? "No character matches that." : "Characters couldn't load right now. Upload a picture instead."}</div>`;
+      : items.length ? items.map(c=>`<button class="av-tile" data-url="${esc(c.img)}"><img src="${esc(c.img)}" alt="" loading="lazy"><b>${esc(c.name)}</b><small>${esc(c.tag)}</small></button>`).join("")
+      : `<div class="av-msg">${list.length ? "Nobody at the festival matches that." : "Characters couldn't load. Upload a picture instead."}</div>`;
   }
 
   async function open(actFn){
     act = actFn;
     const scrim = document.createElement("div"); scrim.className = "av-scrim";
-    scrim.innerHTML = `<div class="av-sheet" role="dialog" aria-label="Choose your avatar"><div class="av-head"><h2>Choose your avatar</h2><button class="av-x" aria-label="Close">×</button></div>
-      <div class="av-tools"><input type="text" placeholder="Search a character or show" aria-label="Search characters"><button class="av-up">Upload from gallery</button></div>
-      <div class="av-chips"></div><div class="av-grid"></div></div>`;
+    scrim.innerHTML = `<div class="av-sheet" role="dialog" aria-label="Pick your picture"><div class="av-head"><h2>Pick your picture</h2><button class="av-x" aria-label="Close">×</button></div>
+      <div class="av-tools"><input type="text" placeholder="Search by name or what they do" aria-label="Search characters"><button class="av-up">Upload a photo</button></div>
+      <div class="av-grid"></div></div>`;
     document.body.appendChild(scrim);
     // the visible area shrinks when the phone keyboard opens: size the picker to it
     const vv = window.visualViewport;
@@ -76,14 +63,12 @@
     search.oninput = ()=>grid(search.value);
     search.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); search.blur(); } };  // the keyboard's search key closes it and shows results
     search.setAttribute("enterkeyhint", "search");
-    scrim.querySelector(".av-chips").onclick = e=>{ const b = e.target.closest("[data-show]"); if(!b) return;
-      show = b.dataset.show; scrim.querySelectorAll(".av-chips button").forEach(x=>x.classList.toggle("on", x===b)); grid(search.value); };
     scrim.querySelector(".av-grid").onclick = async e=>{
       const t = e.target.closest(".av-tile"); if(!t) return;
       search.blur();
       try{ await act("avatar", {url: t.dataset.url}); remember({url: t.dataset.url}); close && close(); }catch(err){ alertish(err.message); }
     };
-    chips(); grid(""); await load(); chips(); grid(search.value);
+    grid(""); await load(); grid(search.value);
   }
 
   file.onchange = async ()=>{
@@ -100,13 +85,13 @@
   };
 
   function alertish(msg){
-    const m = document.querySelector(".av-grid"); if(m) m.insertAdjacentHTML("afterbegin", `<div class="av-msg" style="color:#ff9a9a;opacity:1">${esc(msg)}</div>`);
+    const m = document.querySelector(".av-grid"); if(m) m.insertAdjacentHTML("afterbegin", `<div class="av-msg" style="color:#B3261E">${esc(msg)}</div>`);
   }
 
   /* your profile picture, saved on this device: whatever you pick last follows you into every game */
   const KEY = "gn:avatar", applied = new Set();
   function remember(v){ try{ localStorage.setItem(KEY, JSON.stringify(v)); }catch(e){} }
-  function saved(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+  function saved(){ try{ const v = JSON.parse(localStorage.getItem(KEY)); return v && v.url && !v.url.startsWith("/img/chars/") ? null : v; }catch(e){ return null; } }
   function apply(actFn, player){
     // a player with no picture in this room yet gets their saved one, once per room
     if(!player || player.avatar || player.photo) return;

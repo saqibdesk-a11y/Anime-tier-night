@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#0b0d14">
+<meta name="theme-color" content="#1B1F4B">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -12,84 +12,74 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Game Night">
 <title>Codenames</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/festival.css">
 <style>
-/* Layout: an agency situation room. Dark graphite with a faint grid, the two teams as neon red and blue.
-   The board is the hero: physical-looking word cards that flip into agent tiles. Everything else
-   (scores, the clue, your controls) docks around it so a phone shows the whole grid at once. */
+/* Layout: the fortune stall. The board is a counter of paper fortune slips; the two teams are the
+   lantern and the shrine. Everything else (scores, the clue, your controls) docks around the board
+   so a phone shows the whole grid at once. Colors come from festival.css. */
 :root{
-  --bg:#0b0d14; --bg2:#121624; --fg:#eef1fa; --muted:#8b93ad; --line:rgba(238,241,250,.1); --line2:rgba(238,241,250,.2);
-  --glass:rgba(18,22,36,.78); --glass2:rgba(255,255,255,.05);
-  --red:#ff3d5a; --red2:#b3122f; --redglow:rgba(255,61,90,.45);
-  --blue:#3d8bff; --blue2:#1446a8; --blueglow:rgba(61,139,255,.45);
-  --card:#efe7d4; --card2:#ddd1b6; --ink:#1d1a14; --neutral:#d9c9a3; --neutral2:#b8a57c;
-  --ass:#0a0a0c; --gold:#ffcf4d;
-  --display:"Oswald","Arial Narrow",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
-  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
-  color-scheme:dark;
+  --bg:var(--night); --bg2:var(--night-2); --line2:var(--line-2);
+  --glass:color-mix(in srgb,var(--night-2) 92%,transparent); --glass2:rgba(243,235,221,.07);
+  --red:var(--lantern); --red2:color-mix(in srgb,var(--lantern) 62%,#000); --redglow:color-mix(in srgb,var(--lantern) 45%,transparent);
+  --blue:var(--shrine); --blue2:color-mix(in srgb,var(--shrine) 62%,#000); --blueglow:color-mix(in srgb,var(--shrine) 45%,transparent);
+  --card:var(--paper); --card2:var(--paper-2); --neutral:#CDBD98; --neutral2:#A99770;
+  --ass:#120E1C; --mono:var(--body); --cardfont:var(--body);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;overflow-x:hidden;overflow-x:clip}  /* flying cards must never widen the page on phones */
-body{min-height:100vh;color:var(--fg);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden;
-  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(61,139,255,.12),transparent 60%),
-  radial-gradient(ellipse 60% 40% at 100% 100%,rgba(255,61,90,.08),transparent 60%),
-  linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/28px 28px,
-  linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/28px 28px,var(--bg);background-attachment:fixed}
-body.turn-red{background-color:#120b10} body.turn-blue{background-color:#0a0e18}
+body{overflow-x:hidden}
+/* whose turn it is tints the whole night a little */
+body.turn-red{background-color:color-mix(in srgb,var(--night) 90%,var(--lantern))} body.turn-blue{background-color:color-mix(in srgb,var(--night) 88%,var(--shrine))}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 [hidden]{display:none!important}
-h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;letter-spacing:.02em;text-transform:uppercase;text-wrap:balance}
+
 .muted{color:var(--muted)}
-.top{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(11,13,20,.96),rgba(11,13,20,.75));backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.top a{color:var(--muted);text-decoration:none;font-weight:800;font-size:18px}
-.top h1{font-size:18px;letter-spacing:.14em}
-.code{font-family:var(--mono);font-size:13px;letter-spacing:.2em;border:1px solid var(--line2);border-radius:6px;padding:2px 8px;color:var(--muted)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.85}
 .spacer{flex:1}
-.iconbtn{border:1px solid var(--line);background:var(--glass2);border-radius:10px;width:36px;height:36px;display:grid;place-items:center;padding:0}
+.iconbtn{border:1px solid rgba(30,26,46,.35);background:none;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;padding:0;color:inherit}
 .iconbtn svg{width:18px;height:18px}
-.timer{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;border-radius:8px;padding:3px 10px;background:var(--glass);border:1px solid var(--line2)}
-.timer.low{color:var(--red);border-color:var(--red);animation:beat 1s infinite}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--paper);color:var(--ink);animation:beat 1s infinite}
 @keyframes beat{50%{transform:scale(1.08)}}
 .stage{width:min(980px,100%);margin:0 auto;padding:10px max(10px,env(safe-area-inset-left,0px)) calc(var(--dockh,150px) + 24px) max(10px,env(safe-area-inset-right,0px))}
-.eyebrow{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.eyebrow{text-align:center;font-size:15px;color:var(--muted)}
 .title{font-size:clamp(30px,8vw,52px);line-height:1;text-align:center;margin-top:4px}
 .sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
 .panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:14px;backdrop-filter:blur(10px)}
-.panel h2{font-size:17px;letter-spacing:.08em}
-.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:11px;padding:11px 18px;font-weight:800;transition:transform .12s,background .2s,box-shadow .2s;white-space:nowrap}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s,background .2s,box-shadow .2s;white-space:nowrap}
 .btn:active{transform:scale(.96)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.primary{background:var(--gold);border-color:var(--gold);color:#221800}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
 .btn.red{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 8px 24px -8px var(--redglow)}
 .btn.blue{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 8px 24px -8px var(--blueglow)}
-.btn.small{padding:6px 12px;font-size:13px;border-radius:9px}
+.btn.small{padding:6px 14px;font-size:14px}
 .btn.wide{width:100%}
-label{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-input[type=text],select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
-input[type=text]:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,207,77,.12)}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 12%,transparent)}
 select option{background:var(--bg2)}
-.err{color:#ff8b9b;font-size:14px;min-height:1.2em}
+.err{color:var(--danger);font-size:14px;min-height:1.2em}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:999px;padding:7px 13px;font-weight:700;font-size:13px}
-.chips button.on{border-color:var(--gold);background:rgba(255,207,77,.12);color:var(--gold)}
+.chips button.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .seg button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:10px;text-align:left;display:grid;gap:1px}
 .seg button small{color:var(--muted);font-weight:500;line-height:1.3;font-size:12px}
-.seg button.on{border-color:var(--gold);background:rgba(255,207,77,.1)}
+.seg button.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent)}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .toggle button{width:52px;height:30px;border-radius:999px;border:1px solid var(--line2);background:rgba(0,0,0,.4);position:relative;flex:none}
 .toggle button::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
-.toggle button.on{background:rgba(255,207,77,.25);border-color:var(--gold)}
+.toggle button.on{background:color-mix(in srgb,var(--gold) 25%,transparent);border-color:var(--gold)}
 .toggle button.on::after{transform:translateX(22px);background:var(--gold)}
-.mini{width:20px;height:20px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:9px;font-weight:900;color:#141824;border:1.5px solid var(--bg);vertical-align:middle;flex:none}
+.mini{width:20px;height:20px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:9px;font-weight:900;color:var(--ink);border:1.5px solid var(--bg);vertical-align:middle;flex:none}
 .mini img,.face img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
-.face{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:#141824;flex:none;border:2px solid rgba(255,255,255,.15)}
-.toast{position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--fg);color:var(--bg);font-weight:800;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.face{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none;border:2px solid rgba(255,255,255,.15)}
+.toast{position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
 .fadeup{animation:fadeup .55s cubic-bezier(.2,.8,.2,1) backwards}
 @keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
 .dots{display:inline-flex;gap:4px;vertical-align:middle}
@@ -103,23 +93,23 @@ select option{background:var(--bg2)}
 .hero-grid i{aspect-ratio:1.5;border-radius:5px;background:var(--card);opacity:.9;animation:herocard 6s infinite;box-shadow:0 6px 14px -6px #000}
 .hero-grid i.r{--to:var(--red)} .hero-grid i.b{--to:var(--blue)} .hero-grid i.n{--to:var(--neutral2)} .hero-grid i.a{--to:#111}
 @keyframes herocard{0%,35%{background:var(--card);transform:rotateY(0)}45%,85%{background:var(--to);transform:rotateY(180deg)}95%,100%{background:var(--card);transform:rotateY(360deg)}}
-.hero h1{font-size:clamp(44px,13vw,84px);letter-spacing:.08em;line-height:.95;background:linear-gradient(90deg,var(--red),#ff9db0 45%,#a9cbff 55%,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:clamp(48px,13vw,88px);line-height:1}
 .teams{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .team{border-radius:16px;padding:12px;display:grid;gap:10px;align-content:start;border:1px solid var(--line);position:relative;overflow:hidden}
-.team.red{background:linear-gradient(180deg,rgba(255,61,90,.16),rgba(255,61,90,.03));border-color:rgba(255,61,90,.35)}
-.team.blue{background:linear-gradient(180deg,rgba(61,139,255,.16),rgba(61,139,255,.03));border-color:rgba(61,139,255,.35)}
-.team h3{font-size:20px;letter-spacing:.12em;display:flex;justify-content:space-between;align-items:baseline}
+.team.red{background:linear-gradient(180deg,color-mix(in srgb,var(--lantern) 16%,transparent),color-mix(in srgb,var(--lantern) 3%,transparent));border-color:color-mix(in srgb,var(--lantern) 35%,transparent)}
+.team.blue{background:linear-gradient(180deg,color-mix(in srgb,var(--shrine) 16%,transparent),color-mix(in srgb,var(--shrine) 3%,transparent));border-color:color-mix(in srgb,var(--shrine) 35%,transparent)}
+.team h3{font-size:24px;display:flex;justify-content:space-between;align-items:baseline}
 .team.red h3{color:var(--red)} .team.blue h3{color:var(--blue)}
-.team h3 small{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.team h3 small{font-family:var(--body);font-size:13px;color:var(--muted)}
 .seat{display:flex;align-items:center;gap:8px;border:1px dashed var(--line2);border-radius:12px;padding:7px;background:rgba(0,0,0,.2);text-align:left;width:100%;min-height:56px}
 .seat.filled{border-style:solid}
 .seat .face{width:38px;height:38px}
 .seat b{display:block;font-size:13px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.seat small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
-.seat .ai{background:linear-gradient(135deg,#2a3150,#151a2c);color:var(--gold)}
+.seat small{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.seat .ai{background:var(--night-3);color:var(--gold)}
 .ops{display:grid;gap:6px}
 .op{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;animation:fadeup .4s backwards}
-.op .face{width:30px;height:30px;font-size:12px}
+.op .face{width:30px;height:30px;font-size:12px;flex:none}
 .op span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .op .kick{border:0;background:none;color:var(--muted);font-size:11px;padding:2px 4px}
 .photo-pick{display:flex;align-items:center;gap:14px}
@@ -131,7 +121,7 @@ select option{background:var(--bg2)}
 .sc.blue{flex-direction:row-reverse;text-align:right}
 .sc .n{font-family:var(--display);font-size:30px;font-weight:700;line-height:1}
 .sc.red .n{color:var(--red)} .sc.blue .n{color:var(--blue)}
-.sc .lab{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+.sc .lab{font-size:12px;font-weight:700;color:var(--muted);line-height:1.2}
 .sc .pips{display:flex;gap:2px;flex-wrap:wrap;margin-top:3px}
 .sc.blue .pips{justify-content:flex-end}
 .sc .pips i{width:6px;height:6px;border-radius:2px;background:currentColor;opacity:.9;transition:opacity .4s,transform .4s}
@@ -139,17 +129,17 @@ select option{background:var(--bg2)}
 .sc .pips i.gone{opacity:.15;transform:scale(.7)}
 .sc.on.red{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 0 30px -6px var(--redglow);transform:scale(1.03)}
 .sc.on.blue{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 0 30px -6px var(--blueglow);transform:scale(1.03)}
-.series{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;line-height:1.2}
+.series{font-size:12px;color:var(--muted);text-align:center;line-height:1.2}
 .series b{font-size:16px;color:var(--fg)}
 .cluebar{width:min(640px,100%);margin:0 auto 10px;min-height:58px;border-radius:14px;border:1px solid var(--line);background:var(--glass);display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 14px;text-align:center;transition:border-color .4s,background .4s}
-.cluebar.red{border-color:rgba(255,61,90,.5);background:linear-gradient(90deg,rgba(255,61,90,.14),rgba(18,22,36,.8))}
-.cluebar.blue{border-color:rgba(61,139,255,.5);background:linear-gradient(90deg,rgba(18,22,36,.8),rgba(61,139,255,.14))}
-.cluebar .cw{font-family:var(--display);font-size:clamp(24px,7vw,34px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1}
+.cluebar.red{border-color:color-mix(in srgb,var(--lantern) 50%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--lantern) 14%,transparent),rgba(18,22,36,.8))}
+.cluebar.blue{border-color:color-mix(in srgb,var(--shrine) 50%,transparent);background:linear-gradient(90deg,rgba(18,22,36,.8),color-mix(in srgb,var(--shrine) 14%,transparent))}
+.cluebar .cw{font-family:var(--display);font-size:clamp(26px,7vw,36px);line-height:1}
 .cluebar .cn{font-family:var(--display);font-size:22px;font-weight:700;border-radius:8px;min-width:34px;height:34px;display:grid;place-items:center;color:#fff}
 .cluebar.red .cn{background:var(--red)} .cluebar.blue .cn{background:var(--blue)}
-.cluebar .gl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);line-height:1.3}
+.cluebar .gl{font-size:13px;font-weight:700;color:var(--muted);line-height:1.3}
 .cluebar .wait{font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px}
-.cluebar .wait.red{color:#ff9aab} .cluebar .wait.blue{color:#9cc3ff}
+.cluebar .wait.red{color:color-mix(in srgb,var(--lantern) 60%,#fff)} .cluebar .wait.blue{color:color-mix(in srgb,var(--shrine) 50%,#fff)}
 .cluebar .by{display:flex;align-items:center;gap:6px}
 
 /* ---------- the board ---------- */
@@ -161,29 +151,30 @@ select option{background:var(--bg2)}
 .card.revealed .inner{transform:rotateY(180deg)}
 .card .f{position:absolute;inset:0;border-radius:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
 .card .front{background:linear-gradient(180deg,var(--card),var(--card2));box-shadow:0 6px 14px -8px #000,inset 0 0 0 1px rgba(0,0,0,.08);display:grid;place-items:center;transition:box-shadow .25s,transform .2s}
-.card .front::before{content:"";position:absolute;inset:3px;border-radius:5px;border:1px solid rgba(60,45,20,.18)}
-.card .word{position:relative;font-family:var(--cardfont,var(--display));font-weight:700;text-transform:uppercase;letter-spacing:.02em;line-height:1.02;font-size:calc(var(--fs,1) * clamp(9px,2.75vw,16px));padding:0 3px;text-align:center;overflow-wrap:anywhere;z-index:1}
-.card .up{position:absolute;top:4px;left:0;right:0;text-align:center;transform:rotate(180deg);font-family:var(--display);font-weight:600;font-size:clamp(6px,1.5vw,9px);text-transform:uppercase;opacity:.28;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+/* a fortune slip: the fold line across the top */
+.card .front::before{content:"";position:absolute;left:8%;right:8%;top:18%;border-top:1px dashed rgba(30,26,46,.22)}
+.card .word{position:relative;font-family:var(--cardfont,var(--display));font-weight:900;letter-spacing:0;line-height:1.02;font-size:calc(var(--fs,1) * clamp(9px,2.75vw,16px));padding:0 3px;text-align:center;overflow-wrap:anywhere;z-index:1}
+.card .up{position:absolute;top:4px;left:0;right:0;text-align:center;transform:rotate(180deg);font-weight:700;font-size:clamp(6px,1.5vw,9px);opacity:.3;white-space:nowrap;overflow:hidden}
 .card .pic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
 .board.pics .card .word{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(239,231,212,.97),rgba(239,231,212,.86));padding:3px 2px 2px;font-size:calc(var(--fs,1) * clamp(7px,2vw,12px))}
 .card .back{transform:rotateY(180deg);display:grid;place-items:center;box-shadow:0 6px 14px -8px #000}
 .card .back svg{width:62%;height:62%;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
-.card .back .wl{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-family:var(--display);font-weight:600;font-size:clamp(6px,1.6vw,10px);text-transform:uppercase;letter-spacing:.04em;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
-.back.red{background:radial-gradient(circle at 50% 30%,#ff6a80,var(--red) 50%,var(--red2));color:#fff}
-.back.blue{background:radial-gradient(circle at 50% 30%,#78adff,var(--blue) 50%,var(--blue2));color:#fff}
-.back.neutral{background:radial-gradient(circle at 50% 30%,#f0e2bf,var(--neutral) 50%,var(--neutral2));color:#4b3e22}
-.back.assassin{background:radial-gradient(circle at 50% 35%,#3a0d16,var(--ass) 65%);color:#ff3d5a;box-shadow:0 0 0 2px #ff3d5a,0 0 26px -2px rgba(255,61,90,.7)}
+.card .back .wl{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-weight:700;font-size:clamp(7px,1.7vw,11px);opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
+.back.red{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--lantern) 70%,#fff),var(--red) 50%,var(--red2));color:#fff}
+.back.blue{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--shrine) 70%,#fff),var(--blue) 50%,var(--blue2));color:#fff}
+.back.neutral{background:radial-gradient(circle at 50% 30%,#E8DDC2,var(--neutral) 50%,var(--neutral2));color:#4b3e22}
+.back.assassin{background:radial-gradient(circle at 50% 35%,#3a0d16,var(--ass) 65%);color:var(--lantern);box-shadow:0 0 0 2px var(--lantern),0 0 26px -2px color-mix(in srgb,var(--lantern) 70%,transparent)}
 /* the spymaster's key, on cards that are still face down */
-.card.k-red:not(.revealed) .front{box-shadow:inset 0 0 0 3px var(--red),0 6px 14px -8px #000;background:linear-gradient(180deg,#ffdfe3,#f3b9c2)}
-.card.k-blue:not(.revealed) .front{box-shadow:inset 0 0 0 3px var(--blue),0 6px 14px -8px #000;background:linear-gradient(180deg,#dde9ff,#b6cdf5)}
+.card.k-red:not(.revealed) .front{box-shadow:inset 0 0 0 3px var(--red),0 6px 14px -8px #000;background:linear-gradient(180deg,color-mix(in srgb,var(--lantern) 18%,var(--paper)),color-mix(in srgb,var(--lantern) 34%,var(--paper)))}
+.card.k-blue:not(.revealed) .front{box-shadow:inset 0 0 0 3px var(--blue),0 6px 14px -8px #000;background:linear-gradient(180deg,color-mix(in srgb,var(--shrine) 18%,var(--paper)),color-mix(in srgb,var(--shrine) 34%,var(--paper)))}
 .card.k-neutral:not(.revealed) .front{background:linear-gradient(180deg,#e9dfc8,#cfc0a0)}
-.card.k-assassin:not(.revealed) .front{background:linear-gradient(180deg,#2b2b30,#121215);color:#ffd6dc;box-shadow:inset 0 0 0 3px #ff3d5a,0 0 16px -4px rgba(255,61,90,.7)}
-.card.k-assassin:not(.revealed) .front::before{border-color:rgba(255,61,90,.4)}
+.card.k-assassin:not(.revealed) .front{background:linear-gradient(180deg,#2b2b30,#121215);color:var(--paper);box-shadow:inset 0 0 0 3px var(--lantern),0 0 16px -4px color-mix(in srgb,var(--lantern) 70%,transparent)}
+.card.k-assassin:not(.revealed) .front::before{border-color:color-mix(in srgb,var(--lantern) 40%,transparent)}
 /* on picture cards the photo covers the tint, so the key goes on top as a frame and a glow from below */
-.card.k-red{--kc:var(--red);--kt:rgba(255,61,90,.55)} .card.k-blue{--kc:var(--blue);--kt:rgba(61,139,255,.55)}
-.card.k-neutral{--kc:#cdbb8f;--kt:rgba(205,187,143,.5)} .card.k-assassin{--kc:#ff3d5a;--kt:rgba(0,0,0,.85)}
+.card.k-red{--kc:var(--red);--kt:color-mix(in srgb,var(--lantern) 55%,transparent)} .card.k-blue{--kc:var(--blue);--kt:color-mix(in srgb,var(--shrine) 55%,transparent)}
+.card.k-neutral{--kc:#cdbb8f;--kt:rgba(205,187,143,.5)} .card.k-assassin{--kc:var(--lantern);--kt:rgba(0,0,0,.85)}
 .board.pics .card:is(.k-red,.k-blue,.k-neutral,.k-assassin):not(.revealed) .front::after{content:"";position:absolute;inset:0;border-radius:8px;box-shadow:inset 0 0 0 4px var(--kc);background:linear-gradient(0deg,var(--kt),transparent 60%);z-index:1;pointer-events:none}
-.board.pics .card.k-assassin:not(.revealed) .front::after{background:linear-gradient(0deg,var(--kt),rgba(0,0,0,.35));content:"☠";display:grid;place-items:center;font-size:clamp(20px,7vw,34px);color:#ff3d5a}
+.board.pics .card.k-assassin:not(.revealed) .front::after{background:linear-gradient(0deg,var(--kt),rgba(0,0,0,.35));content:"☠";display:grid;place-items:center;font-size:clamp(20px,7vw,34px);color:var(--lantern)}
 .board.pics .card .word{z-index:2}
 .spyview .card.revealed{opacity:.45;filter:saturate(.6)}
 .card.late .inner{transition-duration:1s}
@@ -191,14 +182,14 @@ select option{background:var(--bg2)}
 .card.can{cursor:pointer}
 .card.can:hover .front{transform:translateY(-2px)}
 .card.can:active .front{transform:scale(.96)}
-.card.mine .front{box-shadow:0 0 0 3px var(--gold),0 0 22px -2px rgba(255,207,77,.7)}
+.card.mine .front{box-shadow:0 0 0 3px var(--gold),0 0 22px -2px color-mix(in srgb,var(--gold) 70%,transparent)}
 /* your marked card gets a Lock in button; tapping the card itself again takes the mark off */
 .card .lock{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%) scale(.6);opacity:0;pointer-events:none;z-index:4;display:flex;align-items:center;gap:3px;white-space:nowrap;
-  background:var(--gold);color:#221800;border-radius:999px;padding:4px 9px;font:900 clamp(9px,2.4vw,11px)/1 var(--body);letter-spacing:.06em;text-transform:uppercase;box-shadow:0 6px 16px -4px rgba(0,0,0,.8),0 0 0 2px rgba(0,0,0,.35);transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .2s}
+  background:var(--gold);color:var(--ink);border-radius:999px;padding:4px 10px;font:900 clamp(10px,2.4vw,12px)/1 var(--body);box-shadow:0 6px 16px -4px rgba(0,0,0,.8),0 0 0 2px rgba(0,0,0,.35);transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .2s}
 .card .lock svg{width:11px;height:11px}
 .card.mine{z-index:5}  /* lifts the Lock in button over the row below */
 .card.mine .lock{opacity:1;transform:translateX(-50%) scale(1);pointer-events:auto;animation:lockpulse 1.4s 1s infinite}
-@keyframes lockpulse{50%{box-shadow:0 6px 16px -4px rgba(0,0,0,.8),0 0 0 5px rgba(255,207,77,.35)}}
+@keyframes lockpulse{50%{box-shadow:0 6px 16px -4px rgba(0,0,0,.8),0 0 0 5px color-mix(in srgb,var(--gold) 35%,transparent)}}
 .card.mine .up{opacity:0}
 @media (max-width:600px){.card{aspect-ratio:1.18}.board.pics .card{aspect-ratio:.72}.card .word{font-size:calc(var(--fs,1) * clamp(10px,3.1vw,16px))}}
 .card .marks{position:absolute;right:-4px;top:-6px;display:flex;flex-direction:row-reverse;z-index:3}
@@ -218,14 +209,14 @@ select option{background:var(--bg2)}
 .sweep{position:fixed;left:0;right:0;top:40%;z-index:55;pointer-events:none;padding:16px 0;text-align:center;transform:translateX(-105%);animation:sweep 1.6s cubic-bezier(.7,0,.3,1) forwards}
 .sweep.red{background:linear-gradient(90deg,transparent,var(--red) 15%,var(--red) 85%,transparent)}
 .sweep.blue{background:linear-gradient(90deg,transparent,var(--blue) 15%,var(--blue) 85%,transparent)}
-.sweep b{display:block;font-family:var(--display);font-size:clamp(30px,10vw,58px);letter-spacing:.14em;text-transform:uppercase;color:#fff;line-height:1}
-.sweep small{font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:12px;color:rgba(255,255,255,.85)}
+.sweep b{display:block;font-family:var(--display);font-size:clamp(34px,10vw,62px);color:#fff;line-height:1.1}
+.sweep small{font-weight:700;font-size:15px;color:rgba(255,255,255,.9)}
 @keyframes sweep{0%{transform:translateX(-105%)}30%,70%{transform:translateX(0)}100%{transform:translateX(105%)}}
 .cluepop{position:fixed;inset:0;z-index:56;pointer-events:none;display:grid;place-items:center;background:rgba(5,6,10,.55);animation:fadeout 2.1s forwards}
 .cluepop .cc{background:linear-gradient(180deg,var(--card),var(--card2));color:var(--ink);border-radius:14px;padding:18px 28px 14px;text-align:center;box-shadow:0 30px 70px -20px #000;animation:slam .55s cubic-bezier(.2,1.6,.4,1) backwards;min-width:220px}
 .cluepop .cc.red{box-shadow:0 0 0 4px var(--red),0 30px 70px -20px #000} .cluepop .cc.blue{box-shadow:0 0 0 4px var(--blue),0 30px 70px -20px #000}
-.cluepop .k{font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
-.cluepop .w{font-family:var(--display);font-weight:700;font-size:clamp(34px,11vw,64px);text-transform:uppercase;letter-spacing:.04em;line-height:1.05}
+.cluepop .k{font-size:14px;font-weight:700;opacity:.65}
+.cluepop .w{font-family:var(--display);font-size:clamp(38px,11vw,68px);line-height:1.1}
 .cluepop .n{display:inline-grid;place-items:center;min-width:46px;height:46px;border-radius:10px;color:#fff;font-family:var(--display);font-size:30px;font-weight:700;margin-top:6px;animation:slam .4s .45s cubic-bezier(.2,1.8,.4,1) backwards}
 .cluepop .cc.red .n{background:var(--red)} .cluepop .cc.blue .n{background:var(--blue)}
 @keyframes slam{from{transform:scale(2.2) rotate(-6deg);opacity:0}}
@@ -233,8 +224,8 @@ select option{background:var(--bg2)}
 .flash{position:fixed;inset:0;z-index:45;pointer-events:none;animation:flash .7s ease-out forwards}
 @keyframes flash{from{opacity:.45}to{opacity:0}}
 .assassin-fx{position:fixed;inset:0;z-index:70;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle,rgba(60,0,10,.6),#000 75%);animation:fadeout 3.2s forwards}
-.assassin-fx b{font-family:var(--display);font-size:clamp(44px,15vw,110px);letter-spacing:.12em;color:var(--red);text-shadow:3px 0 #00e5ff,-3px 0 #ff00aa;animation:glitch .25s steps(2) infinite,slam .5s cubic-bezier(.2,1.6,.4,1) backwards}
-.assassin-fx small{display:block;text-align:center;font-weight:800;letter-spacing:.2em;color:#ffb3bf;text-transform:uppercase;font-size:13px;margin-top:8px}
+.assassin-fx b{font-family:var(--display);font-size:clamp(48px,15vw,116px);color:var(--paper);text-shadow:3px 0 var(--lantern),-3px 0 var(--gold);animation:glitch .25s steps(2) infinite,slam .5s cubic-bezier(.2,1.6,.4,1) backwards}
+.assassin-fx small{display:block;text-align:center;font-weight:700;color:var(--paper);font-size:16px;margin-top:8px}
 @keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-3px,1px)}50%{transform:translate(2px,-2px)}75%{transform:translate(-1px,2px)}}
 body.quake .stage{animation:quake .6s}
 @keyframes quake{10%,50%,90%{transform:translate(-8px,4px)}30%,70%{transform:translate(8px,-4px)}}
@@ -245,27 +236,27 @@ body.quake .stage{animation:quake .6s}
 .winner{width:min(640px,100%);margin:0 auto 12px;text-align:center;border-radius:18px;padding:16px 14px 14px;position:relative;overflow:hidden;animation:fadeup .6s backwards}
 .winner.red{background:linear-gradient(135deg,var(--red2),var(--red));box-shadow:0 20px 50px -20px var(--redglow)}
 .winner.blue{background:linear-gradient(135deg,var(--blue2),var(--blue));box-shadow:0 20px 50px -20px var(--blueglow)}
-.winner h2{font-size:clamp(30px,9vw,50px);letter-spacing:.1em;color:#fff;line-height:1}
+.winner h2{font-size:clamp(34px,9vw,54px);color:#fff;line-height:1.1}
 .winner p{margin:6px 0 0;color:rgba(255,255,255,.9);font-weight:700}
 .winner::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-100%);animation:shine 2.4s 1s infinite}
 @keyframes shine{60%,100%{transform:translateX(100%)}}
 .awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;width:min(640px,100%);margin:14px auto 0}
 .award{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:6px;animation:fadeup .5s backwards}
-.award .k{font-size:10px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.award .k{font-size:13px;font-weight:700;color:var(--gold)}
 .award .v{display:flex;align-items:center;gap:8px;font-weight:800}
 .award .d{font-size:12px;color:var(--muted)}
 
 /* ---------- dock (your controls) and sheets ---------- */
-.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:linear-gradient(0deg,rgba(11,13,20,.98),rgba(11,13,20,.86));backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
 .dock .in{width:min(640px,100%);margin:0 auto;display:grid;gap:8px}
 .dock .role{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:700;color:var(--muted)}
 .dock .role .tools .btn{padding:5px 10px}
 .dock .role b.red{color:var(--red)} .dock .role b.blue{color:var(--blue)}
 .dock .row{display:flex;gap:8px;align-items:center}
-.dock .row input{flex:1;min-width:0;text-transform:uppercase;font-family:var(--display);font-weight:600;letter-spacing:.06em;font-size:18px;padding:9px 12px}
+.dock .row input{flex:1;min-width:0;font-family:var(--display);font-size:20px;padding:8px 14px;border-radius:999px}
 .nums{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding:2px}
 .nums button{flex:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--line2);background:rgba(0,0,0,.3);font-family:var(--display);font-weight:700;font-size:17px}
-.nums button.on{background:var(--gold);border-color:var(--gold);color:#221800;transform:scale(1.08)}
+.nums button.on{background:var(--gold);border-color:var(--gold);color:var(--on-lantern);transform:scale(1.08)}
 .tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);animation:fadein .2s}
 @keyframes fadein{from{opacity:0}}
@@ -277,11 +268,11 @@ body.quake .stage{animation:quake .6s}
 .le{border-left:3px solid var(--line2);padding:4px 0 4px 10px;display:grid;gap:5px}
 .le.red{border-color:var(--red)} .le.blue{border-color:var(--blue)}
 .le .cl{display:flex;align-items:center;gap:8px;font-weight:800}
-.le .cl .w{font-family:var(--display);font-size:18px;letter-spacing:.05em;text-transform:uppercase}
+.le .cl .w{font-family:var(--display);font-size:20px}
 .le .cl .n{font-family:var(--display);font-size:14px;border-radius:5px;padding:0 6px;color:#fff}
 .le.red .cl .n{background:var(--red)} .le.blue .cl .n{background:var(--blue)}
 .le .gs{display:flex;flex-wrap:wrap;gap:4px}
-.g{font-size:11px;font-weight:800;text-transform:uppercase;border-radius:5px;padding:2px 6px;letter-spacing:.03em}
+.g{font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px}
 .g.red{background:var(--red);color:#fff} .g.blue{background:var(--blue);color:#fff} .g.neutral{background:var(--neutral);color:#4b3e22} .g.assassin{background:#000;color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
 .le .plan{font-size:12px;color:var(--gold)}
 .le .end{font-size:11px;color:var(--muted);font-weight:700}
@@ -290,69 +281,11 @@ body.quake .stage{animation:quake .6s}
   .stage > .main{grid-column:1} .stage > .side{grid-column:2;position:sticky;top:70px}
 }
 @media (max-width:999px){ .stage > .side{display:none} }
-/* ---------- card styles (each player picks theirs in the theme menu) ---------- */
-html[data-cards=dragonball]{--cardfont:"Bangers",var(--display)}
-html[data-cards=dragonball] .card .front{background:radial-gradient(circle at 50% 120%,#ffb347,#ffe0a3 55%,#fff3d9)}
-html[data-cards=dragonball] .card .front::before{border:2px solid rgba(255,120,0,.45)}
-html[data-cards=dragonball] .card .word{letter-spacing:.06em;color:#3a1a00;font-weight:400}
-html[data-cards=dragonball] .card .up{font-family:"Bangers",var(--display);font-weight:400}
-html[data-cards=dragonball] .back.red{background:radial-gradient(circle at 50% 30%,#ff8a3d,#e8361e 55%,#8f1606)}
-html[data-cards=dragonball] .back.blue{background:radial-gradient(circle at 50% 30%,#6fb2ff,#1a5ad8 55%,#0b2a6b)}
-html[data-cards=conan]{--cardfont:"Special Elite",var(--display)}
-html[data-cards=conan] .card .front{background:repeating-linear-gradient(180deg,#fbf7ec 0 9px,#e4dcc6 9px 10px);color:#1b2240}
-html[data-cards=conan] .card .front::before{border:0;border-left:2px solid rgba(224,36,47,.6);inset:0 auto 0 10%;border-radius:0}
-html[data-cards=conan] .card .word{font-weight:400;letter-spacing:0;text-transform:none;font-size:calc(var(--fs,1) * clamp(10px,3vw,17px))}
-html[data-cards=conan] .back.neutral{background:radial-gradient(circle at 50% 30%,#f5eedd,#d8cdb2 60%,#b3a382)}
-html[data-cards=conan] .back.assassin{background:radial-gradient(circle at 50% 40%,#1a1a22,#000 70%);color:#fff}
-html[data-cards=naruto]{--cardfont:"Shojumaru",var(--display)}
-html[data-cards=naruto] .card .front{background:linear-gradient(90deg,#8a5a2b 0 6%,#f3e2bf 6% 94%,#8a5a2b 94%);color:#2a1406}
-html[data-cards=naruto] .card .front::before{border-color:rgba(138,90,43,.3);inset:3px 9%}
-html[data-cards=naruto] .card .word{font-weight:400;letter-spacing:0}
-html[data-cards=naruto] .back.red{background:radial-gradient(circle at 50% 30%,#ff9a3d,#e8601e 55%,#7a2a06)}
-html[data-cards=demonslayer]{--cardfont:"Kaisei Decol",var(--display)}
-html[data-cards=demonslayer] .card .front{background:linear-gradient(180deg,#f7f1e3,#e7dcc4);color:#10251a}
-html[data-cards=demonslayer] .card .front::after{content:"";position:absolute;left:0;right:0;top:0;height:16%;background:conic-gradient(#14251b 25%,#2ecc71 0 50%,#14251b 0 75%,#2ecc71 0) 0 0/10px 10px;opacity:.9}
-html[data-cards=demonslayer] .card .up{top:18%}
-html[data-cards=demonslayer] .card .word{text-transform:none;letter-spacing:0;font-weight:700}
-html[data-cards=demonslayer] .back.assassin{background:radial-gradient(circle at 50% 35%,#4a0b1e,#0b0306 70%);color:#ff7eb6}
-html[data-cards=neon] .card .front{background:linear-gradient(180deg,#171b2e,#0d1020);color:#bff3ff;box-shadow:0 0 0 1px rgba(63,214,255,.45),0 0 18px -6px rgba(63,214,255,.6)}
-html[data-cards=neon] .card .front::before{border-color:rgba(63,214,255,.25)}
-html[data-cards=neon] .card .word{text-shadow:0 0 8px rgba(63,214,255,.8)}
-html[data-cards=neon] .card.k-neutral:not(.revealed) .front{background:linear-gradient(180deg,#2a2618,#171409);color:#f4e6b8}
-html[data-cards=neon] .board.pics .card .word{background:rgba(13,16,32,.9)}
-
-/* ---------- chat ---------- */
-.chatfab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(var(--dockh,0px) + 14px + env(safe-area-inset-bottom,0px));z-index:35;width:54px;height:54px;border-radius:50%;border:0;background:var(--gold);color:#221800;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.8);transition:transform .2s}
-.chatfab:active{transform:scale(.92)}
-.chatfab svg{width:24px;height:24px}
-.chatfab .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;padding:0 5px;animation:pin .35s cubic-bezier(.3,1.7,.5,1)}
-.chatbox{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:45;height:min(64dvh,520px);display:flex;flex-direction:column;background:var(--bg2);border-top:1px solid var(--line2);border-radius:20px 20px 0 0;box-shadow:0 -20px 60px -10px rgba(0,0,0,.8);animation:up .28s cubic-bezier(.2,.9,.3,1)}
-@media (min-width:700px){.chatbox{left:auto;right:16px;bottom:16px;width:380px;border-radius:20px;border:1px solid var(--line2)}}
-.chatbox.typing{height:auto;top:var(--kb-top,0px);border-radius:0}
-.chatbox header{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;flex:none}
-.chatbox header b{font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:16px;flex:1}
-.chatbox header b.red{color:var(--red)} .chatbox header b.blue{color:var(--blue)}
-.chatbox header button{border:0;background:var(--glass2);border-radius:50%;width:34px;height:34px;font-size:18px}
-.chatbox .msgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 12px 10px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
-.chatbox .m{display:flex;gap:8px;align-items:flex-end;max-width:86%;animation:fadeup .3s backwards}
-.chatbox .m.me{align-self:flex-end;flex-direction:row-reverse}
-.chatbox .m .mini{width:26px;height:26px;font-size:11px}
-.chatbox .m .b{background:var(--glass2);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:6px 11px;overflow-wrap:anywhere;font-size:14px;line-height:1.35}
-.chatbox .m.me .b{border-radius:14px 14px 4px 14px;background:rgba(255,207,77,.14);border-color:rgba(255,207,77,.35)}
-.chatbox .m .n{display:block;font-size:11px;font-weight:800;margin-bottom:1px}
-.chatbox .m .n.red{color:#ff8ea0} .chatbox .m .n.blue{color:#8fb9ff}
-.chatbox .sys{align-self:center;font-size:12px;color:var(--muted);text-align:center;background:rgba(255,255,255,.04);border-radius:999px;padding:3px 12px;max-width:94%}
-.chatbox form{display:flex;gap:6px;align-items:flex-end;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);flex:none}
-.chatbox.typing form{padding-bottom:8px}
-.chatbox textarea{flex:1;min-width:0;height:38px;max-height:110px;resize:none;background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:19px;padding:8px 14px;font:inherit;font-size:16px;line-height:1.3;color:var(--fg);outline:none;display:block}
-.chatbox textarea:focus{border-color:var(--gold)}
-.chatbox form button{border:0;border-radius:50%;width:38px;height:38px;flex:none;background:var(--gold);color:#221800;display:grid;place-items:center}
-.chatbox form button svg{width:18px;height:18px}
-.chatbox .muted-note{padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+:root{--chat-lift:var(--dockh,0px)}  /* the chat button and panel sit above the dock */
 .me-pic{border:0;padding:0;background:none;display:inline-flex;vertical-align:middle;margin-right:4px}
 .g .mini{width:16px;height:16px;margin-right:4px;font-size:8px;border-width:1px}
 .g{display:inline-flex;align-items:center}
-.g i{font-style:normal;font-weight:600;opacity:.85;margin-left:4px;text-transform:none}
+.g i{font-style:normal;font-weight:500;opacity:.85;margin-left:4px}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -363,17 +296,11 @@ html[data-cards=neon] .board.pics .card .word{background:rgba(13,16,32,.9)}
     <symbol id="agent" viewBox="0 0 100 100"><path fill="currentColor" d="M27 38c2-12 11-20 23-20s21 8 23 20l9 2c2 .5 2 3 0 3.5-9 2.5-21 3.5-32 3.5S27 46 18 43.5c-2-.5-2-3 0-3.5zM34 50c3 8 9 13 16 13s13-5 16-13c-5 1-11 1.5-16 1.5S39 51 34 50zM20 96c2-16 12-27 24-30l6 8 6-8c12 3 22 14 24 30z"/><path fill="rgba(0,0,0,.35)" d="M30 44h40v4H30z"/></symbol>
     <symbol id="civ" viewBox="0 0 100 100"><circle cx="50" cy="36" r="15" fill="currentColor"/><path fill="currentColor" d="M22 94c2-18 13-30 28-30s26 12 28 30z"/></symbol>
     <symbol id="skull" viewBox="0 0 100 100"><path fill="currentColor" d="M50 12c-20 0-34 14-34 32 0 11 5 19 12 24v12c0 3 2 5 5 5h4v-7h6v7h14v-7h6v7h4c3 0 5-2 5-5V68c7-5 12-13 12-24 0-18-14-32-34-32zM36 40a9 9 0 110 18 9 9 0 010-18zm28 0a9 9 0 110 18 9 9 0 010-18zM50 58l6 10H44z"/><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="6 6" opacity=".6"/></symbol>
-    <symbol id="dball" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ffa21f" stroke="#c45f00" stroke-width="3"/><circle cx="36" cy="34" r="12" fill="#fff" opacity=".45"/><g fill="#d81e1e"><path d="M50 30l4 10h11l-9 7 4 11-10-7-10 7 4-11-9-7h11z"/><path d="M34 58l2.5 6h6.5l-5 4 2 7-6-4-6 4 2-7-5-4h6.5z"/><path d="M66 58l2.5 6h6.5l-5 4 2 7-6-4-6 4 2-7-5-4h6.5z"/></g></symbol>
-    <symbol id="glass" viewBox="0 0 100 100"><circle cx="42" cy="42" r="24" fill="rgba(255,255,255,.25)" stroke="currentColor" stroke-width="8"/><path d="M60 60l22 22" stroke="currentColor" stroke-width="12" stroke-linecap="round"/><path d="M30 34a14 14 0 0110-8" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/></symbol>
-    <symbol id="culprit" viewBox="0 0 100 100"><path fill="#000" d="M50 10c-14 0-24 11-24 25 0 9 4 16 10 20-14 4-24 16-26 40h80c-2-24-12-36-26-40 6-4 10-11 10-20 0-14-10-25-24-25z"/><path fill="#fff" d="M38 33q5-4 9 0q-4 4-9 0zM53 33q5-4 9 0q-4 4-9 0z"/><path d="M42 45q8 5 16 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></symbol>
-    <symbol id="leaf" viewBox="0 0 100 100"><rect x="10" y="30" width="80" height="40" rx="6" fill="#9aa3b5" stroke="#5b6375" stroke-width="3"/><path d="M50 50m-13 0a13 13 0 1 0 26 0a9 9 0 1 0 -18 0a5 5 0 1 0 10 0" fill="none" stroke="#2c3240" stroke-width="3.5"/><path d="M63 50q10-3 13-14" fill="none" stroke="#2c3240" stroke-width="3.5"/><path d="M14 30L4 22M86 30l10-8" stroke="#2c3240" stroke-width="4" stroke-linecap="round"/></symbol>
-    <symbol id="blade" viewBox="0 0 100 100"><path d="M24 80L80 14l4 3-52 68z" fill="#e8f2ff" stroke="#9fb3cf" stroke-width="2"/><rect x="14" y="74" width="20" height="8" rx="3" transform="rotate(-50 24 78)" fill="#2ecc71"/><path d="M8 94l14-14" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round"/></symbol>
-    <symbol id="oni" viewBox="0 0 100 100"><path fill="currentColor" d="M22 30l8-20 10 16M78 30l-8-20-10 16"/><path fill="currentColor" d="M50 22c-20 0-32 14-32 32 0 20 14 34 32 34s32-14 32-34c0-18-12-32-32-32z"/><path fill="#000" d="M32 48l14 6-14 4zM68 48l-14 6 14 4z"/><path fill="#000" d="M36 72q14 8 28 0l-4 6-6-3-4 4-4-4-6 3z"/></symbol>
     <symbol id="bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="13" r="1.6" fill="currentColor"/><circle cx="15" cy="13" r="1.6" fill="currentColor"/><path d="M12 3v4M8 22h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
-<header class="top">
-  <a href="/" aria-label="All games">&larr;</a>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
   <h1>Codenames</h1>
   <span class="code" id="hCode" hidden></span>
   <span class="spacer"></span>
@@ -388,6 +315,7 @@ html[data-cards=neon] .board.pics .card .word{background:rgba(13,16,32,.9)}
 <script src="/avatars.js"></script>
 <script src="/backguard.js"></script>
 <script src="/theme.js"></script>
+<script src="/chat.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -407,10 +335,10 @@ let clueN = 1;
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 const P = pid => room.players[pid] || {name:"Someone who left"};
-const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : esc((p.name||"?")[0].toUpperCase()); };
+const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
 const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
-const botFace = (cls="face") => `<span class="${cls} ai" style="background:linear-gradient(135deg,#2a3150,#151a2c);color:var(--gold)"><svg width="60%" height="60%"><use href="#bot"/></svg></span>`;
-const TEAM = {red:"Red", blue:"Blue"};
+const botFace = (cls="face") => `<span class="${cls} ai" style="background:var(--night-3);color:var(--gold)"><svg width="60%" height="60%"><use href="#bot"/></svg></span>`;
+const TEAM = {red:"Lantern", blue:"Shrine"};
 const other = t => t === "red" ? "blue" : "red";
 const mine = () => room && me && room.players[me.pid];
 const isSpy = () => mine()?.role === "spy";
@@ -452,12 +380,12 @@ function heroGrid(){
 }
 function home(){
   $("#dock").hidden = true;
-  $("#stage").innerHTML = `<div class="main"><div class="hero fadeup">${heroGrid()}<div class="eyebrow">Two teams · one grid · zero chill</div><h1>Codenames</h1>
-    <p class="sub">Your spymaster knows which words are your agents. They get one word and a number to point you at them. Find all of yours first, and never touch the assassin.</p></div>
+  $("#stage").innerHTML = `<div class="main"><div class="hero fadeup">${heroGrid()}<h1>Codenames</h1>
+    <p class="sub">Your spymaster sees which slips are your team's and gives one-word clues. Find all of yours first. Never touch the assassin.</p></div>
     <div style="display:grid;gap:14px;max-width:520px;margin:0 auto">
-    <form class="panel" id="createForm"><h2>Start an operation</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+    <form class="panel" id="createForm"><h2>Start a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
       <div class="err" id="cErr"></div><button class="btn primary wide">Create game</button><p class="hint">Teams, word packs, timers and the AI spymaster are set in the lobby.</p></form>
-    <form class="panel" id="joinForm"><h2>Join an operation</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
+    <form class="panel" id="joinForm"><h2>Join a game</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
       <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div>
       <div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div></div>`;
   $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
@@ -472,7 +400,8 @@ function openRoom(c){
   BackGuard.arm();
   poll(++pollGen, -1);
 }
-BackGuard.onBack(()=>{ if(chatOpen){ closeChat(); return true; } if(sheet){ closeSheet(); return true; } return false; });
+BackGuard.onBack(()=>{ if(sheet){ closeSheet(); return true; } return false; });
+Chat.mount({act});
 // a new card style redraws the turned cards with its own pictures
 if(window.Theme) Theme.onChange(()=>{ if(view === "game") updateBoard(); });
 
@@ -491,7 +420,7 @@ async function poll(gen, v){
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       render();
       moments();
-      renderChat();
+      Chat.update(room, me);
     }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -512,7 +441,7 @@ function render(){
 }
 function gate(){
   view = "gate"; $("#dock").hidden = true;
-  $("#stage").innerHTML = `<div class="main"><form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><div class="eyebrow">You've been recruited</div><h2 style="text-align:center">Join this operation</h2>
+  $("#stage").innerHTML = `<div class="main"><form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join this game</h2>
     <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form></div>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("cn:"+code, {me, hostKey}); lobbySig = ""; poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
@@ -543,16 +472,16 @@ function lobby(){
   const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
   const packs = Object.entries(room.packs || {});
   const n = Object.keys(room.players).length;
-  $("#stage").innerHTML = `<div class="main" style="max-width:640px;margin:0 auto;width:100%"><div class="fadeup"><div class="eyebrow">Mission briefing · code <b style="color:var(--gold)">${room.code}</b></div><h1 class="title">Pick your sides</h1>
+  $("#stage").innerHTML = `<div class="main" style="max-width:640px;margin:0 auto;width:100%"><div class="fadeup"><div class="eyebrow">Room code <b style="color:var(--gold)">${room.code}</b></div><h1 class="title">Pick your sides</h1>
     <p class="sub">Each team needs at least one guesser. ${room.aiReady && s.aiSpy ? "An empty spymaster seat is taken by the AI, so even two of you can play." : "Each team needs a spymaster."}</p></div>
     <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Choose your avatar">${Avatars.src(my)?picOf(my):"Choose"}</button>
-      <div><b>Agent ${esc(my.name)}</b><p class="hint">${Avatars.src(my) ? "Tap to change your avatar." : "Pick an anime character or a picture from your gallery. It shows when you mark cards."}</p></div></div></div>
+      <div><b>Agent ${esc(my.name)}</b><p class="hint">${Avatars.src(my) ? "Tap to change your picture." : "Pick a festival character or a photo. It shows when you mark cards."}</p></div></div></div>
     <div class="teams">${teamHTML("red")}${teamHTML("blue")}</div>
     ${H ? `<div class="tools" style="margin-top:10px"><button class="btn small" data-host="shuffle">Shuffle teams</button><button class="btn small" data-shuffle-spies="1">Shuffle with spymasters</button></div>` : ""}
-    <div class="panel" style="margin-top:14px"><h2>${H ? "Mission settings" : "Mission settings (the host picks)"}</h2>
+    <div class="panel" style="margin-top:14px"><h2>${H ? "Settings" : "Settings (the host picks)"}</h2>
       <div><label>Words</label><div class="chips">${packs.map(([v,t])=>`<button type="button" class="${s.pack===v?"on":""}" data-pack="${v}" ${H?"":"disabled"}>${esc(t)}</button>`).join("")}</div></div>
       ${s.pack==="custom" ? `<div><label for="sCustom">Words about</label><input type="text" id="sCustom" maxlength="200" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Marvel, football, our school, Pakistan"><p class="hint" style="margin-top:6px">The AI makes a fresh board on this topic every game.</p></div>` : ""}
-      ${s.pack==="pictures" ? `<p class="hint">The cards are anime characters with their pictures. Clues can be about their show, powers, looks or vibe.</p>` : ""}
+      ${s.pack==="pictures" ? `<p class="hint">The cards are festival characters. Clue by their look, what they hold or what they do.</p>` : ""}
       <div><label>Board</label><div class="seg">
         <button type="button" class="${s.size===25?"on":""}" data-size="25" ${H?"":"disabled"}><b>5 × 5 classic</b><small>9 vs 8 agents</small></button>
         <button type="button" class="${s.size===16?"on":""}" data-size="16" ${H?"":"disabled"}><b>4 × 4 quick</b><small>6 vs 5 agents, faster games</small></button></div></div>
@@ -561,14 +490,14 @@ function lobby(){
         <button type="button" class="${s.assassins===2?"on":""}" data-ass="2" ${H?"":"disabled"}><b>Two</b><small>Hard mode. Every clue is a risk</small></button></div></div>
       <div class="row2"><div><label for="sClue">Spymaster timer</label>${sel("sClue", TIMERS, s.clueSec)}</div><div><label for="sGuess">Guessing timer</label>${sel("sGuess", TIMERS, s.guessSec)}</div></div>
       <div><label>Chat</label><div class="seg" style="grid-template-columns:1fr 1fr 1fr">
-        <button type="button" class="${s.chat==="teams"?"on":""}" data-chat="teams" ${H?"":"disabled"}><b>Team chats</b><small>Red and blue talk privately</small></button>
+        <button type="button" class="${s.chat==="teams"?"on":""}" data-chat="teams" ${H?"":"disabled"}><b>Team chats</b><small>Each team talks privately</small></button>
         <button type="button" class="${s.chat==="all"?"on":""}" data-chat="all" ${H?"":"disabled"}><b>Everyone</b><small>One chat for trash talk</small></button>
         <button type="button" class="${s.chat==="off"?"on":""}" data-chat="off" ${H?"":"disabled"}><b>Off</b><small>You're all in the same room</small></button></div>
         <p class="hint" style="margin-top:6px">Spymasters can read, but can't type while a game is on.</p></div>
       <div class="toggle"><div><b>AI spymaster</b><p class="hint">${room.aiReady ? "Fills any empty spymaster seat. It's sneaky." : "Not available: no AI key on this server."}</p></div><button type="button" id="aiSpy" class="${s.aiSpy&&room.aiReady?"on":""}" ${H&&room.aiReady?"":"disabled"} aria-label="AI spymaster"></button></div>
       ${H ? `<button class="btn primary wide" data-host="start" ${n<2?"disabled":""}>${n<2 ? "Waiting for one more agent" : "Deal the board"}</button>` : `<p class="hint" style="text-align:center">The host deals when everyone's in.</p>`}</div>
     <details class="panel" style="margin-top:14px"><summary style="font-weight:800;cursor:pointer">How to play</summary><p class="hint" style="margin-top:8px">
-      Each team has a <b>spymaster</b> who sees the secret key: which cards are red agents, blue agents, innocent bystanders, and the <b>assassin</b>.<br><br>
+      Each team has a <b>spymaster</b> who sees the secret key: which cards are Lantern agents, Shrine agents, innocent bystanders, and the <b>assassin</b>.<br><br>
       On your turn the spymaster gives <b>one word and a number</b>, like <i>OCEAN 2</i>, meaning "two of our cards connect to ocean". The clue can't be a word on the board.<br><br>
       Guessers tap a card to <b>mark</b> it (your team sees your marks) and tap it again to unmark it. Press <b>Lock in</b> on your marked card to reveal it. Your agent: keep going, up to the number plus one. A bystander or the other team's agent ends your turn. The assassin loses the game on the spot.<br><br>
       A <b>0</b> or <b>∞</b> clue means guess as many as you like. First team to find all its agents wins.</p></details></div>`;
@@ -589,15 +518,15 @@ function starting(){
   if(view === "starting") return;
   view = "starting";
   const s = room.settings;
-  $("#stage").innerHTML = `<div class="main"><div class="hero fadeup" style="margin-top:12vh">${heroGrid()}<div class="eyebrow">Stand by</div><h1 style="font-size:clamp(30px,8vw,48px)">Dealing the board</h1>
-    <p class="sub">${s.pack==="custom" ? `The AI is writing words about ${esc(s.custom||"anything")}…` : s.pack==="pictures" ? "Recruiting anime characters…" : "Shuffling the codenames…"}</p></div></div>`;
+  $("#stage").innerHTML = `<div class="main"><div class="hero fadeup" style="margin-top:12vh">${heroGrid()}<h1 style="font-size:clamp(34px,8vw,52px)">Dealing the board</h1>
+    <p class="sub">${s.pack==="custom" ? `The AI is writing words about ${esc(s.custom||"anything")}…` : s.pack==="pictures" ? "Calling the festival crowd…" : "Shuffling the codenames…"}</p></div></div>`;
 }
 
 /* ---------- the game ---------- */
 let boardDeal = null;
 function fsFor(w){ const n = w.length; return n <= 5 ? 1 : n <= 7 ? .9 : n <= 9 ? .78 : n <= 11 ? .68 : n <= 14 ? .58 : .5; }
 // the picture on a turned card depends on the player's card style
-const ICONS = {dragonball:{agent:"dball"}, conan:{agent:"glass", assassin:"culprit"}, naruto:{agent:"leaf"}, demonslayer:{agent:"blade", assassin:"oni"}};
+const ICONS = {};
 function backHTML(c){
   const k = c.key || "neutral", set = ICONS[window.Theme ? Theme.cards() : "classic"] || {};
   const icon = k === "assassin" ? set.assassin || "skull" : k === "neutral" ? set.neutral || "civ" : set.agent || "agent";
@@ -611,14 +540,14 @@ function game(){
       <div class="board ${pics?"pics":""}" id="board" style="--cols:${room.cards.length===16?4:5}">${room.cards.map((c,i)=>{
         const dx = (Math.random()*2-1)*120 + "px", dy = (220 + Math.random()*120) + "px", dr = (Math.random()*60-30) + "deg";
         return `<button class="card deal" data-i="${i}" style="--fs:${fsFor(c.w)};--dx:${dx};--dy:${dy};--dr:${dr};animation-delay:${i*35}ms" aria-label="${esc(c.w)}">
-          <div class="inner"><div class="f front">${c.img?`<img class="pic" src="${esc(c.img)}" alt="" referrerpolicy="no-referrer" loading="lazy">`:`<span class="up">${esc(c.w)}</span>`}<span class="word">${esc(c.w)}</span></div>${backHTML(c)}</div><span class="marks"></span><span class="lock" role="button" aria-label="Lock in ${esc(c.w)}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0110 0v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1zm2 0h6V7a3 3 0 00-6 0z"/></svg>Lock in</span></button>`; }).join("")}</div>
+          <div class="inner"><div class="f front">${c.img?`<img class="pic" src="${esc(c.img)}" alt="" loading="lazy">`:`<span class="up">${esc(c.w)}</span>`}<span class="word">${esc(c.w)}</span></div>${backHTML(c)}</div><span class="marks"></span><span class="lock" role="button" aria-label="Lock in ${esc(c.w)}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0110 0v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1zm2 0h6V7a3 3 0 00-6 0z"/></svg>Lock in</span></button>`; }).join("")}</div>
       <div id="awards"></div></div><aside class="side panel" id="sideLog"></aside>`;
     $("#board").onclick = onCard;
     setTimeout(()=>document.querySelectorAll(".card.deal").forEach(c=>c.classList.remove("deal")), 1600);
     if(!prev || prev.dealId !== room.dealId) SFX.turn();
   }
   renderScore(); renderClue(); updateBoard(); renderDock(); renderOver();
-  const side = $("#sideLog"); if(side) side.innerHTML = `<h2>Mission log</h2>${logHTML()}`;
+  const side = $("#sideLog"); if(side) side.innerHTML = `<h2>Game log</h2>${logHTML()}`;
 }
 function renderScore(){
   const pip = t => Array.from({length: room.total[t]}, (_, i)=>`<i class="${i >= room.left[t] ? "gone" : ""}"></i>`).join("");
@@ -741,7 +670,7 @@ function closeSheet(){ sheet = null; $("#sheetHost").innerHTML = ""; }
 function renderSheet(){
   if(!sheet || !room) return;
   let html = "";
-  if(sheet === "log") html = `<h2>Mission log</h2>${logHTML()}`;
+  if(sheet === "log") html = `<h2>Game log</h2>${logHTML()}`;
   if(sheet === "teams"){
     const live = ["clue","guess"].includes(room.phase), my = mine();
     const row = t => { const ps = Object.keys(room.players).filter(pid=>P(pid).team===t);
@@ -778,13 +707,13 @@ function renderOver(){
   const clues = (room.log||[]).filter(e=>e.kind==="clue").sort((a,b)=>(b.right||0)-(a.right||0));
   const top = clues[0], sharp = best("right"), oops = ps.filter(pid=>st[pid].assassin)[0] || best("wrong");
   const cards = [];
-  if(top && top.right) cards.push(`<div class="award"><span class="k">Clue of the game</span><span class="v" style="font-family:var(--display);font-size:20px;text-transform:uppercase">${esc(top.word)} <span class="muted" style="font-size:14px">${top.n===10?"∞":top.n}</span></span><span class="d">${top.right} agent${top.right===1?"":"s"} found · ${top.by==="ai"?"AI spymaster":esc(P(top.by).name)}</span></div>`);
+  if(top && top.right) cards.push(`<div class="award"><span class="k">Clue of the game</span><span class="v" style="font-family:var(--display);font-size:22px">${esc(top.word)} <span class="muted" style="font-size:14px">${top.n===10?"∞":top.n}</span></span><span class="d">${top.right} agent${top.right===1?"":"s"} found · ${top.by==="ai"?"AI spymaster":esc(P(top.by).name)}</span></div>`);
   if(sharp) cards.push(`<div class="award"><span class="k">Sharpest agent</span><span class="v">${face(sharp,"face")}${esc(P(sharp).name)}</span><span class="d">${st[sharp].right} right guess${st[sharp].right===1?"":"es"}</span></div>`);
   if(oops) cards.push(`<div class="award"><span class="k">${st[oops].assassin ? "Shook hands with the assassin" : "Friendly fire"}</span><span class="v">${face(oops,"face")}${esc(P(oops).name)}</span><span class="d">${st[oops].assassin ? "Game over, courtesy of them" : `${st[oops].wrong} wrong card${st[oops].wrong===1?"":"s"}`}</span></div>`);
   const aiPlans = clues.filter(e=>e.by==="ai" && e.targets);
   el.innerHTML = `<div class="awards">${cards.map((c,i)=>c.replace('class="award"', `class="award" style="animation-delay:${1.6+i*.2}s"`)).join("")}</div>
-    ${aiPlans.length ? `<div class="panel" style="width:min(640px,100%);margin:12px auto 0"><h2>What the AI was thinking</h2>${aiPlans.map(e=>`<div><b style="font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;color:var(--${e.team})">${esc(e.word)} ${e.n}</b> <span class="muted">→ ${e.targets.map(esc).join(", ")}</span></div>`).join("")}</div>` : ""}
-    <div class="panel" style="width:min(640px,100%);margin:12px auto 0"><h2>Mission log</h2>${logHTML()}</div>`;
+    ${aiPlans.length ? `<div class="panel" style="width:min(640px,100%);margin:12px auto 0"><h2>What the AI was thinking</h2>${aiPlans.map(e=>`<div><b style="font-family:var(--display);color:var(--${e.team})">${esc(e.word)} ${e.n}</b> <span class="muted">→ ${e.targets.map(esc).join(", ")}</span></div>`).join("")}</div>` : ""}
+    <div class="panel" style="width:min(640px,100%);margin:12px auto 0"><h2>Game log</h2>${logHTML()}</div>`;
 }
 
 /* ---------- moments: what changed since the last update, as animation and sound ---------- */
@@ -793,7 +722,7 @@ function moments(){
   const r = room.lastReveal;
   if(r && r.id !== prev.lastReveal?.id){
     const el = document.querySelector(`.card[data-i="${r.i}"]`);
-    const color = {red:"#ff3d5a", blue:"#3d8bff", neutral:"#d9c9a3", assassin:"#ff3d5a"}[r.key];
+    const color = {red:"var(--lantern)", blue:"#3d8bff", neutral:"#d9c9a3", assassin:"var(--lantern)"}[r.key];
     if(r.key === "assassin"){ assassinFx(); }
     else if(r.key === r.team){ SFX.right(); buzz(30); setTimeout(()=>{ burst(el, color); el?.classList.add("glow"); }, 380); }
     else { (r.key === "neutral" ? SFX.neutral : SFX.wrong)(); buzz([60,40,60]); setTimeout(()=>{ el?.classList.add("shake"); flash(color); }, 380); setTimeout(()=>el?.classList.remove("shake"), 1000); }
@@ -838,7 +767,7 @@ function assassinFx(){
   setTimeout(()=>{ document.body.appendChild(a); setTimeout(()=>a.remove(), 3300); }, 350);
 }
 function confetti(team){
-  const cols = team === "red" ? ["#ff3d5a","#ff9db0","#ffcf4d","#fff"] : ["#3d8bff","#a9cbff","#ffcf4d","#fff"];
+  const cols = team === "red" ? ["var(--lantern)","#ff9db0","#ffcf4d","#fff"] : ["#3d8bff","#a9cbff","#ffcf4d","#fff"];
   for(let k=0;k<90;k++){
     const c = document.createElement("i"); c.className = "confetti";
     c.style.cssText = `left:${Math.random()*100}vw;background:${cols[k%cols.length]};--x:${(Math.random()*2-1)*120}px;--r:${Math.random()*900}deg;animation-duration:${2.2+Math.random()*2}s;animation-delay:${Math.random()*.6}s;border-radius:${k%4?2:50}px`;
@@ -866,80 +795,6 @@ document.addEventListener("click", async e=>{
     if(k){ if(k.dataset.sure !== "1"){ k.dataset.sure = "1"; k.textContent = "Sure?"; return; } await act("kick", {pid:k.dataset.kick}); }
   }catch(err){ toast(err.message); }
 });
-
-/* ---------- chat: a bubble button, and a panel that sits right above the keyboard ---------- */
-let chatOpen = false, chatSeen = store("cn:seen") || "", chatShown = new Set(), chatRoom = null;
-const SEND = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5l18-8.5L3 3.5v6.6l12 1.9-12 1.9z"/></svg>';
-const BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>';
-function chatChannel(){ return room.settings.chat === "all" ? "Everyone" : `${TEAM[myTeam()] || "Team"} team chat`; }
-function renderChat(){
-  if(!room || !mine()) return;
-  const off = room.settings.chat === "off";
-  let fab = $("#chatFab");
-  if(off){ fab?.remove(); if(chatOpen) closeChat(); return; }
-  if(!fab){ fab = document.createElement("button"); fab.id = "chatFab"; fab.className = "chatfab"; fab.setAttribute("aria-label", "Chat"); fab.onclick = openChat; document.body.appendChild(fab); }
-  const msgs = room.chat || [];
-  const lastIdx = msgs.findIndex(m=>m.id === chatSeen);
-  const unread = chatOpen ? 0 : msgs.slice(lastIdx + 1).filter(m=>!m.sys && m.pid !== me.pid).length;
-  fab.hidden = chatOpen;
-  fab.innerHTML = BUBBLE + (unread ? `<span class="badge">${unread > 9 ? "9+" : unread}</span>` : "");
-  if(prev && msgs.length && prev.chat && msgs[msgs.length-1].id !== prev.chat[prev.chat.length-1]?.id && !chatOpen && msgs[msgs.length-1].pid && msgs[msgs.length-1].pid !== me.pid) SFX.tap();
-  if(!chatOpen) return;
-  const box = $("#chatBox");
-  if(chatRoom !== room.code + myTeam() + room.settings.chat){ chatRoom = room.code + myTeam() + room.settings.chat; chatShown.clear(); box.querySelector(".msgs").innerHTML = ""; }
-  box.querySelector("header b").textContent = chatChannel();
-  box.querySelector("header b").className = room.settings.chat === "teams" ? myTeam() : "";
-  const list = box.querySelector(".msgs"), atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
-  for(const m of msgs){
-    if(chatShown.has(m.id)) continue;
-    chatShown.add(m.id);
-    const el = document.createElement("div");
-    if(m.sys){ el.className = "sys"; el.textContent = m.text; }
-    else { const p = P(m.pid), mineMsg = m.pid === me.pid;
-      el.className = "m" + (mineMsg ? " me" : "");
-      el.innerHTML = `${face(m.pid)}<div class="b">${mineMsg ? "" : `<span class="n ${p.team||""}">${esc(p.name)}</span>`}${esc(m.text)}</div>`; }
-    list.appendChild(el);
-  }
-  if(atEnd || list.dataset.first !== "1"){ list.scrollTop = list.scrollHeight; list.dataset.first = "1"; }
-  if(msgs.length){ chatSeen = msgs[msgs.length-1].id; store("cn:seen", chatSeen); }
-  // spymasters read along but can't type mid-game
-  const muted = isSpy() && ["clue","guess"].includes(room.phase);
-  box.querySelector("form").hidden = muted; box.querySelector(".muted-note").hidden = !muted;
-}
-function openChat(){
-  if(chatOpen) return;
-  chatOpen = true; chatShown.clear(); chatRoom = null;
-  const box = document.createElement("div"); box.className = "chatbox"; box.id = "chatBox";
-  box.innerHTML = `<header><b></b><button type="button" aria-label="Close chat">×</button></header><div class="msgs"></div>
-    <form><textarea rows="1" maxlength="200" placeholder="Message" enterkeyhint="send" aria-label="Message"></textarea><button type="submit" aria-label="Send">${SEND}</button></form>
-    <div class="muted-note" hidden>Spymasters can't chat mid-game. Your clues do the talking.</div>`;
-  document.body.appendChild(box);
-  const ta = box.querySelector("textarea"), btn = box.querySelector("form button");
-  const grow = ()=>{ ta.style.height = "38px"; ta.style.height = Math.min(ta.scrollHeight + 2, 110) + "px"; };
-  ta.oninput = grow;
-  ta.onkeydown = e=>{ if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); box.querySelector("form").requestSubmit(); } };
-  // keep the keyboard open when you tap send
-  btn.addEventListener("pointerdown", e=>e.preventDefault()); btn.addEventListener("mousedown", e=>e.preventDefault());
-  box.querySelector("form").onsubmit = async e=>{ e.preventDefault(); const t = ta.value.trim(); if(!t) return;
-    ta.value = ""; grow();
-    try{ await act("chat", {text:t}); }catch(err){ ta.value = t; grow(); toast(err.message); } };
-  box.querySelector("header button").onclick = closeChat;
-  fitChat(); renderChat();
-}
-function closeChat(){
-  if(!chatOpen) return;
-  chatOpen = false; $("#chatBox")?.remove(); renderChat();
-}
-// on iPhones the keyboard covers fixed panels, so lift the chat to sit on top of it
-function fitChat(){
-  const vv = window.visualViewport, box = $("#chatBox"); if(!vv || !box) return;
-  const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-  box.style.setProperty("--kb", kb + "px");
-  box.classList.toggle("typing", kb > 80 && window.innerWidth < 700);
-  box.style.setProperty("--kb-top", vv.offsetTop + "px");
-}
-window.visualViewport?.addEventListener("resize", fitChat);
-window.visualViewport?.addEventListener("scroll", fitChat);
 
 function tickTimer(){
   const el = $("#timer");

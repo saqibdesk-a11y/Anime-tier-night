@@ -336,6 +336,23 @@ def tick(room):
 
 # ---------- what each viewer sees ----------
 
+QUIET = {"reveal": "Chat opens after the clues. No hints on the side.",
+         "clues": "Chat opens after the clues. No hints on the side.",
+         "guess": "The imposter is guessing the word. Chat opens again in a moment."}
+
+
+def chat_rules(room, pid):
+    """Chat is closed while words are secret and clues are being given, and nobody can type their word."""
+    rd = cur(room) if room.get("roundData") else None
+    if room["phase"] in QUIET:
+        return {"read": ["all"], "write": [], "why": QUIET[room["phase"]]}
+    block = []
+    if rd and room["phase"] not in ("results", "final") and pid in rd["order"]:
+        mine = rd["decoy"] if pid in rd["imposters"] else rd["word"]
+        block = [mine] if mine else []
+    return {"read": ["all"], "write": ["all"], "block": block}
+
+
 def public(room, viewer):
     r = {k: v for k, v in room.items() if k not in ("hostKey", "pairs", "roundData")}
     r["now"] = time.time()

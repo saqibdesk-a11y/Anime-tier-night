@@ -2,7 +2,7 @@
 secret key and gives one-word clues with a number; their operatives tap cards to guess. Hit the
 assassin and your team loses on the spot.
 
-Extras: anime packs and anime picture cards, AI-made boards on any topic, an AI spymaster for a team
+Extras: anime packs and festival-character picture cards, AI-made boards on any topic, an AI spymaster for a team
 without one (so even 2 people can play), timers, guess marks your team can see, and a series score.
 
 server.py owns rooms, the lock and HTTP; this module owns the game's rules."""
@@ -12,10 +12,10 @@ import threading
 import time
 
 import ai
+import media
 from media import Refuse
 
 rooms = lock = changed = rid = None
-gallery = None  # server.py plugs in the anime character list for picture cards
 
 HOST_ACTIONS = ("start", "settings", "shuffle", "kick", "playagain", "skip", "addtime", "tolobby")
 TEAMS = ("red", "blue")
@@ -88,7 +88,7 @@ WORDS = {
         Zombie Crafting Farm Village Trade Raid Clan Lobby Ranked Elo Smurf Tryhard Clutch Ace GG""",
 }
 WORDS["mix"] = " ".join(WORDS.values())
-PACKS = {"classic": "Classic", "anime": "Anime", "pictures": "Anime characters (pictures)", "pop": "Pop culture",
+PACKS = {"classic": "Classic", "anime": "Anime", "pictures": "Festival characters (pictures)", "pop": "Pop culture",
          "food": "Food", "games": "Video games", "mix": "Mix of everything", "custom": "Custom (AI)"}
 
 
@@ -116,7 +116,7 @@ def clean_settings(b, old=None):
 def create(room, b):
     room.update({"game": "codenames", "phase": "lobby", "settings": clean_settings(b), "deadline": None,
                  "cards": [], "turn": None, "clue": None, "log": [], "marks": {}, "winner": None, "why": None,
-                 "wins": {"red": 0, "blue": 0}, "aiThinking": None, "aiNote": None, "gameNo": 0, "chat": []})
+                 "wins": {"red": 0, "blue": 0}, "aiThinking": None, "aiNote": None, "gameNo": 0, })
 
 
 def on_join(room, pid):
@@ -178,10 +178,25 @@ def clue_clash(room, word):
     return None
 
 
-def say(room, text, ch="both", pid=None):
-    """Adds a chat line. ch is "all", a team, or "both" (game events everyone should see in their own chat)."""
-    room.setdefault("chat", []).append({"id": rid(6), "pid": pid, "ch": ch, "text": text, "at": time.time(), "sys": pid is None})
-    del room["chat"][:-150]
+def say(room, text):
+    """A game event in everyone's chat."""
+    media.chat_say(room, text)
+
+
+TEAM_NAME = {"red": "Lantern", "blue": "Shrine"}
+
+
+def chat_rules(room, pid):
+    """Off, one chat for everyone, or a private chat per team. Spymasters stay quiet mid-game."""
+    mode, p = room["settings"]["chat"], room["players"].get(pid) or {}
+    if mode == "off":
+        return {"read": [], "write": [], "names": {}, "why": "Chat is off in this game."}
+    team = p.get("team")
+    ch = "all" if mode == "all" or team not in TEAMS else team
+    names = {"all": "Everyone", "red": "Lantern team", "blue": "Shrine team"}
+    quiet = p.get("role") == "spy" and room["phase"] in ("clue", "guess")
+    return {"read": [ch], "write": [] if quiet else [ch], "names": names,
+            "why": "Spymasters can't chat mid-game. Your clues do the talking."}
 
 
 def set_timer(room, secs):
@@ -216,10 +231,10 @@ def make_words(settings, n):
             pass
         pack = "mix"
     if pack == "pictures":
-        chars = [c for c in (gallery() if gallery else []) if c.get("img")]
+        chars = media.CHARACTERS
         if len(chars) >= n:
             picked = random.sample(chars, n)
-            return [{"w": (c.get("alias") or c["name"].split(" (")[0]), "img": c["img"], "show": c.get("show", "")} for c in picked]
+            return [{"w": c["name"], "img": c["img"], "show": c["tag"]} for c in picked]
         pack = "anime"
     pool, seen = [], set()
     for w in re.findall(r"[^\s]+", WORDS[pack]):
@@ -281,7 +296,7 @@ def give_clue(room, word, n, by, targets=None):
                         "targets": targets or None, "right": 0, "id": room["clue"]["id"]})
     room["phase"] = "guess"
     room["aiThinking"] = None
-    say(room, f'{"AI spymaster" if by == "ai" else name(room, by)} gave {room["turn"].title()} the clue: {word} {"∞" if n == UNLIMITED else n}')
+    say(room, f'{"AI spymaster" if by == "ai" else name(room, by)} gave {TEAM_NAME[room["turn"]]} the clue: {word} {"∞" if n == UNLIMITED else n}')
     set_timer(room, room["settings"]["guessSec"])
 
 
@@ -304,7 +319,7 @@ def reveal(room, i, pid):
     clue["guesses"] += 1
     room["log"].append({"kind": "guess", "team": team, "by": pid, "i": i, "w": c["w"], "key": c["key"]})
     room["lastReveal"] = {"i": i, "key": c["key"], "team": team, "id": rid(6)}
-    what = {"assassin": "the ASSASSIN", "neutral": "a bystander", team: "their own agent"}.get(c["key"], f"a {c['key'].title()} agent")
+    what = {"assassin": "the ASSASSIN", "neutral": "a bystander", team: "their own agent"}.get(c["key"], f"a {TEAM_NAME[c['key']]} agent")
     say(room, f"{name(room, pid)} locked {c['w']}: {what}")
     if c["key"] == "assassin":
         stat(room, pid, "assassin")
@@ -350,7 +365,7 @@ def ai_clue(code, tid):
     system = ("You are a brilliant Codenames spymaster. Give one clue word that links as many of your team's cards as "
               "you safely can, while steering clear of the other team's cards and above all the assassin. "
               "The clue must be a single word (a well-known name is fine), not any word on the board and not part of one. "
-              + ("The cards are anime characters; their show is in brackets. Clues can be about their show, powers, looks or personality. " if pics else ""))
+              + ("The cards are original festival characters; what they are known for is in brackets. Clues can be about that, their look or their vibe. " if pics else ""))
     prompt = (f"Your team's cards: {', '.join(mine)}.\nOther team's cards: {', '.join(theirs)}.\n"
               f"Neutral cards: {', '.join(neutral) or 'none'}.\nASSASSIN (never point near it): {', '.join(assassin)}.\n"
               + (f"Clues already given: {', '.join(past)}.\n" if past else "")
@@ -423,11 +438,6 @@ def public(room, viewer):
     r["spymasters"] = {t: spymaster(room, t) for t in TEAMS}
     r["aiReady"] = bool(ai.BUILTIN_ORDER)
     r["packs"] = PACKS
-    # chat: everyone sees the "all" channel; with team chats you only see your own team's
-    team = me.get("team") if me else None
-    mode = room["settings"]["chat"]
-    r["chat"] = [] if mode == "off" else [m for m in room.get("chat", [])
-                                         if m["ch"] == "both" or (mode == "all" and m["ch"] == "all") or (mode == "teams" and m["ch"] == team)]
     return r
 
 
@@ -445,25 +455,11 @@ def player_action(room, action, b, pid):
         if role == "spy":
             taken = [q for q in members(room, team, "spy") if q != pid]
             if taken:
-                raise Refuse(f"{name(room, taken[0])} is already the {team} spymaster.")
+                raise Refuse(f"{name(room, taken[0])} is already the {TEAM_NAME[team]} spymaster.")
         p.update({"team": team, "role": role})
         if role == "spy" and ph == "clue" and room["turn"] == team:  # a human takes over from the AI
             room["aiNote"] = room["aiFailed"] = room["aiThinking"] = None
             set_timer(room, room["settings"]["clueSec"])
-        return True
-    if action == "chat":
-        mode = room["settings"]["chat"]
-        if mode == "off":
-            raise Refuse("Chat is off in this game.")
-        if p.get("role") == "spy" and ph in ("clue", "guess"):
-            raise Refuse("Spymasters can't chat mid-game. Your clues do the talking.")
-        text = " ".join(str(b.get("text") or "").split())[:200]
-        if not text:
-            raise Refuse("Type a message.")
-        if time.time() - p.get("lastChat", 0) < .5:
-            raise Refuse("Slow down a little.")
-        p["lastChat"] = time.time()
-        say(room, text, "all" if mode == "all" else p.get("team"), pid)
         return True
     if action == "clue":
         if ph != "clue" or p.get("team") != room["turn"] or p.get("role") != "spy":
@@ -535,9 +531,9 @@ def host_action(room, action, b):
                         room["players"][pid]["role"] = "spy" if pid == nxt else "op"
         for t in TEAMS:
             if not members(room, t, "op"):
-                raise Refuse(f"{t.title()} team needs at least one guesser.")
+                raise Refuse(f"{TEAM_NAME[t]} team needs at least one guesser.")
             if not spymaster(room, t):
-                raise Refuse(f"{t.title()} team needs a spymaster" + (" (or turn on the AI spymaster)." if ai.BUILTIN_ORDER else "."))
+                raise Refuse(f"{TEAM_NAME[t]} team needs a spymaster" + (" (or turn on the AI spymaster)." if ai.BUILTIN_ORDER else "."))
         room["phase"] = "starting"
         room["deadline"] = None
         threading.Thread(target=begin_game, args=(room["code"],), daemon=True).start()

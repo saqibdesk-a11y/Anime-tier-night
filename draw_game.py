@@ -72,7 +72,7 @@ def create(room, b):
         "category": b.get("category") if b.get("category") in CATEGORIES or b.get("category") == "custom" else "mix",
         "theme": (b.get("theme") or "").strip()[:200],  # what the host typed for a custom category
         "spice": b.get("spice") if b.get("spice") in SPICE else "spicy",
-        "teams": [{"id": "t1", "name": "Team Red"}, {"id": "t2", "name": "Team Blue"}],
+        "teams": [{"id": "t1", "name": "Lantern team"}, {"id": "t2", "name": "Shrine team"}],
         "phase": "lobby", "round": -1, "prompts": [], "deadline": None, "roundData": [], "show": None,
     })
 
@@ -362,6 +362,14 @@ def strokes_since(code, rnd, team, since, gen):
 
 
 # ---------- actions (lock held) ----------
+
+def chat_rules(room, pid):
+    """Everyone talks in one chat; in team mode each team also gets a private one."""
+    team = (room["players"].get(pid) or {}).get("team") if room["mode"] == "team" else None
+    names = {"all": "Everyone", **{t["id"]: t["name"] for t in room["teams"]}}
+    chans = ["all"] + ([team] if team else [])
+    return {"read": chans, "write": chans, "names": names}
+
 
 HOST_ACTIONS = ("start", "shuffle", "teams", "addtime", "end", "slide", "nextround", "finish", "rejudge", "playagain", "kick")
 

@@ -1,0 +1,49 @@
+/* Festival night: the look every page shares. A summer festival street after dark; each game is a
+   stall on it. Pages build their own parts from these tokens, and theme.js swaps the night, lantern,
+   gold and shrine tokens for the other festival recolors. */
+@import url("https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap");
+
+:root{
+  --night:#1B1F4B; --night-2:#252A5E; --night-3:#313773;
+  --paper:#F3EBDD; --paper-2:#E4D7BF; --ink:#1E1A2E; --ink-2:#5B5670;
+  --lantern:#F2603A; --on-lantern:#1E1A2E; --gold:#D9A441; --shrine:#2E8B6E; --on-shrine:#F3EBDD;
+  --fg:#F3EBDD; --muted:#B4B0D2; --line:rgba(243,235,221,.14); --line-2:rgba(243,235,221,.28);
+  --danger:#FF8A7A;
+  --display:"Yuji Syuku","Hiragino Mincho ProN","Times New Roman",serif;
+  --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-tag:10px; --r-panel:16px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;background-color:var(--night);color:var(--fg);font:16px/1.55 var(--body);-webkit-font-smoothing:antialiased;
+  /* the only glow on the page: lantern light spilling from the top edge */
+  background-image:radial-gradient(120% 60% at 50% -12%,color-mix(in srgb,var(--lantern) 16%,transparent),transparent 70%);background-repeat:no-repeat;background-attachment:fixed}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:0;text-wrap:balance;margin:0}
+::selection{background:var(--lantern);color:var(--on-lantern)}
+
+/* the noren: the cloth curtain hung over each stall, which every game page uses as its header.
+   Markup: <header class="noren"><a class="noren-back" href="/">Festival</a><h1>Codenames</h1>...</header> */
+.noren{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;min-height:58px;
+  padding:calc(6px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px));
+  background:var(--lantern);color:var(--on-lantern);
+  /* the curtain is split into flaps: thin night-colored slits at the bottom edge */
+  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,repeating-linear-gradient(90deg,#000 0 calc(25% - 3px),transparent calc(25% - 3px) 25%) bottom/100% 8px no-repeat;
+          mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,repeating-linear-gradient(90deg,#000 0 calc(25% - 3px),transparent calc(25% - 3px) 25%) bottom/100% 8px no-repeat}
+.noren h1{font-size:24px;line-height:1;flex:none}
+.noren .noren-back{color:inherit;text-decoration:none;font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:4px;opacity:.85}
+.noren .noren-back:hover{opacity:1}
+.noren .spacer{flex:1}
+.noren .th-btn{border-color:rgba(30,26,46,.35)}
+
+/* buttons: paper tags. Primary is lantern orange, plain is paper, quiet is an outline */
+.f-btn{border:0;border-radius:999px;padding:11px 20px;font-weight:700;cursor:pointer;background:var(--paper);color:var(--ink);transition:transform .12s}
+.f-btn:active{transform:scale(.97)}
+.f-btn.primary{background:var(--lantern);color:var(--on-lantern)}
+.f-btn.quiet{background:none;color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
+.f-btn:disabled{opacity:.45;cursor:not-allowed}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}

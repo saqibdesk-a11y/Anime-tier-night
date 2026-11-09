@@ -36,8 +36,6 @@ GOOD_SPECIALS = ("seer", "doctor", "hunter", "knight", "mayor", "assassin", "nec
 EVIL_SPECIALS = ("alpha", "shaman", "siren")
 ROLE_SEC = 75     # time to read your card before night falls anyway
 REVEAL_SEC = 9    # how long dawn or a verdict stays on screen before the game moves on
-CHAT = {}         # room code -> recent messages; chat isn't saved, it's gone when the server restarts
-CHAT_KEEP = 150
 
 
 def setup(rooms_, lock_, changed_, rid_):
@@ -297,23 +295,28 @@ def tick(room):
 
 # ---------- chat ----------
 
-def channels(room, pid):
-    """(can read, can write) for a player. All: everyone. Evil: the evil team's private channel.
-    Ghosts: the dead and spectators, who can't talk to the living."""
+CHANNEL_NAMES = {"all": "Everyone", "evil": "Evil team", "ghosts": "Ghosts"}
+
+
+def chat_rules(room, pid):
+    """Who reads and writes where. All: everyone. Evil: the evil team's private channel.
+    Ghosts: the dead and spectators, who can't talk to the living. The village sleeps at night."""
     p = room["players"].get(pid)
     if not p:
-        return set(), set()
-    if room["phase"] in ("lobby", "final") or not p.get("role"):
-        read = {"all"} | ({"ghosts"} if room["phase"] not in ("lobby", "final") else set())
-        return read, ({"all"} if room["phase"] in ("lobby", "final") else {"ghosts"})
+        return {"read": ["all"], "write": [], "names": CHANNEL_NAMES}
+    playing = room["phase"] not in ("lobby", "final")
+    if not playing or not p.get("role"):
+        return {"read": ["all", "ghosts"] if playing else ["all"], "write": ["ghosts"] if playing else ["all"],
+                "names": CHANNEL_NAMES, "why": "Spectators can't talk to the players. Use Ghosts."}
     if not p.get("alive"):
-        return {"all", "ghosts"}, {"ghosts"}
-    read = {"all"}
-    write = set() if room["phase"] == "night" else {"all"}  # the village sleeps: no public talk at night
+        return {"read": ["all", "ghosts"], "write": ["ghosts"], "names": CHANNEL_NAMES,
+                "why": "Ghosts can't talk to the living. Use Ghosts."}
+    read, write = ["all"], [] if room["phase"] == "night" else ["all"]
     if ROLES[p["role"]]["team"] == "evil":
-        read.add("evil")
-        write.add("evil")
-    return read, write
+        read.append("evil")
+        write.append("evil")
+    return {"read": read, "write": write, "names": CHANNEL_NAMES,
+            "why": "The village is asleep. No talking until dawn." if room["phase"] == "night" else "Only the evil team can talk there."}
 
 
 # ---------- what each viewer sees ----------
@@ -364,9 +367,6 @@ def public(room, viewer):
         r["seerLog"] = room["seerLog"]
     if room["phase"] == "final":
         r["events"] = room["events"]
-    read, write = channels(room, viewer) if viewer else ({"all"}, set())
-    r["chat"] = [m for m in CHAT.get(room["code"], []) if m["ch"] in read][-100:]
-    r["chatRead"], r["chatWrite"] = sorted(read), sorted(write)
     return r
 
 
@@ -374,19 +374,6 @@ def public(room, viewer):
 
 def player_action(room, action, b, pid):
     p = room["players"][pid]
-    if action == "chat":
-        ch, text = b.get("ch") or "all", " ".join(str(b.get("text") or "").split())[:300]
-        if not text:
-            raise Refuse("Type a message first.")
-        if ch not in channels(room, pid)[1]:
-            if ch == "all" and p.get("role") and not p.get("alive") and room["phase"] not in ("lobby", "final"):
-                raise Refuse("Ghosts can't talk to the living. Use the Ghosts chat.", 409)
-            raise Refuse({"all": "The village is asleep. No public talking at night.", "evil": "Only the evil team can talk there.",
-                          "ghosts": "Only ghosts can talk there."}.get(ch, "You can't talk there right now."), 409)
-        log = CHAT.setdefault(room["code"], [])
-        log.append({"id": rid(8), "ch": ch, "pid": pid, "name": p["name"], "text": text, "t": time.time()})
-        del log[:-CHAT_KEEP]
-        return True
     if action == "ready":
         if room["phase"] != "roles":
             raise Refuse("Not now.")

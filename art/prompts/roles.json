@@ -1,0 +1,148 @@
+{
+ "style": "Anime illustration, clean confident ink linework, flat cel shading with soft painted highlights, dramatic festival lantern light, deep indigo night background with blurred lanterns. Character card portrait, upper body, facing the viewer, centered, head fully in frame. Original character design. No text, no letters, no watermark.",
+ "jobs": [
+  {
+   "id": "wolf",
+   "out": "img/roles/wolf.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A menacing figure in a dark yukata wearing a carved black wolf festival mask with red painted markings, glowing yellow eyes through the mask holes, claws curling from the sleeve."
+  },
+  {
+   "id": "alpha",
+   "out": "img/roles/alpha.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A towering commanding figure in a crimson and black haori wearing a large silver wolf mask with a gold crown of horns, fur collar, glowing red eyes through the mask."
+  },
+  {
+   "id": "shaman",
+   "out": "img/roles/shaman.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A hunched figure in tattered purple robes wearing a cracked grey wolf mask hung with paper charms, holding a smoking incense bundle, green mist."
+  },
+  {
+   "id": "siren",
+   "out": "img/roles/siren.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "An alluring figure in a deep teal yukata wearing a half mask of pale blue fish scales, long wet black hair, singing, ghostly blue light."
+  },
+  {
+   "id": "seer",
+   "out": "img/roles/seer.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A calm young woman with closed eyes and a white veil, wearing a golden sun-and-moon festival mask on top of her head, holding a glowing crystal orb, violet light."
+  },
+  {
+   "id": "doctor",
+   "out": "img/roles/doctor.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A kind young man with short brown hair in a white coat over a green yukata, a white crane mask pushed onto his forehead, holding a medicine box and bandages."
+  },
+  {
+   "id": "hunter",
+   "out": "img/roles/hunter.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A rugged woman with a messy brown braid and a fur shoulder cape, a brown bear mask pushed up on her head, holding an old long rifle, determined."
+  },
+  {
+   "id": "knight",
+   "out": "img/roles/knight.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A proud young man in lacquered red samurai armor with a lion-dog guardian mask pushed onto his head, holding a tall shield, steady stance."
+  },
+  {
+   "id": "mayor",
+   "out": "img/roles/mayor.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A plump smiling middle-aged man with a mustache in a formal black haori with a gold sash, a lucky-cat mask on the side of his head, holding a wooden gavel."
+  },
+  {
+   "id": "assassin",
+   "out": "img/roles/assassin.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A slim masked figure in black with a pale white mask with a single painted red tear, hood up, holding a thin dagger hidden behind a lantern."
+  },
+  {
+   "id": "necro",
+   "out": "img/roles/necro.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A pale gaunt figure with long white hair in a grey robe, a skull festival mask pushed aside, holding a lantern with a blue spirit flame, wisps of ghosts around."
+  },
+  {
+   "id": "jester",
+   "out": "img/roles/jester.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A grinning prankster in a patchwork yukata of every color wearing a laughing hyottoko mask on the side of the head, juggling three paper balls."
+  },
+  {
+   "id": "villager",
+   "out": "img/roles/villager.webp",
+   "w": 768,
+   "h": 1024,
+   "size": [
+    480,
+    640
+   ],
+   "prompt": "A friendly young villager with a tidy black bob in a plain blue yukata, a simple round paper mask hanging from the neck, holding a paper lantern."
+  }
+ ]
+}
