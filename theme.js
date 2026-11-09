@@ -68,10 +68,11 @@
   const ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M12 3v2"/><path d="M7 7c0-1 2.2-2 5-2s5 1 5 2v8c0 1-2.2 2-5 2s-5-1-5-2z"/><path d="M7 11h10M10 17v2h4v-2"/></svg>`;
   function addButtons(){
     const slots = document.querySelectorAll("[data-theme-slot]");
-    (slots.length ? slots : document.querySelectorAll("header.top")).forEach(h => {
+    (slots.length ? slots : document.querySelectorAll("header.top, .bar .wrap, .hero")).forEach(h => {
       if(h.querySelector(":scope > .th-btn")) return;
       const b = document.createElement("button"); b.className = "th-btn"; b.type = "button"; b.title = "Festival colors"; b.setAttribute("aria-label", "Festival colors"); b.innerHTML = ICON;
       b.onclick = open;
+      if(h.classList.contains("hero")){ b.style.cssText = "position:absolute;top:0;right:0"; if(getComputedStyle(h).position === "static") h.style.position = "relative"; }
       const before = h.querySelector(":scope > #soundBtn, :scope > .timer");
       before ? h.insertBefore(b, before) : h.appendChild(b);
     });

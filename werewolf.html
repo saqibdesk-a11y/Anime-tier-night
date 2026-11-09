@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#05060f">
+<meta name="theme-color" content="#1B1F4B">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -12,87 +12,93 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Game Night">
 <title>Werewolf</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/festival.css">
 <style>
-/* Layout: the whole game happens around one round table under the night sky. You always sit at the
-   bottom seat; the table's center shows the phase, the clock and what just happened. Votes are arrows
-   across the table. Role cards flip in 3D for the big reveals. */
+/* Layout: the far end of the festival street, past the last stall. The game happens around one round
+   table under the sky; a string of lanterns hangs over it and goes dark, one lantern at a time, when
+   night falls. You always sit at the bottom seat; the table's center shows the phase and the clock.
+   Role cards are festival masks and flip in 3D for the big reveals. Colors come from festival.css. */
 :root{
-  --ink:#05060f; --night1:#070a1c; --night2:#141238; --fg:#efeaf7; --muted:#9a95b4; --line:rgba(205,195,255,.14); --line2:rgba(205,195,255,.28);
-  --glass:rgba(16,14,40,.66); --glass2:rgba(255,255,255,.07);
-  --moon:#ffe9b0; --blood:#e3264b; --blood2:#7d0f2a; --gold:#f2c35b; --mint:#53e3a6; --violet:#9d7bff;
+  --deep:color-mix(in srgb,var(--night) 55%,#000); --night1:color-mix(in srgb,var(--night) 70%,#000); --night2:var(--night); --line2:var(--line-2);
+  --glass:color-mix(in srgb,var(--night-2) 80%,transparent); --glass2:rgba(243,235,221,.08);
+  --moon:#FFE9B8; --blood:var(--lantern); --blood2:color-mix(in srgb,var(--lantern) 50%,#000); --mint:#6FD9AE; --violet:#A98BFF;
   --wolf1:#7d0f2a; --wolf2:#e3264b; --seer1:#3b1d86; --seer2:#9d7bff; --doc1:#0d5c45; --doc2:#53e3a6;
   --hunt1:#7a4a07; --hunt2:#f2a33a; --vill1:#1f3557; --vill2:#6fa8ff;
   --wood1:#3a2516; --wood2:#1d120a;
-  --display:"Cinzel","Times New Roman",serif; --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
-  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{background:var(--ink);color:var(--fg);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{background:var(--deep);overflow-x:hidden}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:2px solid var(--moon);outline-offset:3px}
+
 [hidden]{display:none!important}
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.02em}
+
 .muted{color:var(--muted)}
 
 /* ---------- sky ---------- */
-.scene{position:fixed;inset:0;z-index:0;overflow:hidden;background:linear-gradient(180deg,var(--night1),var(--night2) 70%,#1d1440);transition:background 2.5s ease}
+.scene{position:fixed;inset:0;z-index:0;overflow:hidden;background:linear-gradient(180deg,var(--deep),var(--night1) 55%,var(--night2));transition:background 2.5s ease}
+/* the festival's last string of lanterns. Lit in the evening and by day; at night they go out one by one */
+.lanterns{position:absolute;left:-2%;right:-2%;top:56px;height:90px;display:flex;align-items:flex-start;justify-content:space-between;padding:0 3%}
+.lanterns::before{content:"";position:absolute;left:0;right:0;top:-30px;height:60px;border-bottom:1.5px solid rgba(243,235,221,.25);border-radius:0 0 50% 50%}
+.lanterns i{position:relative;width:clamp(16px,3vw,26px);aspect-ratio:3/4;border-radius:45%;margin-top:calc(var(--sag) * 1px);background:var(--lantern);
+  box-shadow:0 0 18px 6px color-mix(in srgb,var(--lantern) 45%,transparent),inset 0 -4px 0 rgba(0,0,0,.18);transition:background 1.2s,box-shadow 1.2s;transition-delay:calc(var(--n) * .35s)}
+.lanterns i::before{content:"";position:absolute;left:30%;right:30%;top:-4px;height:4px;background:#2a2033;border-radius:2px}
+body.s-night .lanterns i,body.s-vote .lanterns i{background:#3a3550;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+body.s-vote .lanterns i:nth-child(3n){background:var(--lantern);box-shadow:0 0 12px 3px color-mix(in srgb,var(--lantern) 35%,transparent)}
 .scene .stars{position:absolute;inset:0;transition:opacity 2.5s}
 .scene .stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:twinkle 3s infinite ease-in-out}
 @keyframes twinkle{50%{opacity:.25}}
 .moon{position:absolute;right:5%;top:3%;width:min(18vw,120px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 55%,#e0bf73);box-shadow:0 0 60px 20px rgba(255,233,176,.22);transition:transform 2.5s ease,opacity 2.5s}
 .sun{position:absolute;left:50%;bottom:-40%;width:min(46vw,300px);aspect-ratio:1;border-radius:50%;transform:translateX(-50%);background:radial-gradient(circle,#fff3c4,#ffb347 60%,#ff7a3d);box-shadow:0 0 120px 50px rgba(255,150,70,.35);opacity:0;transition:bottom 3s cubic-bezier(.2,.7,.2,1),opacity 2s}
-.trees{position:absolute;left:0;right:0;bottom:0;height:20vh;opacity:.9}
+.trees{position:absolute;left:0;right:0;bottom:0;height:20vh;opacity:.95}
+.trees path{fill:var(--deep)}
 .fog{position:absolute;left:-50%;width:200%;height:30vh;bottom:4vh;background:radial-gradient(closest-side,rgba(180,170,230,.10),transparent);filter:blur(10px);animation:drift 40s linear infinite}
 @keyframes drift{from{transform:translateX(0)}to{transform:translateX(25%)}}
-body.s-dawn .scene{background:linear-gradient(180deg,#2a1f5c,#b4527a 55%,#f39a5d)}
+body.s-dawn .scene{background:linear-gradient(180deg,var(--night),color-mix(in srgb,var(--lantern) 55%,var(--night)) 55%,color-mix(in srgb,var(--gold) 70%,var(--lantern)))}
 body.s-dawn .sun{bottom:4%;opacity:1}
 body.s-dawn .moon,body.s-day .moon{transform:translateY(-140%);opacity:0}
 body.s-dawn .stars,body.s-day .stars{opacity:0}
-body.s-day .scene{background:linear-gradient(180deg,#22305c,#4a5f96 55%,#8d7aa8)}
+body.s-day .scene{background:linear-gradient(180deg,var(--night-2),var(--night-3) 55%,color-mix(in srgb,var(--night-3) 60%,var(--gold)))}
 body.s-day .sun{bottom:62%;opacity:.85;left:16%}
-body.s-vote .scene{background:linear-gradient(180deg,#1a0716,#4a0f26 60%,#8a1f3a)}
+body.s-vote .scene{background:linear-gradient(180deg,var(--deep),color-mix(in srgb,var(--night) 60%,var(--lantern)) 70%,color-mix(in srgb,var(--night) 35%,var(--lantern)))}
 body.s-vote .moon{opacity:.2}
 body.s-vote .stars{opacity:.3}
-body.s-wolves .scene{background:linear-gradient(180deg,#12020a,#3d0618 60%,#7d0f2a)}
+body.s-wolves .scene{background:linear-gradient(180deg,#0c0410,color-mix(in srgb,#0c0410 60%,var(--lantern)))}
 body.s-wolves .moon{background:radial-gradient(circle at 35% 35%,#ffd6d6,#ff5470 60%,#9a1030);box-shadow:0 0 80px 30px rgba(227,38,75,.35)}
-body.s-village .scene{background:linear-gradient(180deg,#1d2b55,#6e5fa0 50%,#f0b15f)}
+body.s-village .scene{background:linear-gradient(180deg,var(--night-2),var(--night-3) 50%,var(--gold))}
 body.s-village .sun{bottom:30%;opacity:1}
 body.s-village .moon{opacity:0}
 
 /* ---------- frame ---------- */
 .app{position:relative;z-index:1;min-height:100vh}
-.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(5,6,15,.85),rgba(5,6,15,0))}
-.top a{color:var(--muted);text-decoration:none;font-weight:700}
-.top h1{font-size:17px;font-weight:800}
-.code{font-family:var(--display);font-weight:800;letter-spacing:.2em;font-size:13px;border:1px solid var(--line2);border-radius:999px;padding:3px 12px;background:var(--glass)}
+.noren{background:var(--ink);color:var(--paper)}
+.noren .th-btn{border-color:var(--line-2)}
+.code{font-weight:700;letter-spacing:.16em;font-size:14px;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.85}
 .spacer{flex:1}
 .stage{width:min(720px,100%);margin:0 auto;padding:0 max(14px,env(safe-area-inset-left,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
 .panel{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;gap:12px}
-.title{font-size:clamp(28px,7.5vw,48px);font-weight:900;line-height:1.05;text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.title{font-size:clamp(32px,7.5vw,52px);line-height:1.1;text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6)}
 .sub{text-align:center;color:var(--muted);margin:6px 0 0}
-.eyebrow{text-align:center;font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--moon)}
-.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:800;transition:transform .12s,background .2s}
+.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--moon)}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s,background .2s}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.primary{background:linear-gradient(135deg,var(--moon),var(--gold));color:#2a1a00;border-color:transparent;box-shadow:0 10px 30px -10px rgba(242,195,91,.7)}
-.btn.blood{background:linear-gradient(135deg,var(--blood),var(--blood2));border-color:transparent;color:#fff}
+.btn.primary{background:var(--paper);color:var(--ink);border-color:transparent}
+.btn.blood{background:var(--lantern);border-color:transparent;color:var(--on-lantern)}
 .btn.small{padding:6px 13px;font-size:13px}
 .btn.wide{width:100%}
-label{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-input[type=text],select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:11px 14px;outline:none;color:var(--fg)}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:11px 14px;outline:none;color:var(--fg)}
 input[type=text]:focus,select:focus{border-color:var(--moon)}
-select option{background:#14122e}
-.err{color:#ff8fa3;font-size:14px;min-height:1.4em}
+select option{background:var(--night)}
+.err{color:var(--danger);font-size:14px;min-height:1.4em}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media (max-width:520px){.row3{grid-template-columns:1fr 1fr}}
 .toggles{display:flex;flex-wrap:wrap;gap:8px}
 .tg{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:rgba(0,0,0,.25);font-weight:700;font-size:14px}
-.tg.on{border-color:var(--moon);background:rgba(255,233,176,.1)}
+.tg.on{border-color:var(--moon);background:rgba(255,233,184,.1)}
 .tg i{width:10px;height:10px;border-radius:50%}
 .hint{font-size:13px;color:var(--muted);margin:0}
 
@@ -106,14 +112,14 @@ select option{background:#14122e}
 .center .ico.sunico{background:radial-gradient(circle,#fff3c4,#ffb347 60%,#ff7a3d);box-shadow:0 0 30px rgba(255,150,70,.6)}
 .center .ico.voteico{background:radial-gradient(circle,#ff8aa0,var(--blood) 60%,var(--blood2));box-shadow:0 0 30px rgba(227,38,75,.6);animation:glow 1.6s ease-in-out infinite}
 @keyframes glow{50%{transform:scale(1.08)}}
-.center h2{font-size:clamp(14px,4.2vw,24px);font-weight:900;line-height:1.1}
-.center .clock{font-family:var(--display);font-weight:900;font-size:clamp(18px,5.5vw,30px);font-variant-numeric:tabular-nums;color:var(--moon)}
+.center h2{font-size:clamp(16px,4.4vw,26px);line-height:1.15}
+.center .clock{font-weight:900;font-size:clamp(18px,5.5vw,30px);font-variant-numeric:tabular-nums;color:var(--moon)}
 .center .clock.low{color:var(--blood);animation:glow 1s infinite}
 .center .small{font-size:clamp(10px,2.8vw,13px);color:var(--muted);font-weight:700}
 .seat{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;width:var(--sz);border:0;background:none;padding:0;transition:transform .2s,filter .4s;z-index:2}
-.seat .av{width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.22);background:#221d48;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:calc(var(--sz)*.38);color:#0b0820;box-shadow:0 10px 24px -8px rgba(0,0,0,.95);position:relative}
+.seat .av{width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.22);background:var(--night-3);display:grid;place-items:center;font-weight:900;font-size:calc(var(--sz)*.38);color:#0b0820;box-shadow:0 10px 24px -8px rgba(0,0,0,.95);position:relative}
 .seat .av img{width:100%;height:100%;object-fit:cover;object-position:top}
-.seat .nm{font-weight:800;font-size:12px;max-width:calc(var(--sz) + 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 6px #000;background:rgba(5,6,15,.55);border-radius:999px;padding:0 7px}
+.seat .nm{font-weight:700;font-size:13px;max-width:calc(var(--sz) + 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 6px #000;background:rgba(5,6,15,.55);border-radius:999px;padding:0 7px}
 .seat.me .av{border-color:var(--moon)}
 .seat.pick{cursor:pointer}
 .seat.pick:hover{transform:translate(-50%,-50%) scale(1.07)}
@@ -124,7 +130,7 @@ select option{background:#14122e}
 .seat.dead .av::after{content:"";position:absolute;inset:0;background:linear-gradient(45deg,transparent 46%,var(--blood) 46% 54%,transparent 54%)}
 .seat.dying{animation:shake .5s 3}
 @keyframes shake{25%{transform:translate(-53%,-50%)}75%{transform:translate(-47%,-50%)}}
-.seat .tag{position:absolute;top:-6px;right:-8px;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 6px;color:#fff;background:var(--c1,#333);border:1px solid var(--c2,#666);white-space:nowrap}
+.seat .tag{position:absolute;top:-6px;right:-8px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 6px;color:#fff;background:var(--c1,#333);border:1px solid var(--c2,#666);white-space:nowrap}
 .seat .cnt{position:absolute;top:-4px;left:-6px;min-width:22px;height:22px;border-radius:999px;background:var(--blood);color:#fff;font-weight:900;font-size:12px;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 12px rgba(227,38,75,.7);animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{from{transform:scale(.3)}}
 .lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
@@ -139,7 +145,7 @@ select option{background:#14122e}
 
 /* under the table */
 .info{margin-top:8px;display:grid;gap:10px}
-.say{font-family:var(--display);font-weight:600;font-size:clamp(15px,4vw,19px);line-height:1.5;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.7);padding:0 6px}
+.say{font-family:var(--display);font-size:clamp(17px,4.2vw,21px);line-height:1.5;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.7);padding:0 6px}
 .myrole{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px;border:1px solid var(--line2);background:var(--glass)}
 .chip.role{background:var(--c1);border-color:var(--c2)}
@@ -150,19 +156,26 @@ select option{background:#14122e}
 .card{position:relative;width:min(280px,74vw);aspect-ratio:5/7.4;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.3,1.25,.4,1);cursor:pointer}
 .card.flip{transform:rotateY(180deg)}
 .card .side{position:absolute;inset:0;border-radius:22px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 30px 70px -20px rgba(0,0,0,.95),inset 0 0 0 2px rgba(255,236,190,.35)}
-.card .back{background:radial-gradient(circle at 50% 38%,rgba(255,233,176,.25),transparent 40%),repeating-linear-gradient(45deg,#16123a 0 14px,#1b1646 14px 28px);display:grid;place-items:center}
-.card .back::before{content:"";position:absolute;inset:12px;border:2px solid rgba(255,233,176,.35);border-radius:14px}
+.card .back{background:radial-gradient(circle at 50% 38%,rgba(255,233,184,.22),transparent 40%),repeating-linear-gradient(45deg,var(--night) 0 14px,var(--night-2) 14px 28px);display:grid;place-items:center}
+.card .back::before{content:"";position:absolute;inset:12px;border:2px solid color-mix(in srgb,var(--gold) 60%,transparent);border-radius:14px}
 .card .back .mn{width:42%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 60%,#c99d47);box-shadow:0 0 50px rgba(255,233,176,.5)}
-.card .back .tap{position:absolute;bottom:14%;font-family:var(--display);font-weight:800;letter-spacing:.2em;font-size:13px;color:var(--moon);animation:breathe 2s infinite}
+.card .back .tap{position:absolute;bottom:14%;font-weight:700;font-size:15px;color:var(--moon);animation:breathe 2s infinite}
 @keyframes breathe{50%{opacity:.4}}
-.card .front{transform:rotateY(180deg);display:grid;grid-template-rows:auto auto 1fr auto;justify-items:center;gap:4px;padding:18px;text-align:center;background:linear-gradient(165deg,var(--c1),#0b0820 85%)}
-.card .front::before{content:"";position:absolute;inset:10px;border:2px solid rgba(255,236,190,.4);border-radius:15px;pointer-events:none}
+.card .front{transform:rotateY(180deg);display:grid;grid-template-rows:auto 1fr auto auto;justify-items:center;gap:4px;padding:16px;text-align:center;background:linear-gradient(165deg,var(--c1),#0b0820 85%)}
+/* the role's mask portrait fills the card; the name and rules sit on a dark band at the bottom */
+.card .front .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 18%}
+.card .front::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,8,20,.94) 0%,rgba(10,8,20,.75) 34%,transparent 62%);pointer-events:none}
+.card .front > :not(.art){position:relative;z-index:1}
+.card .front .owner{grid-row:1;justify-self:start}
+.card .front .rname{grid-row:3}
+.card .front .desc{grid-row:4}
+.card .front::before{content:"";position:absolute;inset:10px;border:2px solid rgba(255,236,190,.45);border-radius:15px;pointer-events:none;z-index:2}
 .card .front .owner{width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;font-weight:900;color:#0b0820;background:#333}
 .card .front .owner img{width:100%;height:100%;object-fit:cover;object-position:top}
-.card .front .rname{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.06em;color:#fff;text-shadow:0 2px 12px var(--c2)}
+.card .front .rname{font-family:var(--display);font-size:28px;line-height:1.1;color:#fff;text-shadow:0 2px 12px var(--c2)}
 .card .front svg{width:58%;margin:auto;filter:drop-shadow(0 0 22px var(--c2))}
-.card .front .desc{font-size:13px;line-height:1.45;color:#e7e1f5}
-.card .stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4);opacity:0;font-family:var(--display);font-weight:900;font-size:20px;letter-spacing:.12em;color:var(--blood);border:4px solid var(--blood);border-radius:10px;padding:4px 12px;background:rgba(10,0,6,.6);white-space:nowrap;animation:slam .5s 1.4s cubic-bezier(.2,1.6,.4,1) forwards;backface-visibility:hidden}
+.card .front .desc{font-size:14px;line-height:1.45;color:#EFE9F7}
+.card .stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4);opacity:0;font-family:var(--display);font-size:24px;z-index:3;color:var(--blood);border:4px solid var(--blood);border-radius:10px;padding:4px 12px;background:rgba(10,0,6,.6);white-space:nowrap;animation:slam .5s 1.4s cubic-bezier(.2,1.6,.4,1) forwards;backface-visibility:hidden}
 @keyframes slam{to{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}}
 .reveal-pop{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(5,4,15,.55);backdrop-filter:blur(3px);animation:fadein .4s;pointer-events:none}
 @keyframes fadein{from{opacity:0}}
@@ -171,107 +184,54 @@ select option{background:#14122e}
 .minicards .card{width:100%;cursor:default}
 .minicards .card .front{padding:10px;grid-template-rows:auto auto 1fr auto auto;gap:2px}
 .minicards .card .front .owner{width:36px;height:36px;font-size:13px}
-.minicards .card .front .rname{font-size:14px}
+.minicards .card .front .rname{font-size:16px}
 .minicards .card .front svg{width:52%}
-.minicards .card .front .desc{font-size:12px;font-weight:800}
-.minicards .card .st{font-family:var(--display);font-weight:900;font-size:10px;letter-spacing:.14em;border:2px solid currentColor;border-radius:6px;padding:0 6px;color:var(--mint)}
+.minicards .card .front .desc{font-size:13px;font-weight:700}
+.minicards .card .st{font-weight:700;font-size:12px;grid-row:2;align-self:start;justify-self:end;border:2px solid currentColor;border-radius:6px;padding:0 6px;color:var(--mint)}
 .minicards .card.dead .st{color:var(--blood)}
-.banner{font-family:var(--display);font-weight:900;font-size:clamp(32px,9.5vw,68px);text-align:center;line-height:1;letter-spacing:.04em;margin-top:10px;animation:rise 1.4s cubic-bezier(.2,.8,.2,1) backwards}
-@keyframes rise{from{opacity:0;transform:translateY(30px) scale(.9);letter-spacing:.3em}}
-.banner.wolves{color:#ff5a78;text-shadow:0 0 40px rgba(227,38,75,.8)}
-.banner.village{color:var(--gold);text-shadow:0 0 40px rgba(242,195,91,.7)}
+.banner{font-family:var(--display);font-size:clamp(36px,10vw,72px);text-align:center;line-height:1.1;margin-top:10px;animation:rise 1.4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(30px) scale(.9)}}
+.banner.wolves{color:var(--lantern);text-shadow:0 0 40px color-mix(in srgb,var(--lantern) 70%,transparent)}
+.banner.village{color:var(--paper);text-shadow:0 0 40px color-mix(in srgb,var(--gold) 70%,transparent)}
 .timeline{display:grid;gap:6px;margin-top:6px}
 .timeline div{display:flex;gap:10px;align-items:center;font-size:14px}
 .timeline b{font-family:var(--display);min-width:64px;color:var(--moon)}
 .vision{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(5,4,20,.9);backdrop-filter:blur(6px);padding:20px;animation:fadein .4s}
 .vision .orb{width:140px;aspect-ratio:1;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 40% 35%,#fff,var(--violet) 45%,#2a1060);box-shadow:0 0 80px 20px rgba(157,123,255,.5);animation:glow 2.4s ease-in-out infinite}
-.drum{font-family:var(--display);font-weight:900;font-size:clamp(26px,7vw,40px);text-align:center}
+.drum{font-family:var(--display);font-size:clamp(26px,7vw,40px);text-align:center}
 .fadeup{animation:fadeup .7s cubic-bezier(.2,.8,.2,1) backwards}
 @keyframes fadeup{from{opacity:0;transform:translateY(18px)}}
-.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(0deg,rgba(5,6,15,.95),rgba(5,6,15,.6));border-top:1px solid var(--line)}
-.hostbar .lbl{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:50;background:var(--moon);color:#2a1a00;font-weight:800;border-radius:999px;padding:10px 20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+.hostbar .lbl{font-size:14px;font-weight:700;color:var(--muted)}
+body.has-hostbar{--chat-lift:64px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:50;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .me-pic{display:flex;align-items:center;gap:14px}
 .me-pic button{width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px dashed var(--line2);display:grid;place-items:center;background:rgba(0,0,0,.3);flex:none;font-size:12px;color:var(--muted);padding:0}
 .me-pic button img{width:100%;height:100%;object-fit:cover;object-position:top}
 details summary{cursor:pointer;font-weight:800}
 .rolelist{display:grid;gap:8px;margin-top:10px}
-.rolelist div{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center;font-size:14px}
-.rolelist svg{width:34px;filter:drop-shadow(0 0 8px var(--c2))}
-/* ---------- chat: a sheet from the bottom on phones, docked on the right on big screens ---------- */
-.chatfab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25;width:58px;height:58px;border-radius:50%;border:1px solid var(--line2);background:linear-gradient(135deg,#2a2160,#14123a);color:var(--moon);display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.9);transition:transform .15s}
-.chatfab:active{transform:scale(.94)}
-.chatfab svg{width:26px;height:26px}
-.chatfab .badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;border-radius:999px;background:var(--blood);color:#fff;font-size:12px;font-weight:900;display:grid;place-items:center;padding:0 6px}
-body.has-hostbar .chatfab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-.chat{position:fixed;left:0;right:0;bottom:0;z-index:35;height:min(72dvh,620px);display:flex;flex-direction:column;background:rgba(12,10,32,.97);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;box-shadow:0 -20px 60px rgba(0,0,0,.7);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);backdrop-filter:blur(14px)}
-.chat.open{transform:none}
-/* keyboard open on a phone: the chat fills exactly the space above it, newest messages in view */
-/* while typing on a phone: the chat runs from the top of the screen to the top of the keyboard, no gaps */
-.chat.typing{top:var(--kb-top,0px);bottom:var(--kb-bottom,0px);height:auto;border-radius:0;border-top:0;transition:none}
-.chat.typing .grab{display:none}
-.chat.typing header{padding:calc(4px + env(safe-area-inset-top,0px)) 10px 4px}
-.chat.typing .msgs{padding:4px 10px 6px}
-.chat.typing form{padding:4px 8px}
-.chat .grab{width:42px;height:5px;border-radius:999px;background:rgba(255,255,255,.25);margin:8px auto 0}
-.chat header{display:flex;align-items:center;gap:6px;padding:8px 12px 8px 14px}
-.chat .tabs{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
-.chat .tabs button{flex:none;border:1px solid var(--line);background:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:13px;color:var(--muted);position:relative}
-.chat .tabs button.on{background:var(--moon);color:#2a1a00;border-color:var(--moon)}
-.chat .tabs button.evil.on{background:var(--blood);color:#fff;border-color:var(--blood)}
-.chat .tabs button.ghosts.on{background:#5b5f7a;color:#fff;border-color:#5b5f7a}
-.chat .tabs button i{position:absolute;top:2px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--blood)}
-.chat .x{border:0;background:rgba(255,255,255,.08);border-radius:999px;width:36px;height:36px;font-size:18px;color:var(--fg)}
-.chat .msgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 12px 10px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
-.chat header,.chat .grab,.chat form{flex:none}
-.chat .m{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:end;max-width:86%}
-.chat .m .av{width:30px;height:30px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;font-size:12px;color:#0b0820}
-.chat .m .av img{width:100%;height:100%;object-fit:cover;object-position:top}
-.chat .m .b{background:rgba(255,255,255,.08);border-radius:16px 16px 16px 4px;padding:7px 11px;overflow-wrap:anywhere;font-size:15px;line-height:1.4}
-.chat .m .b b{display:block;font-size:11px;color:var(--moon);margin-bottom:1px}
-.chat .m.mine{align-self:flex-end;grid-template-columns:minmax(0,1fr)}
-.chat .m.mine .av{display:none}
-.chat .m.mine .b{background:linear-gradient(135deg,#3b2f8f,#2a2160);border-radius:16px 16px 4px 16px}
-.chat .m.mine .b b{display:none}
-.chat .m.evil .b{background:rgba(227,38,75,.18)}
-.chat .m.ghosts .b{background:rgba(150,155,190,.16);font-style:italic}
-.chat .empty{margin:auto;color:var(--muted);text-align:center;font-size:14px;padding:20px}
-.chat form{display:flex;align-items:flex-end;gap:6px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
-.chat form textarea{flex:1;min-width:0;height:38px;max-height:120px;resize:none;overflow-y:auto;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:19px;padding:8px 14px;font:inherit;font-size:16px;line-height:1.3;color:var(--fg);outline:none;display:block}
-.chat form textarea:focus{border-color:var(--moon)}
-.chat form button{border:0;border-radius:50%;width:36px;height:36px;margin-bottom:1px;flex:none;background:var(--moon);color:#2a1a00;display:grid;place-items:center}
-.chat form button svg{width:16px;height:16px}
-.chat form .locked{flex:1;color:var(--muted);font-size:13px;text-align:center;padding:6px}
-@media (min-width:1100px){
-  .chat{left:auto;right:16px;top:70px;bottom:16px;width:340px;height:auto;border-radius:20px;border:1px solid var(--line2);transform:none}
-  .chat .grab,.chat .x,.chatfab{display:none}
-  body.has-hostbar .chat{bottom:80px}
-  .stage{margin-right:max(calc((100vw - 720px)/2), 372px)}
-}
+.rolelist div{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;font-size:15px}
+.rolelist img{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:50% 15%;box-shadow:0 0 0 2px var(--c2)}
+.chip.role img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:50% 15%}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body class="s-night">
+<body class="s-eve">
 <div class="scene" aria-hidden="true">
-  <div class="stars" id="stars"></div><div class="moon"></div><div class="sun"></div><div class="fog"></div>
+  <div class="stars" id="stars"></div><div class="moon"></div><div class="sun"></div><div class="lanterns" id="lanterns"></div><div class="fog"></div>
   <svg class="trees" viewBox="0 0 1200 200" preserveAspectRatio="none"><path fill="#04050c" d="M0 200 L0 140 L30 90 L45 130 L70 60 L95 130 L110 100 L130 140 L160 70 L190 140 L220 110 L240 150 L270 80 L300 150 L340 120 L360 150 L400 90 L430 150 L470 130 L500 160 L540 100 L570 160 L620 140 L650 170 L700 110 L730 160 L770 130 L800 165 L840 90 L870 160 L900 120 L930 160 L970 70 L1000 150 L1030 120 L1060 160 L1100 80 L1130 150 L1160 110 L1200 140 L1200 200 Z"/></svg>
 </div>
 <div class="app">
-  <header class="top"><a href="/" aria-label="All games">&larr;</a><h1>Werewolf</h1><span class="code" id="hCode" hidden></span><span class="spacer"></span></header>
+  <header class="top noren"><a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a><h1>Werewolf</h1><span class="code" id="hCode" hidden></span><span class="spacer"></span></header>
   <main class="stage" id="stage"></main>
 </div>
 <div class="hostbar" id="hostbar" hidden></div>
-<button class="chatfab" id="chatFab" hidden aria-label="Open chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="badge" id="chatBadge" hidden></span></button>
-<section class="chat" id="chat" hidden aria-label="Chat">
-  <div class="grab"></div>
-  <header><div class="tabs" id="chatTabs"></div><button class="x" id="chatClose" aria-label="Close chat">×</button></header>
-  <div class="msgs" id="chatMsgs"></div>
-  <form id="chatForm"></form>
-</section>
 <div class="toast" id="toast" hidden></div>
 <div id="overlay"></div>
 <script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
 <script src="/theme.js"></script>
+<script src="/chat.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -285,6 +245,8 @@ async function api(path, body){
   if(!r.ok) throw new Error(j.error || "Something went wrong");
   return j;
 }
+// lanterns hang lower in the middle of the string
+$("#lanterns").innerHTML = Array.from({length:11}, (_, i)=>`<i style="--n:${i};--sag:${Math.round(Math.sin(i / 10 * Math.PI) * 26)}"></i>`).join("");
 $("#stars").innerHTML = Array.from({length:90},()=>`<i style="left:${Math.random()*100}%;top:${Math.random()*62}%;animation-delay:${(Math.random()*3).toFixed(2)}s;opacity:${(.3+Math.random()*.7).toFixed(2)}"></i>`).join("");
 
 /* ---------- role art ---------- */
@@ -327,14 +289,14 @@ let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, revea
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 const P = pid => room.players[pid] || {name:"?"};
-const pic = (pid, cls="") => { const p = P(pid), src = Avatars.src(p); return `<span class="${cls}" style="background:${hue(p.name)}">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:esc(p.name[0].toUpperCase())}</span>`; };
+const pic = (pid, cls="") => { const p = P(pid), src = Avatars.src(p); return `<span class="${cls}" style="background:${hue(p.name)}">${src?`<img src="${esc(src)}" alt="">`:esc(p.name[0].toUpperCase())}</span>`; };
 const inGame = () => Object.keys(room.players).filter(pid=>!P(pid).spectator);  // late joiners watch from outside the table
 const alivePids = () => inGame().filter(pid=>P(pid).alive);
 
 /* ---------- home and join ---------- */
 function home(){
-  document.body.className = "s-night";
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:6vh"><div class="eyebrow">A party game of lies</div><h1 class="title" style="font-size:clamp(46px,13vw,90px)">Werewolf</h1>
+  document.body.className = "s-eve";
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:18vh"><h1 class="title" style="font-size:clamp(52px,13vw,96px)">Werewolf</h1>
     <p class="sub" style="max-width:46ch;margin:10px auto 0">Take a seat at the table. Someone here is a wolf. Find them before they find you.</p></div>
     <div style="display:grid;gap:16px;margin-top:26px">
     <form class="panel" id="createForm"><h2 style="font-size:22px">Host a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
@@ -350,7 +312,7 @@ function home(){
 function openRoom(c){
   code = c; const s = store("ww:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
   history.replaceState(null, "", "/werewolf?room="+c); $("#hCode").hidden = false; $("#hCode").textContent = c;
-  armBack();
+  BackGuard.arm();
   poll(++pollGen, -1);
 }
 async function poll(gen, v){
@@ -371,7 +333,7 @@ async function poll(gen, v){
         if(room.current?.dead?.includes(me?.pid)) buzz([300,100,300]);
         lastLines = new Set();
       }
-      render(); renderChat();
+      render(); Chat.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -380,9 +342,10 @@ async function poll(gen, v){
 let lastSig = "";
 function render(){
   const ph = room.phase;
-  const scene = {dawn:"s-dawn", day:"s-day", vote:"s-vote", verdict:"s-vote", final: room.winner==="wolves"?"s-wolves":"s-village"}[ph] || "s-night";
+  const scene = {lobby:"s-eve", dawn:"s-dawn", day:"s-day", vote:"s-vote", verdict:"s-vote", final: room.winner==="wolves"?"s-wolves":"s-village"}[ph] || "s-night";
   document.body.className = scene;
   renderHostbar(); tick();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
   if(!me || !room.players[me.pid]) return gate();
   const sig = JSON.stringify([ph, room.day, room.players, room.current?.id, room.votes, room.myNight, room.seerLog, room.settings, room.me, room.acted, room.myShield, revealed]);
   if(sig === lastSig) return;
@@ -435,7 +398,7 @@ function tableHTML({center, pickable=()=>false, selected=null, selClass="sel", a
 }
 function myRoleChip(){
   const r = room.me.role; if(!r) return "";
-  return `<span class="chip role r-${r}">${ART[r]}You are the ${rname(r)}${room.me.alive?"":" (ghost)"}</span>`;
+  return `<span class="chip role r-${r}"><img src="/img/roles/${r}.webp" alt="">You are the ${rname(r)}${room.me.alive?"":" (ghost)"}</span>`;
 }
 const clockHTML = () => `<div class="clock" id="clock"></div>`;
 
@@ -569,7 +532,7 @@ function lobby(){
   $("#stage").innerHTML = tableHTML({center:`<span class="ico moonico"></span><h2>${n} at the table</h2><span class="small">Code <b style="letter-spacing:.2em;color:var(--moon)">${room.code}</b></span><span class="small">${n<4?`Need ${4-n} more`:"Ready when the host is"}</span>`,
       tags: H ? {} : {}})
     + `<div class="info">
-    <div class="panel"><div class="me-pic"><button id="avBtn" type="button" aria-label="Choose your avatar">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:"Choose"}</button>
+    <div class="panel"><div class="me-pic"><button id="avBtn" type="button" aria-label="Choose your avatar">${src?`<img src="${esc(src)}" alt="">`:"Choose"}</button>
       <div><b>${esc(mine.name)}</b><p class="hint">${src ? "Tap to change your avatar." : "Pick an anime character or a picture from your gallery."}</p></div></div></div>
     ${H ? `<div class="panel"><b>Players</b><div style="display:flex;flex-wrap:wrap;gap:8px">${ps.filter(pid=>pid!==me.pid).map(pid=>`<span class="chip">${esc(P(pid).name)} <button class="btn small" data-kick="${pid}" style="padding:1px 9px;font-size:11px">Kick</button></span>`).join("") || '<span class="hint">Nobody else yet. Share the code.</span>'}</div></div>` : ""}
     <div class="panel"><h2 style="font-size:19px">${H ? "Set up the game" : "Game setup"}</h2>
@@ -583,7 +546,7 @@ function lobby(){
         <div><label for="sVote">Voting</label>${sel("sVote", [[30,"30 sec"],[60,"1 min"],[90,"90 sec"]], s.voteSec)}</div>
       </div>
       ${H ? `<button class="btn primary wide" data-host="start" ${n<4?"disabled":""}>${n<4?`Waiting for ${4-n} more`:"Deal the cards"}</button>` : '<p class="hint" style="text-align:center">The host deals the cards when everyone is seated.</p>'}</div>
-    <details class="panel"><summary>How to play</summary><div class="rolelist">${Object.keys(ART).map(r=>`<div class="r-${r}">${ART[r]}<span><b>${rname(r)}.</b> ${DESC[r]}</span></div>`).join("")}</div>
+    <details class="panel"><summary>How to play</summary><div class="rolelist">${Object.keys(ART).filter(r=>r!=="hidden").map(r=>`<div class="r-${r}"><img src="/img/roles/${r}.webp" alt="" loading="lazy"><span><b>${rname(r)}.</b> ${DESC[r]}</span></div>`).join("")}</div>
       <p class="hint" style="margin-top:8px">The game runs itself: night, dawn, discussion, vote, repeat. Good wins when the whole evil team is gone. Evil wins when they match the good team in number. Roles follow Plato's Werewolf.</p></details></div>`;
   $("#avBtn").onclick = ()=>Avatars.open(act);
   if(H){
@@ -598,9 +561,9 @@ function lobby(){
 function cardHTML(pid, role, opts={}){
   const p = P(pid), src = Avatars.src(p);
   return `<div class="card ${opts.flip?"flip":""} ${opts.dead?"dead":""} r-${role}" ${opts.id?`id="${opts.id}"`:""} style="${opts.delay?`transition-delay:${opts.delay}s`:""}">
-    <div class="side back"><div class="mn"></div>${opts.tap?'<div class="tap">TAP TO REVEAL</div>':""}</div>
-    <div class="side front"><span class="owner" style="background:${hue(p.name)}">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:esc(p.name[0])}</span>
-      <div class="rname">${rname(role)}</div>${ART[role]}<div class="desc">${opts.mini ? esc(p.name) : DESC[role]}</div>${opts.st?`<span class="st">${opts.st}</span>`:""}</div></div>`;
+    <div class="side back"><div class="mn"></div>${opts.tap?'<div class="tap">Tap to reveal</div>':""}</div>
+    <div class="side front"><span class="owner" style="background:${hue(p.name)}">${src?`<img src="${esc(src)}" alt="">`:esc(p.name[0])}</span>
+      ${role === "hidden" ? ART.hidden : `<img class="art" src="/img/roles/${role}.webp" alt="">`}<div class="rname">${rname(role)}</div><div class="desc">${opts.mini ? esc(p.name) : DESC[role]}</div>${opts.st?`<span class="st">${opts.st}</span>`:""}</div></div>`;
 }
 function rolesView(){
   const role = room.me.role, mine = P(me.pid);
@@ -635,110 +598,7 @@ function final(){
   setTimeout(()=>document.querySelectorAll(".minicards .card").forEach(c=>c.classList.add("flip")), 250);
 }
 
-/* ---------- chat ---------- */
-const CH = {all:"Everyone", evil:"Evil team", ghosts:"Ghosts"};
-let chatOpen = false, chatCh = "all", chatSeen = {}, chatSig = "";
-const wide = () => matchMedia("(min-width:1100px)").matches;
-function renderChat(){
-  const sheet = $("#chat"), fab = $("#chatFab");
-  const joined = me && room && room.players[me.pid];
-  sheet.hidden = !joined; fab.hidden = !joined;
-  if(!joined) return;
-  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
-  const read = room.chatRead || ["all"], write = room.chatWrite || [];
-  // land on the channel that matters: the evil team at night, ghosts once you're dead
-  if(!read.includes(chatCh)) chatCh = read.includes("ghosts") && !room.me?.alive && room.me?.role ? "ghosts" : read[0];
-  const msgs = room.chat || [];
-  const latest = ch => { const l = msgs.filter(m=>m.ch===ch).slice(-1)[0]; return l ? l.id : null; };
-  const open = chatOpen || wide();
-  if(open) chatSeen[chatCh] = latest(chatCh);
-  const unread = read.reduce((n, ch)=>{ const list = msgs.filter(m=>m.ch===ch); const i = list.findIndex(m=>m.id===chatSeen[ch]); return n + (open && ch===chatCh ? 0 : list.slice(i+1).filter(m=>m.pid!==me.pid).length); }, 0);
-  $("#chatBadge").hidden = !unread; $("#chatBadge").textContent = unread > 99 ? "99+" : unread;
-  sheet.classList.toggle("open", open);
-  $("#chatTabs").innerHTML = read.length > 1 ? read.map(ch=>{ const dot = ch!==chatCh && latest(ch) && latest(ch)!==chatSeen[ch] && msgs.some(m=>m.ch===ch && m.pid!==me.pid);
-    return `<button class="${ch} ${ch===chatCh?"on":""}" data-ch="${ch}">${CH[ch]}${dot?"<i></i>":""}</button>`; }).join("") : `<button class="${chatCh} on">${CH[chatCh]}</button>`;
-  const list = msgs.filter(m=>m.ch===chatCh);
-  const sig = chatCh + "|" + list.map(m=>m.id).join(",") + "|" + write.includes(chatCh);
-  if(sig === chatSig) return;
-  chatSig = sig;
-  const box = $("#chatMsgs"), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-  box.innerHTML = list.length ? list.map(m=>{ const p = room.players[m.pid] || {name:m.name}, src = Avatars.src(p);
-    return `<div class="m ${m.pid===me.pid?"mine":""} ${m.ch}"><span class="av" style="background:${hue(m.name)}">${src?`<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">`:esc(m.name[0])}</span><div class="b"><b>${esc(m.name)}</b>${esc(m.text)}</div></div>`; }).join("")
-    : `<div class="empty">${chatCh==="evil" ? "Plot with your evil team here. Nobody else can see this." : chatCh==="ghosts" ? "Only the dead can read this. Haunt freely." : "Say hi to the table."}</div>`;
-  if(atBottom || list.slice(-1)[0]?.pid === me.pid) box.scrollTop = box.scrollHeight;
-  const why = chatCh === "all" && room.phase === "night" && room.me?.alive ? "The village is asleep. No talking until dawn." : chatCh === "all" && room.me?.ghost ? "Ghosts can't talk to the living. Use Ghosts." : "You can't write here right now.";
-  // rebuild the input only when what you can write changes, so the phone keyboard stays open
-  const formSig = chatCh + "|" + write.includes(chatCh) + "|" + why;
-  if(formSig === renderChat.formSig) return;
-  renderChat.formSig = formSig;
-  const keep = $("#chatIn")?.value || "";
-  $("#chatForm").innerHTML = write.includes(chatCh)
-    ? `<textarea id="chatIn" rows="1" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Message ${CH[chatCh].toLowerCase()}…" aria-label="Message"></textarea><button aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5 21 12 3 3.5 3 10l12 2-12 2z"/></svg></button>`
-    : `<div class="locked">${why}</div>`;
-  if($("#chatIn")){ $("#chatIn").value = keep; growChat(); }
-}
-// phones shrink the visible area when the keyboard opens; keep the whole chat inside what's left.
-// Android Chrome resizes the page itself (see the viewport tag); iPhones need the keyboard measured.
-(function fitChatToKeyboard(){
-  const vv = window.visualViewport;
-  const typing = () => document.activeElement?.id === "chatIn" && !wide();
-  const fit = ()=>{
-    const sheet = $("#chat"), on = typing();
-    sheet.classList.toggle("typing", on);
-    if(!on) return;
-    const top = vv ? vv.offsetTop : 0;
-    const below = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
-    sheet.style.setProperty("--kb-top", top + "px");
-    sheet.style.setProperty("--kb-bottom", below + "px");
-    const box = $("#chatMsgs"); box.scrollTop = box.scrollHeight;
-  };
-  if(vv){ vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
-  window.addEventListener("resize", fit);
-  document.addEventListener("focusin", e=>{ if(e.target.id === "chatIn"){ fit(); setTimeout(fit, 120); setTimeout(fit, 350); } });
-  document.addEventListener("focusout", e=>{ if(e.target.id === "chatIn") setTimeout(fit, 120); });
-})();
-// the send button must not steal focus from the text box, or the keyboard closes and reopens on every message
-document.addEventListener("pointerdown", e=>{ if(e.target.closest("#chatForm button")) e.preventDefault(); });
-document.addEventListener("mousedown", e=>{ if(e.target.closest("#chatForm button")) e.preventDefault(); });
-/* ---------- the phone's Back button ----------
-   Back closes the chat instead of leaving, and leaving the game takes a second press.
-   Two extra history entries do this: "guard" while you're in a room, "chat" while the chat is open. */
-let skipPop = false, leaveArmed = false;
-function armBack(){ if(!history.state?.guard) history.pushState({guard:1}, ""); }
-function openChat(){
-  chatOpen = true; chatSig = ""; renderChat(); setTimeout(()=>$("#chatMsgs").scrollTop = 1e9, 50);
-  if(!history.state?.chat) history.pushState({chat:1}, "");
-}
-function closeChat(fromBack){
-  chatOpen = false; $("#chatIn")?.blur(); renderChat();
-  if(!fromBack && history.state?.chat){ skipPop = true; history.back(); }  // drop the chat entry we added
-}
-window.addEventListener("popstate", ()=>{
-  if(skipPop){ skipPop = false; return; }
-  if(chatOpen && !wide()){ closeChat(true); return; }
-  if(!code) return;
-  if(leaveArmed){ history.back(); return; }  // second press: really leave
-  leaveArmed = true;
-  toast("Press back again to leave the game");
-  history.pushState({guard:1}, "");
-  setTimeout(()=>{ leaveArmed = false; }, 2500);
-});
-$("#chatFab").onclick = openChat;
-$("#chatClose").onclick = ()=>closeChat(false);
-$("#chatTabs").onclick = e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; chatCh = b.dataset.ch; chatSig = ""; renderChat(); $("#chatMsgs").scrollTop = 1e9; };
-function growChat(){
-  const t = $("#chatIn"); if(!t) return;
-  t.style.height = "38px";
-  t.style.height = Math.min(t.scrollHeight + 2, 120) + "px";  // grows line by line, then scrolls inside
-}
-$("#chatForm").addEventListener("input", e=>{ if(e.target.id === "chatIn") growChat(); });
-// Enter sends; Shift+Enter (on a keyboard) adds a new line
-$("#chatForm").addEventListener("keydown", e=>{ if(e.target.id === "chatIn" && e.key === "Enter" && !e.shiftKey){ e.preventDefault(); $("#chatForm").requestSubmit(); } });
-$("#chatForm").onsubmit = async e=>{
-  e.preventDefault(); const inp = $("#chatIn"); const text = inp?.value.trim(); if(!text) return;
-  inp.value = ""; growChat();
-  try{ await act("chat", {ch: chatCh, text}); }catch(err){ inp.value = text; growChat(); toast(err.message); }
-};
+Chat.mount({act});
 
 /* ---------- host controls, clock ---------- */
 function renderHostbar(){
