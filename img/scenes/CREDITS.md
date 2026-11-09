@@ -1,15 +1,16 @@
-# Photo credits
+# Picture credits
 
-The hub background and the stall pictures are photos from Unsplash, free to use under the
-[Unsplash License](https://unsplash.com/license). Credit isn't required, but here it is.
+The hub background and the stall pictures are anime-style illustrations from Pixabay, free to use under
+the [Pixabay Content License](https://pixabay.com/service/license-summary/). Credit isn't required, but
+here it is.
 
-| File | Photo | Photographer |
+| File | Illustration | Changes |
 |---|---|---|
-| hero.webp | [Japanese lanterns hanging at a night festival](https://unsplash.com/photos/japanese-lanterns-hanging-at-a-night-festival-N-wOawq58Co) | Tsuyoshi Kozu |
-| stall-codenames.webp | [Wooden drawers contain a book with asian script](https://unsplash.com/photos/wooden-drawers-contain-a-book-with-asian-script-Er_AaM8-BLo) | Moritz Näf |
-| stall-werewolf.webp | [Trees at night-time](https://unsplash.com/photos/trees-at-night-time-PkbAFKZNnz0) | Dmitry Bessonov |
-| stall-imposter.webp | [A person wearing a white fox mask with feathers](https://unsplash.com/photos/a-person-wearing-a-white-fox-mask-with-feathers-JSGWSXPRSDM) | Crack Cristine |
-| stall-tierlist.webp | [Carnival shooting game stall with lanterns](https://unsplash.com/photos/carnival-shooting-game-stall-with-lanterns-gTdgr_0DTA4) (cropped) | Josh Marty |
-| stall-draw.webp | [Person holding black paint brush while painting](https://unsplash.com/photos/person-holding-black-paint-brush-while-painting-black-text-on-white-paper-vJqSAasmCEY) | Niketh Vellanki |
+| hero.webp | [Colorful night market](https://pixabay.com/illustrations/shopping-market-shopping-centre-8359660/) by dilsadakcaoglu | Enlarged 2x, fine detail redrawn with art/refine.py |
+| stall-codenames.webp | [Secret agent](https://pixabay.com/illustrations/agent-j-3-comic-book-secret-agent-8598546/) | Cropped |
+| stall-werewolf.webp | [Hut by the mountains at night](https://pixabay.com/illustrations/ai-generated-hut-mountain-autumn-9132778/) | Cropped |
+| stall-imposter.webp | [Woman with a kitsune mask](https://pixabay.com/illustrations/woman-kitsune-fox-mythical-creature-6972450/) | Placed on a night background |
+| stall-tierlist.webp | [Anime market](https://pixabay.com/illustrations/ai-generated-woman-market-anime-8588937/) | Cropped |
+| stall-draw.webp | [Anime artist at her desk](https://pixabay.com/illustrations/ai-generated-woman-anime-manga-8581200/) | Cropped |
 
 When you swap one of these files, bump the `?v=` number on its link in hub.html so browsers fetch the new one.
