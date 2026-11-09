@@ -12,6 +12,7 @@ server.py owns rooms, the lock and HTTP; this module owns the game's rules."""
 import random
 import time
 
+import media
 from media import Refuse
 
 rooms = lock = changed = rid = None
@@ -319,6 +320,17 @@ def chat_rules(room, pid):
             "why": "The village is asleep. No talking until dawn." if room["phase"] == "night" else "Only the evil team can talk there."}
 
 
+LIVING_PRANKS = ["fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "hearts", "crown"]
+GHOST_PRANKS = ["boo", "chill", "fart"]
+
+
+def prank_rules(room, pid):
+    """Everyone can prank at any time. Ghosts and spectators get the spooky ones."""
+    p = room["players"].get(pid) or {}
+    ghost = room["phase"] not in ("lobby", "final") and (not p.get("role") or not p.get("alive"))
+    return {"kinds": GHOST_PRANKS if ghost else LIVING_PRANKS}
+
+
 # ---------- what each viewer sees ----------
 
 def public(room, viewer):
@@ -462,6 +474,7 @@ def host_action(room, action, b):
         if n < 4:
             raise Refuse(f"You need at least 4 players ({n} so far).")
         assign_roles(room)
+        media.prank_reset(room)
     elif action in ("next", "skip"):
         # one "skip ahead" for every phase: end the current timer right now
         if ph == "roles":

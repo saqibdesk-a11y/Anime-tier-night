@@ -772,6 +772,7 @@ class Handler(BaseHTTPRequestHandler):
                 game = GAMES.get(room.get("game"))
                 out = game.public(room, viewer) if game else public(room, viewer)
                 out.update(media.chat_view(game, room, viewer))
+                out.update(media.prank_view(game, room, viewer))
                 return self.send_json(out)
 
         self.err("Not found", 404)
@@ -860,6 +861,16 @@ class Handler(BaseHTTPRequestHandler):
                     return self.err("You're not in this room. Rejoin with your name.", 403)
                 try:
                     media.chat_post(GAMES.get(room.get("game")), room, b.get("pid"), b)
+                except media.Refuse as e:
+                    return self.err(str(e), e.status)
+                changed(room)
+                return self.send_json({"ok": True})
+
+            if action == "prank":  # throwables for fun; they never change the game
+                if not player:
+                    return self.err("You're not in this room. Rejoin with your name.", 403)
+                try:
+                    media.prank_post(GAMES.get(room.get("game")), room, b.get("pid"), b)
                 except media.Refuse as e:
                     return self.err(str(e), e.status)
                 changed(room)
@@ -1056,6 +1067,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/backguard.js": ("text/javascript; charset=utf-8", "no-store"),
     "/theme.js": ("text/javascript; charset=utf-8", "no-store"),
     "/chat.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/pranks.js": ("text/javascript; charset=utf-8", "no-store"),
     "/festival.css": ("text/css; charset=utf-8", "no-store"),
     "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),
     "/icon-192.png": ("image/png", "public, max-age=86400"),

@@ -71,3 +71,55 @@ def chat_post(game, room, pid, b):
         raise Refuse("Slow down a little.", 429)
     p["lastChat"] = time.time()
     chat_say(room, text, ch, pid)
+
+
+# ---------- pranks ----------
+# Things players throw at each other for fun (a fart, a water balloon, a curse charm...). They never
+# change the game. A game says which ones a player may throw with a prank_rules(room, pid) hook
+# returning {"kinds": [...]}; without one, a game has no pranks. Kept in memory only.
+
+PRANK_KINDS = {"fart", "firecracker", "balloon", "curse", "goldfish", "takoyaki", "hearts", "crown", "boo", "chill"}
+PRANKS = {}       # room code -> recent pranks
+PRANK_STATS = {}  # room code -> {"sent": {pid: n}, "got": {pid: n}, "kinds": {pid: {kind: n}}}
+PRANK_SHOW = 12   # seconds a prank stays in the room view (long enough for every phone to see it)
+
+
+def prank_post(game, room, pid, b):
+    hook = getattr(game, "prank_rules", None) if game else None
+    if not hook:
+        raise Refuse("No pranks in this game.")
+    kinds = hook(room, pid)["kinds"]
+    kind, to = str(b.get("kind") or ""), str(b.get("to") or "")
+    if kind not in PRANK_KINDS or kind not in kinds:
+        raise Refuse("You can't throw that right now.", 409)
+    if to == pid or to not in room["players"]:
+        raise Refuse("Pick someone else to prank.")
+    now = time.time()
+    p = room["players"][pid]
+    if now - p.get("lastPrank", 0) < 2:
+        raise Refuse("Reloading. Try again in a second.", 429)
+    log = [x for x in PRANKS.get(room["code"], []) if now - x["t"] < 60]
+    if sum(1 for x in log if x["to"] == to and now - x["t"] < 15) >= 8:
+        raise Refuse(f'{room["players"][to]["name"]} has had enough for now.', 429)
+    p["lastPrank"] = now
+    log.append({"id": _rid(8), "from": pid, "to": to, "kind": kind, "t": now, "back": bool(b.get("back"))})
+    PRANKS[room["code"]] = log[-40:]
+    st = PRANK_STATS.setdefault(room["code"], {"sent": {}, "got": {}, "kinds": {}})
+    st["sent"][pid] = st["sent"].get(pid, 0) + 1
+    st["got"][to] = st["got"].get(to, 0) + 1
+    st["kinds"].setdefault(to, {})[kind] = st["kinds"].get(to, {}).get(kind, 0) + 1
+
+
+def prank_view(game, room, viewer):
+    hook = getattr(game, "prank_rules", None) if game else None
+    if not hook:
+        return {}
+    now = time.time()
+    return {"pranks": [x for x in PRANKS.get(room["code"], []) if now - x["t"] < PRANK_SHOW],
+            "prankKinds": hook(room, viewer)["kinds"] if viewer in room["players"] else [],
+            "prankStats": PRANK_STATS.get(room["code"], {"sent": {}, "got": {}, "kinds": {}})}
+
+
+def prank_reset(room):
+    """A new game starts the prank awards from zero."""
+    PRANK_STATS.pop(room["code"], None)

@@ -210,6 +210,8 @@ body.has-hostbar{--chat-lift:64px}
 .me-pic button img{width:100%;height:100%;object-fit:cover;object-position:top}
 details summary{cursor:pointer;font-weight:800}
 .rolelist{display:grid;gap:8px;margin-top:10px}
+.pkface{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.pkface img{width:100%;height:100%;object-fit:cover;object-position:top}
 .rolelist div{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;font-size:15px}
 .rolelist img{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:50% 15%;box-shadow:0 0 0 2px var(--c2)}
 .chip.role img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:50% 15%}
@@ -232,6 +234,7 @@ details summary{cursor:pointer;font-weight:800}
 <script src="/backguard.js"></script>
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
+<script src="/pranks.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -333,7 +336,7 @@ async function poll(gen, v){
         if(room.current?.dead?.includes(me?.pid)) buzz([300,100,300]);
         lastLines = new Set();
       }
-      render(); Chat.update(room, me);
+      render(); Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }
@@ -581,6 +584,17 @@ function rolesView(){
 }
 
 /* ---------- final ---------- */
+// who got pranked most and who threw the most, if anyone threw anything
+function prankAwards(){
+  const st = room.prankStats || {}, top = o => Object.entries(o || {}).sort((a,b)=>b[1]-a[1])[0];
+  const got = top(st.got), sent = top(st.sent);
+  if(!got && !sent) return "";
+  const favTop = got ? top((st.kinds || {})[got[0]]) : null, fav = favTop && favTop[1] >= 2 ? favTop : null, K = Pranks.KINDS;
+  const row = (title, pid, line) => `<div style="display:flex;align-items:center;gap:12px">${pic(pid,"pkface")}<div><b>${title}</b><div class="hint">${esc(P(pid).name)}, ${line}</div></div></div>`;
+  return `<div class="panel"><b>Prank awards</b>
+    ${got ? row("Most pranked", got[0], `hit ${got[1]} time${got[1]===1?"":"s"}${fav ? `, mostly ${K[fav[0]]?.e || ""} ${K[fav[0]]?.name.toLowerCase() || ""}` : ""}`) : ""}
+    ${sent ? row("Biggest troublemaker", sent[0], `threw ${sent[1]} thing${sent[1]===1?"":"s"}`) : ""}</div>`;
+}
 function final(){
   const w = room.winner, ps = inGame();
   const ev = (room.events||[]).map(e=>{
@@ -594,11 +608,13 @@ function final(){
     ${tableHTML({center:`<span class="ico ${w==="wolves"?"voteico":"sunico"}"></span><h2>Game over</h2><span class="small">${room.day} night${room.day===1?"":"s"}</span>`})}
     <div class="info"><div class="panel"><b>How it went</b><div class="timeline">${ev}</div>
       ${room.seerLog?.length ? `<b style="color:var(--seer2)">The Seer's visions</b>${room.seerLog.map(v=>`<div style="font-size:14px">Night ${v.night}: ${esc(v.name)} looked ${v.evil?"Evil":"Good"}</div>`).join("")}` : ""}</div>
+    ${prankAwards()}
     <div class="minicards">${ps.map((pid,i)=>cardHTML(pid, P(pid).role, {mini:true, dead:!P(pid).alive, st:P(pid).alive?"SURVIVED":"DIED", delay:.3+i*.15})).join("")}</div></div>`;
   setTimeout(()=>document.querySelectorAll(".minicards .card").forEach(c=>c.classList.add("flip")), 250);
 }
 
 Chat.mount({act});
+Pranks.mount({act, seat: pid => document.querySelector(`.seat[data-seat="${pid}"] .av`)});
 
 /* ---------- host controls, clock ---------- */
 function renderHostbar(){
