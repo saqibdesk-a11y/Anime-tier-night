@@ -109,7 +109,7 @@
   function saved(){ try{ const v = JSON.parse(localStorage.getItem(KEY)); return v && v.url && v.url.startsWith("/img/") ? null : v; }catch(e){ return null; } }
   function apply(actFn, player){
     // a player with no picture in this room yet gets their saved one, once per room
-    if(!player || player.avatar || player.photo) return;
+    if(!player || player.photo || (player.avatar && !player.avatarAuto)) return;  // a random stand-in face gives way to your own
     const s = saved(), k = location.pathname + location.search + player.name;
     if(!s || applied.has(k)) return;
     applied.add(k);

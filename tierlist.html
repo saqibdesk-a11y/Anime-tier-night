@@ -74,7 +74,8 @@ label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bot
 .tabs button[aria-selected=true]{background:var(--ink);color:var(--paper);opacity:1}
 .players{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
 .chip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 3px;font-size:13px;font-weight:600}
-.av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#0a0d18;flex:none}
+.av{width:24px;height:24px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;font-size:12px;color:#0a0d18;flex:none}
+.av img{width:100%;height:100%;object-fit:cover;object-position:top}
 .chip.me{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--lantern) 10%,transparent)}
 .chip .n{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:500}
 .chip .done{color:var(--C)}
@@ -452,6 +453,8 @@ async function api(path, body){
   return j;
 }
 const colorFor = name => { let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 80% 72%)`; };
+// a player's picture, or their first letter until they have one
+const avOf = p => { const src = Avatars.src(p); return `<span class="av" style="background:${colorFor(p.name)}">${src ? `<img src="${esc(src)}" alt="">` : esc(p.name[0].toUpperCase())}</span>`; };
 
 /* ---------- routing ---------- */
 function boot(){
@@ -630,7 +633,7 @@ function renderPlayers(){
     const n = submitting ? p.picks : TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
     const of = submitting ? room.picksPer : total;
     const done = submitting ? p.picks >= room.picksPer : p.done;
-    return `<span class="chip ${me&&me.pid===pid?"me":""}" data-pid="${esc(pid)}"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}${me&&me.pid===pid?" (you)":""} <span class="n">${n}/${of}${submitting?" picks":""}</span>${done?'<span class="done" title="Done">✓</span>':""}</span>`;
+    return `<span class="chip ${me&&me.pid===pid?"me":""}" data-pid="${esc(pid)}">${avOf(p)}${esc(p.name)}${me&&me.pid===pid?" (you)":""} <span class="n">${n}/${of}${submitting?" picks":""}</span>${done?'<span class="done" title="Done">✓</span>':""}</span>`;
   }).join("") || `<span class="muted">Nobody has joined yet. Share the invite link.</span>`;
 }
 function tickTimer(){
@@ -658,7 +661,7 @@ function renderSubmit(){
       <p class="muted" style="margin:0">${room.anime.length ? "This is what everyone ranks. Get ready." : ""}</p>
       <div class="preview">${room.anime.map(a=>cardHTML(a)).join("")}</div>`;
     $("#lobby").innerHTML = `<h2>Waiting room</h2>
-      <div class="lobby-list">${ps.map(p=>`<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div>${esc(p.name)}${me&&room.players[me.pid]===p?" (you)":""}</div></div>`).join("")}</div>
+      <div class="lobby-list">${ps.map(p=>`<div class="li">${avOf(p)}<div>${esc(p.name)}${me&&room.players[me.pid]===p?" (you)":""}</div></div>`).join("")}</div>
       <p class="muted" style="margin:0;font-size:14px">${ps.length} here. Ranking time: ${fmtTime(room.timerSec)}.</p>
       ${hostKey ? `<button class="btn primary" type="button" id="startBtn" ${room.anime.length && room.aiState?.status !== "working" ? "" : "disabled"}>Start ranking (${fmtTime(room.timerSec)})</button>` : `<p class="muted" style="margin:0;font-size:14px">The host starts the ranking when everyone is here.</p>`}`;
     return;
@@ -674,7 +677,7 @@ function renderSubmit(){
   const ready = ps.filter(p=>p.picks >= room.picksPer).length;
   $("#lobby").innerHTML = `<h2>Waiting room</h2>
     <div><div class="bigstat">${room.poolSize||0}</div><div class="muted">in the pool so far · duplicates count once</div></div>
-    <div class="lobby-list">${ps.map(p=>`<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div>${esc(p.name)}<div class="meter"><i style="width:${Math.min(100,100*p.picks/room.picksPer)}%"></i></div></div><span class="muted" style="font-variant-numeric:tabular-nums">${p.picks}/${room.picksPer}</span></div>`).join("")}</div>
+    <div class="lobby-list">${ps.map(p=>`<div class="li">${avOf(p)}<div>${esc(p.name)}<div class="meter"><i style="width:${Math.min(100,100*p.picks/room.picksPer)}%"></i></div></div><span class="muted" style="font-variant-numeric:tabular-nums">${p.picks}/${room.picksPer}</span></div>`).join("")}</div>
     <p class="muted" style="margin:0;font-size:14px">${ready} of ${ps.length} ready. Ranking starts by itself once everyone's picks are in. Ranking time: ${fmtTime(room.timerSec)}.</p>
     ${room.autoStart ? `<div class="banner" id="autoMsg" style="margin:0">Everyone's in!</div>` : ""}
     ${hostKey ? `<button class="btn primary" type="button" id="startBtn" ${room.poolSize?"":"disabled"}>Start ranking (${fmtTime(room.timerSec)})</button>` : `<p class="muted" style="margin:0;font-size:14px">The host starts the ranking when everyone is in.</p>`}`;
@@ -715,7 +718,7 @@ function renderAll(){
   if(!ps.length){ el.innerHTML = `<div class="empty"><h2>No players yet</h2></div>`; return; }
   const byId = animeById();
   const pickedBy = pid => room.anime.filter(a=>(a.by||[]).includes(pid)).map(a=>a.title);
-  el.innerHTML = `<div class="everyone">${Object.entries(room.players).map(([pid,p])=>`<div class="pboard mini"><h3><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}</h3>${isPicks()?`<p class="pickedby">Secretly picked: ${esc(pickedBy(pid).join(", ")||"nothing")}</p>`:""}<div class="board" style="margin-top:0">${boardHTML(p.tiers, byId, false)}</div></div>`).join("")}</div>`;
+  el.innerHTML = `<div class="everyone">${Object.entries(room.players).map(([pid,p])=>`<div class="pboard mini"><h3>${avOf(p)}${esc(p.name)}</h3>${isPicks()?`<p class="pickedby">Secretly picked: ${esc(pickedBy(pid).join(", ")||"nothing")}</p>`:""}<div class="board" style="margin-top:0">${boardHTML(p.tiers, byId, false)}</div></div>`).join("")}</div>`;
 }
 function renderVerdict(el = $("#tab-verdict")){
   if(!room.revealed){ el.innerHTML = `<div class="empty"><h2>The verdict unlocks at the reveal</h2><p>Once the host reveals the boards, this tab averages everyone's rankings into one group tier list and shows what split the room.</p></div>`; return; }
@@ -842,7 +845,7 @@ function renderHost(){
     const n = TIERS.reduce((s,t)=>s+(p.tiers[t]||[]).length,0);
     const confirming = kickConfirm === pid;
     const status = isPicks() && room.phase === "submit" ? `${p.picks}/${room.picksPer} picks` : `${n}/${room.anime.length} ranked${p.done?" · done":""}`;
-    return `<div class="li"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><div class="nm">${esc(p.name)}${me&&me.pid===pid?" (you)":""}<small>${status}</small></div><button class="btn small ${confirming?"danger":""}" data-kick="${pid}">${confirming?"Confirm kick":"Kick"}</button></div>`;
+    return `<div class="li">${avOf(p)}<div class="nm">${esc(p.name)}${me&&me.pid===pid?" (you)":""}<small>${status}</small></div><button class="btn small ${confirming?"danger":""}" data-kick="${pid}">${confirming?"Confirm kick":"Kick"}</button></div>`;
   }).join("") : `<p class="muted" style="margin:0;font-size:14px">Nobody has joined yet.</p>`;
   $("#hostList").innerHTML = room.anime.map(a=>`<div class="li">${a.img?`<img src="${esc(a.img)}" alt="" referrerpolicy="no-referrer">`:'<span class="noimg"></span>'}<div class="nm">${esc(a.title)}<small>${a.status==="searching"?"Finding a picture…":a.status==="missing"?"No picture found":esc([a.year, a.name!==a.title?"typed: "+a.name:""].filter(Boolean).join(" · "))}</small></div><button class="btn small" data-fix="${a.id}">Change</button></div>`).join("");
 }
@@ -1024,7 +1027,7 @@ function slideHTML(kind){
   if(!p) return `<div class="slide slide-hero"><h1 class="slide-title">This player left</h1></div>`;
   const picks = room.anime.filter(a=>(a.by||[]).includes(pid));
   const award = rp && rp.award(p.name);
-  return `<div class="slide"><div class="who"><span class="av" style="background:${colorFor(p.name)}">${esc(p.name[0].toUpperCase())}</span><h1 class="slide-title" style="margin:0">${esc(p.name)}</h1>${award?`<span class="award"><small>${esc(award.award)}</small></span>`:""}</div>
+  return `<div class="slide"><div class="who">${avOf(p)}<h1 class="slide-title" style="margin:0">${esc(p.name)}</h1>${award?`<span class="award"><small>${esc(award.award)}</small></span>`:""}</div>
     ${isPicks() ? `<div class="pickedby" style="margin-top:10px">Secretly picked</div><div class="picksrow mid">${picks.map(a=>cardHTML(a)).join("") || '<span class="muted">Nothing</span>'}</div>` : ""}
     <div class="player-grid"><div class="board mid">${boardHTML(p.tiers, byId, false)}</div>
     <div>${rp ? chatHTML(rp.forName(p.name)) : status}</div></div></div>`;

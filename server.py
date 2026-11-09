@@ -209,6 +209,18 @@ def avatar_gallery():
         return _avatars["list"] or out
 
 
+def random_avatar(room):
+    """A character nobody in the room has yet, so every new player gets a real face right away.
+    Uses the cached list only (joining never waits on AniList); if it isn't loaded yet, starts loading it."""
+    chars = _avatars["list"]
+    if not chars:
+        threading.Thread(target=avatar_gallery, daemon=True).start()
+        return None
+    taken = {p.get("avatar") for p in room["players"].values()}
+    free = [c["img"] for c in chars if c["img"] not in taken]
+    return random.choice(free or [c["img"] for c in chars])
+
+
 def character_option(c):
     show = ((c.get("media") or {}).get("nodes") or [{}])[0].get("title") or {}
     return {"mal_id": c.get("id"), "title": (c.get("name") or {}).get("full"), "subtitle": show.get("english") or show.get("romaji"),
@@ -743,12 +755,13 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_bytes(f.read(), "image/webp", "public, max-age=604800")
             return self.err("Not found", 404)
 
-        # prank sound effects (made offline, see art/sounds.py)
-        if len(parts) == 2 and parts[0] == "sounds" and re.fullmatch(r"[a-z]+\.wav", parts[1]):
-            path = os.path.join(HERE, "sounds", parts[1])
-            if os.path.isfile(path):
-                with open(path, "rb") as f:
-                    return self.send_bytes(f.read(), "audio/wav", "public, max-age=604800")
+        # prank sound effects: /sounds/fart serves sounds/fart.mp3, .ogg or .wav, whichever is there
+        if len(parts) == 2 and parts[0] == "sounds" and re.fullmatch(r"[a-z]+", parts[1]):
+            for ext, ctype in (("mp3", "audio/mpeg"), ("ogg", "audio/ogg"), ("wav", "audio/wav")):
+                path = os.path.join(HERE, "sounds", f"{parts[1]}.{ext}")
+                if os.path.isfile(path):
+                    with open(path, "rb") as f:
+                        return self.send_bytes(f.read(), ctype, "public, max-age=3600")
             return self.err("Not found", 404)
 
         if u.path in STATIC:
@@ -859,6 +872,9 @@ class Handler(BaseHTTPRequestHandler):
                 pid = rid(8)
                 room["players"][pid] = {"name": name, "key": rid(16), "tiers": {t: [] for t in TIERS},
                                         "joined": time.time(), "done": False}
+                auto = random_avatar(room)
+                if auto:  # a stand-in face until they pick their own (avatarAuto lets their saved pick replace it)
+                    room["players"][pid].update(avatar=auto, avatarAuto=True)
                 if room.get("game") in GAMES:
                     GAMES[room["game"]].on_join(room, pid)
                 changed(room)
@@ -892,7 +908,7 @@ class Handler(BaseHTTPRequestHandler):
                     if not url.startswith(AVATAR_HOST):
                         return self.err("Pick one of the characters.")
                     media.IMAGES.pop(player.get("photo"), None)
-                    player.update(avatar=url[:300], photo=None)
+                    player.update(avatar=url[:300], photo=None, avatarAuto=False)
                 else:
                     img = str(b.get("img") or "")
                     if not img.startswith("data:image/jpeg;base64,"):
@@ -903,7 +919,7 @@ class Handler(BaseHTTPRequestHandler):
                     media.IMAGES.pop(player.get("photo"), None)
                     pic = rid(12)
                     media.IMAGES[pic] = raw
-                    player.update(photo=pic, avatar=None)
+                    player.update(photo=pic, avatar=None, avatarAuto=False)
                 changed(room)
                 return self.send_json({"ok": True})
 
@@ -1100,6 +1116,7 @@ def main():
             if item.get("status") == "searching":
                 lookup_q.put((code, item["id"]))
     threading.Thread(target=saver, daemon=True).start()
+    threading.Thread(target=avatar_gallery, daemon=True).start()  # warm the character list for random avatars
     threading.Thread(target=lookup_worker, daemon=True).start()
     threading.Thread(target=ticker, daemon=True).start()
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)

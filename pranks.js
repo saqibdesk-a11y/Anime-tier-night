@@ -4,7 +4,7 @@
    Usage: Pranks.mount({act, seat: pid => element or null}); Pranks.update(room, me, {hide}) after every
    update. Without a seat function, a thrown thing lands on the first visible [data-pid] element.
    In Werewolf, tapping a seat that isn't part of a game move opens the tray aimed at that player.
-   Sounds are files in /sounds (made by art/sounds.py). */
+   Sounds are files in /sounds named after each prank (fart.mp3, kiss.wav...), plus whoosh for the throw. */
 (function(){
   const KINDS = {
     fart:        {e:"💨", name:"Fart",          verb:"farted on"},
@@ -83,7 +83,7 @@
   // phones only allow sound after the first tap on the page
   ["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, () => audio(), {once:true, capture:true}));
   function load(name){
-    if(!buffers[name]) buffers[name] = fetch(`/sounds/${name}.wav`).then(r => r.arrayBuffer()).then(b => audio().decodeAudioData(b)).catch(() => null);
+    if(!buffers[name]) buffers[name] = fetch(`/sounds/${name}`).then(r => r.arrayBuffer()).then(b => audio().decodeAudioData(b)).catch(() => null);
     return buffers[name];
   }
   async function playSound(name){

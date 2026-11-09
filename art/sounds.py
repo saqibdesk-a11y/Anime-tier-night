@@ -2,7 +2,8 @@
 
 Every sound is built from scratch (filtered noise, formant filters, layered hits), so there are no
 third-party recordings to license. Run:  python art/sounds.py   (needs numpy and scipy)
-To use your own recording instead, drop a .wav with the same name into sounds/.
+To use real recordings instead, put fart.mp3 (or .ogg) etc. into sounds/: the server prefers .mp3,
+then .ogg, over these .wav files.
 """
 import os
 
