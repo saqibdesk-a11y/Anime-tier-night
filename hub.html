@@ -13,13 +13,13 @@
 <meta name="theme-color" content="#1B1F4B">
 <title>Anime Game Night</title>
 <link rel="stylesheet" href="/festival.css">
-<link rel="preload" as="image" href="/img/scenes/hero.webp">
+<link rel="preload" as="image" href="/img/scenes/hero.webp?v=2">
 <style>
 /* The festival entrance: one wide painting of the street at night, then the stalls, one per game.
    Each stall has its own curtain color so the games read apart at a glance. */
 .hero{position:relative;min-height:min(78vh,720px);display:grid;align-content:end;isolation:isolate;
   padding:calc(18px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
-.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--night) url(/img/scenes/hero.webp) 70% 40%/cover no-repeat}
+.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--night) url(/img/scenes/hero.webp?v=2) 70% 40%/cover no-repeat}
 /* darkens the painting where the words sit so they stay readable */
 .hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--night) 0%,color-mix(in srgb,var(--night) 70%,transparent) 35%,transparent 70%),linear-gradient(90deg,color-mix(in srgb,var(--night) 75%,transparent),transparent 60%)}
 .hero-top{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:center}
@@ -77,27 +77,27 @@
   <h2>Pick a stall</h2>
   <div class="grid">
     <a class="stall s-code" href="/codenames">
-      <div class="art" style="--img:url(/img/scenes/stall-codenames.webp)"><div class="cloth"><h3>Codenames</h3></div></div>
+      <div class="art" style="--img:url(/img/scenes/stall-codenames.webp?v=2)"><div class="cloth"><h3>Codenames</h3></div></div>
       <div class="body"><p>Two teams, one grid of words. Your spymaster gives one-word clues.</p>
         <div class="foot"><span class="who">2+ players, AI spymaster</span><span class="go">Play</span></div></div>
     </a>
     <a class="stall s-wolf" href="/werewolf">
-      <div class="art" style="--img:url(/img/scenes/stall-werewolf.webp)"><div class="cloth"><h3>Werewolf</h3></div></div>
+      <div class="art" style="--img:url(/img/scenes/stall-werewolf.webp?v=2)"><div class="cloth"><h3>Werewolf</h3></div></div>
       <div class="body"><p>Secret roles. Wolves hunt at night, the village votes by day.</p>
         <div class="foot"><span class="who">4+ players, 13 roles</span><span class="go">Play</span></div></div>
     </a>
     <a class="stall s-imp" href="/imposter">
-      <div class="art" style="--img:url(/img/scenes/stall-imposter.webp)"><div class="cloth"><h3>Imposter</h3></div></div>
+      <div class="art" style="--img:url(/img/scenes/stall-imposter.webp?v=2)"><div class="cloth"><h3>Imposter</h3></div></div>
       <div class="body"><p>Everyone gets the same word except one. Give clues, find the fake.</p>
         <div class="foot"><span class="who">3+ players</span><span class="go">Play</span></div></div>
     </a>
     <a class="stall s-tier" href="/tierlist">
-      <div class="art" style="--img:url(/img/scenes/stall-tierlist.webp)"><div class="cloth"><h3>Tier List</h3></div></div>
+      <div class="art" style="--img:url(/img/scenes/stall-tierlist.webp?v=2)"><div class="cloth"><h3>Tier List</h3></div></div>
       <div class="body"><p>Rank anime, characters or anything else together. The AI roasts your taste.</p>
         <div class="foot"><span class="who">Any group size</span><span class="go">Play</span></div></div>
     </a>
     <a class="stall s-draw" href="/draw">
-      <div class="art" style="--img:url(/img/scenes/stall-draw.webp)"><div class="cloth"><h3>Draw It</h3></div></div>
+      <div class="art" style="--img:url(/img/scenes/stall-draw.webp?v=2)"><div class="cloth"><h3>Draw It</h3></div></div>
       <div class="body"><p>The AI picks what you draw. Friends rate it, the AI scores it.</p>
         <div class="foot"><span class="who">Solo or teams</span><span class="go">Play</span></div></div>
     </a>
