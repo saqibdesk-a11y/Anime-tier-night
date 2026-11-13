@@ -568,10 +568,12 @@ async function poll(gen, v){
         if(data.phase === "ranking"){ switchTab("mine"); toast("Ranking started. Go!"); }
         if(data.phase === "results"){ toast("Ranking's over! Here come the results"); }
       }
+      const prev = room;
       room = data; v = data.version;
       if(me && !room.players[me.pid]){ me = null; myTiers = null; saveLocal(); toast("You were removed from this room by the host"); }
       if(me) Avatars.apply(chatAct, room.players[me.pid]);  // your saved picture shows next to your chat messages
-      render(); Chat.update(room, me); Pranks.update(room, me);
+      if(!Chat.socialOnly(prev, room)) render();  // chat and pranks leave your board and picks alone
+      Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }

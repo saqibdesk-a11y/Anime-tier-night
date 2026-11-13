@@ -245,7 +245,7 @@ async function poll(gen, v){
         window.scrollTo({top:0, behavior:"smooth"});
       }
       if(prev && prev.turnPid !== room.turnPid && room.turnPid === me?.pid) buzz([80,60,80]);
-      render();
+      if(!Chat.socialOnly(prev, room)) render();  // chat and pranks never redraw the clue box you're typing in
       document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
       Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }

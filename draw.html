@@ -409,7 +409,8 @@ async function poll(gen, v){
       const prev = room; room = data; v = data.version;
       if(me && !room.players[me.pid]){ me = null; store("draw:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
-      onChange(prev); render(); Chat.update(room, me); Pranks.update(room, me, {hide: room.phase === "drawing"});
+      if(!Chat.socialOnly(prev, room)){ onChange(prev); render(); }  // chat and pranks leave your drawing and comments alone
+      Chat.update(room, me); Pranks.update(room, me, {hide: room.phase === "drawing"});
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }

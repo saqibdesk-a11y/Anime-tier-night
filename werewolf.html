@@ -336,7 +336,8 @@ async function poll(gen, v){
         if(room.current?.dead?.includes(me?.pid)) buzz([300,100,300]);
         lastLines = new Set();
       }
-      render(); Chat.update(room, me); Pranks.update(room, me);
+      if(!Chat.socialOnly(prev, room)) render();  // chat and pranks don't redraw the table
+      Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }

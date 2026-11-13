@@ -146,5 +146,12 @@
     box.addEventListener("focusout", () => setTimeout(fit, 120));
   })();
 
-  window.Chat = {mount, update, open: show, close, isOpen: () => open};
+  // what changes with every chat message or prank; everything else is the game itself
+  const SOCIAL = new Set(["chat", "chatRead", "chatWrite", "chatNames", "chatWhy", "pranks", "prankKinds", "prankWait",
+                          "prankCooldown", "prankStats", "version", "now", "lastChat", "lastPrank"]);
+  const gameSig = r => JSON.stringify(r, (k, v) => SOCIAL.has(k) ? undefined : v);
+  // true when the newest update only brought chat or pranks, so the page can skip redrawing the game
+  const socialOnly = (prev, next) => !!(prev && next) && gameSig(prev) === gameSig(next);
+
+  window.Chat = {mount, update, open: show, close, isOpen: () => open, socialOnly};
 })();

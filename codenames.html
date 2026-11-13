@@ -420,8 +420,7 @@ async function poll(gen, v){
       prev = room; room = d; v = d.version;
       if(me && !room.players[me.pid]){ me = null; store("cn:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
-      render();
-      moments();
+      if(!Chat.socialOnly(prev, room)){ render(); moments(); }  // chat and pranks leave the board and your clue box alone
       Chat.update(room, me); Pranks.update(room, me);
     }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
   }

@@ -23,6 +23,8 @@ class Refuse(Exception):
 # that shows in every channel. Chat lives in memory only: a server restart clears it.
 
 CHAT = {}  # room code -> messages
+LAST_CHAT = {}   # (room code, pid) -> when they last sent a message
+LAST_PRANK = {}  # (room code, pid) -> when they last threw something
 CHAT_KEEP = 150
 DEFAULT_RULES = {"read": ["all"], "write": ["all"], "names": {"all": "Everyone"}, "why": "", "block": []}
 
@@ -55,7 +57,6 @@ def chat_view(game, room, viewer):
 
 
 def chat_post(game, room, pid, b):
-    p = room["players"][pid]
     rules = chat_rules(game, room, pid)
     ch = str(b.get("ch") or (rules["write"] or ["all"])[0])
     text = " ".join(str(b.get("text") or "").split())[:300]
@@ -67,9 +68,9 @@ def chat_post(game, room, pid, b):
     for w in rules["block"]:
         if w and w.lower() in low:
             raise Refuse("That message gives away the secret word. Try saying it another way.", 409)
-    if time.time() - p.get("lastChat", 0) < .4:
+    if time.time() - LAST_CHAT.get((room["code"], pid), 0) < .4:
         raise Refuse("Slow down a little.", 429)
-    p["lastChat"] = time.time()
+    LAST_CHAT[(room["code"], pid)] = time.time()
     chat_say(room, text, ch, pid)
 
 
@@ -96,9 +97,8 @@ def _kinds(game, room, pid):
 
 def _ready_at(room, pid, now):
     """When this player may throw again: the cooldown, or the burst limit, whichever is later."""
-    p = room["players"].get(pid) or {}
     mine = sorted(x["t"] for x in PRANKS.get(room["code"], []) if x["from"] == pid and now - x["t"] < BURST[1])
-    ready = p.get("lastPrank", 0) + COOLDOWN
+    ready = LAST_PRANK.get((room["code"], pid), 0) + COOLDOWN
     if len(mine) >= BURST[0]:
         ready = max(ready, mine[-BURST[0]] + BURST[1])
     return ready
@@ -117,7 +117,7 @@ def prank_post(game, room, pid, b):
     log = [x for x in PRANKS.get(room["code"], []) if now - x["t"] < 60]
     if sum(1 for x in log if x["to"] == to and now - x["t"] < TARGET[1]) >= TARGET[0]:
         raise Refuse(f'{room["players"][to]["name"]} has had enough for now. Pick someone else.', 429)
-    room["players"][pid]["lastPrank"] = now
+    LAST_PRANK[(room["code"], pid)] = now
     log.append({"id": _rid(8), "from": pid, "to": to, "kind": kind, "t": now, "back": bool(b.get("back"))})
     PRANKS[room["code"]] = log[-40:]
     st = PRANK_STATS.setdefault(room["code"], {"sent": {}, "got": {}, "kinds": {}})
