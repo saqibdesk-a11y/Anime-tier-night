@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Last Lantern</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+/* Layout: a card stall at the festival. The other players sit along the top, the draw pile and the
+   face-up card in the middle, your hand fanned at the bottom with the cards you can play lifted up.
+   Four card colours, each with its own symbol so they read apart without colour: lantern (red),
+   fan (blue), bamboo (green), firework (gold). Colors come from festival.css. */
+:root{
+  --c-r:#E2513A; --c-b:#3F6FD8; --c-g:#2E9467; --c-y:#E0A526; --c-w:#1E1A2E;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 90%,transparent);
+  --cw:clamp(62px,15vw,92px);
+}
+body{overflow-x:hidden}
+.noren{background:var(--c-b);color:#F3EBDD}
+.noren .th-btn{border-color:rgba(243,235,221,.35)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.85}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--lantern);color:var(--on-lantern);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+.stage{width:min(860px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.title{font-size:clamp(34px,8vw,56px);line-height:1.1;text-align:center}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:52ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:rgba(243,235,221,.07);border-radius:999px;padding:11px 20px;font-weight:700;cursor:pointer;transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
+.btn.small{padding:6px 14px;font-size:14px}
+.btn.wide{width:100%}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text]{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus{border-color:var(--gold)}
+.err{color:var(--danger);font-size:14px;min-height:1.4em}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(0,0,0,.2);border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px;cursor:pointer}
+.chips button.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold)}
+.chips button:disabled{cursor:default}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toggle small{display:block;color:var(--muted);font-size:13px}
+.toggle button{width:52px;height:30px;border-radius:999px;border:1px solid var(--line2);background:rgba(0,0,0,.4);position:relative;flex:none;cursor:pointer}
+.toggle button::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .2s}
+.toggle button.on{background:color-mix(in srgb,var(--gold) 30%,transparent);border-color:var(--gold)}
+.toggle button.on::after{transform:translateX(22px);background:var(--gold)}
+.face{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.face img{width:100%;height:100%;object-fit:cover;object-position:top}
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.person{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.18);border-radius:12px;padding:8px 10px;min-width:0}
+.person b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person .kick{border:0;background:none;color:var(--muted);font-size:13px;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:50;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+body.has-hostbar{--chat-lift:66px}
+body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))}
+.fadeup{animation:fadeup .5s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+
+/* ---------- cards ---------- */
+.card{--cc:var(--c-w);position:relative;width:var(--cw);aspect-ratio:5/7.4;border-radius:calc(var(--cw)*.13);background:var(--cc);
+  box-shadow:inset 0 0 0 calc(var(--cw)*.05) rgba(255,255,255,.88),0 6px 14px -6px rgba(0,0,0,.7);color:#fff;display:grid;place-items:center;flex:none;user-select:none}
+.card.c-r{--cc:var(--c-r)} .card.c-b{--cc:var(--c-b)} .card.c-g{--cc:var(--c-g)} .card.c-y{--cc:var(--c-y)}
+.card .oval{width:74%;height:60%;border-radius:50%;background:#fff;transform:rotate(-24deg);display:grid;place-items:center}
+.card .oval > *{transform:rotate(24deg)}
+.card .v{color:var(--cc);font:900 calc(var(--cw)*.44)/1 var(--body);letter-spacing:-.04em}
+.card .v.small{font-size:calc(var(--cw)*.32)}
+.card .sym{width:calc(var(--cw)*.46);height:calc(var(--cw)*.46);color:var(--cc)}
+.card .corner{position:absolute;display:grid;justify-items:center;gap:1px;font:900 calc(var(--cw)*.17)/1 var(--body);color:#fff}
+.card .corner svg{width:calc(var(--cw)*.17);height:calc(var(--cw)*.17)}
+.card .tl{left:9%;top:6%} .card .br{right:9%;bottom:6%;transform:rotate(180deg)}
+/* wilds: the oval shows all four colours */
+.card.wild .oval{background:conic-gradient(var(--c-r) 0 25%,var(--c-b) 0 50%,var(--c-g) 0 75%,var(--c-y) 0)}
+.card.wild .v{color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.card.back{background:var(--night-3);box-shadow:inset 0 0 0 calc(var(--cw)*.05) var(--gold),0 6px 14px -6px rgba(0,0,0,.7)}
+.card.back .lamp{width:42%;color:var(--lantern);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--lantern) 70%,transparent))}
+
+/* ---------- the table ---------- */
+.seats{display:flex;gap:10px;overflow-x:auto;padding:12px 2px 8px;scrollbar-width:none;justify-content:safe center}
+.seat{position:relative;flex:none;display:grid;justify-items:center;gap:4px;width:76px;text-align:center;border:0;background:none;color:inherit;padding:0;font:inherit}
+.seat .face{width:56px;height:56px;box-shadow:0 0 0 3px transparent;transition:box-shadow .3s}
+.seat.turn .face{box-shadow:0 0 0 3px var(--gold),0 0 22px color-mix(in srgb,var(--gold) 70%,transparent)}
+.seat b{font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat .n{position:absolute;top:36px;right:2px;min-width:26px;height:26px;border-radius:999px;background:var(--paper);color:var(--ink);font-weight:900;font-size:14px;display:grid;place-items:center;padding:0 6px;border:2px solid var(--night)}
+.seat .tag{font-size:11px;font-weight:900;border-radius:999px;padding:2px 7px;background:var(--lantern);color:var(--on-lantern);white-space:nowrap}
+.seat .tag.safe{background:var(--gold);color:var(--ink)}
+.catch{border:0;border-radius:999px;background:var(--lantern);color:var(--on-lantern);font:900 13px var(--body);padding:5px 10px;cursor:pointer;animation:beat .8s infinite}
+.middle{display:flex;align-items:center;justify-content:center;gap:clamp(18px,6vw,48px);margin:10px 0 6px}
+.pile{position:relative;border:0;background:none;padding:0;cursor:default}
+.pile.can{cursor:pointer}
+.pile.can .card{animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(-4px)}}
+.pile .count{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:13px;color:var(--muted);font-weight:700}
+.discard{position:relative;width:calc(var(--cw)*1.25);aspect-ratio:5/7.4}
+.discard .card{position:absolute;inset:0;width:100%}
+.discard .card.under{opacity:.9}
+.discard .card.top.new{animation:slap .45s cubic-bezier(.2,1.5,.4,1)}
+@keyframes slap{from{transform:translateY(-70px) rotate(-25deg) scale(1.3);opacity:0}}
+.state{display:grid;justify-items:center;gap:8px;min-width:90px}
+.dot{width:40px;height:40px;border-radius:50%;background:var(--cc);box-shadow:0 0 0 4px rgba(255,255,255,.85),0 0 20px var(--cc);display:grid;place-items:center;color:#fff}
+.dot svg{width:22px;height:22px}
+.dot.c-r{--cc:var(--c-r)} .dot.c-b{--cc:var(--c-b)} .dot.c-g{--cc:var(--c-g)} .dot.c-y{--cc:var(--c-y)}
+.dir{font-size:14px;color:var(--muted);font-weight:700}
+.pending{font:900 22px/1 var(--body);color:var(--on-lantern);background:var(--lantern);border-radius:999px;padding:6px 12px;animation:beat 1s infinite}
+.status{text-align:center;font-family:var(--display);font-size:clamp(20px,5vw,26px);margin:22px 0 4px;min-height:1.3em}
+.status.mine{color:var(--gold)}
+.feed{text-align:center;color:var(--muted);font-size:15px;min-height:1.5em}
+
+/* ---------- your hand ---------- */
+/* a big hand wraps onto more rows, so no card is ever hidden off the side */
+.hand{display:flex;flex-wrap:wrap;gap:20px 6px;padding:22px 0 12px;justify-content:center}
+.hand .card{border:0;padding:0;cursor:default;transition:transform .15s,filter .2s}
+.hand.myturn .card:not(.ok){filter:brightness(.55) saturate(.6)}
+.hand .card.ok{cursor:pointer;transform:translateY(-14px)}
+.hand .card.ok:hover{transform:translateY(-20px)}
+.hand .card.drawn{box-shadow:inset 0 0 0 calc(var(--cw)*.05) var(--gold),0 0 0 3px var(--gold),0 10px 20px -6px rgba(0,0,0,.8)}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.callbtn{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.callbtn.urgent{animation:beat .7s infinite}
+/* the colour picker for wild cards */
+.scrim{position:fixed;inset:0;z-index:55;background:rgba(8,9,24,.6);display:grid;place-items:center;padding:16px}
+.picker{background:var(--paper);color:var(--ink);border-radius:18px;padding:18px;width:min(360px,100%);display:grid;gap:12px;text-align:center}
+.picker h2{font-size:26px}
+.picker .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.picker .opts button{border:0;border-radius:14px;padding:16px 8px;color:#fff;font:900 16px var(--body);display:grid;justify-items:center;gap:6px;cursor:pointer}
+.picker .opts svg{width:30px;height:30px}
+.picker .x{border:0;background:none;color:var(--ink-2);font:700 15px var(--body);cursor:pointer}
+
+/* ---------- round over ---------- */
+.winner{text-align:center;margin-top:16px}
+.winner .face{width:96px;height:96px;margin:0 auto 10px;box-shadow:0 0 0 4px var(--gold),0 0 40px color-mix(in srgb,var(--gold) 60%,transparent)}
+.hands{display:grid;gap:8px;margin-top:16px}
+.hands .row{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.18);border-radius:12px;padding:8px 10px;--cw:34px;overflow-x:auto}
+.hands .row b{min-width:80px}
+.hands .row .wins{margin-left:auto;color:var(--gold);font-weight:900;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <h1>Last Lantern</h1>
+  <span class="code" id="hCode" hidden></span>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 70%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+const P = pid => room.players[pid] || {name:"Someone who left"};
+const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc(p.name[0].toUpperCase()); };
+const face = (pid, cls="face") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
+
+/* ---------- cards ---------- */
+const SUIT = {
+  r: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="1.5" width="6" height="2.5" rx="1"/><path d="M5 9c0-3.5 3.2-5 7-5s7 1.5 7 5v6c0 3.5-3.2 5-7 5s-7-1.5-7-5z"/><rect x="9" y="20" width="6" height="2.5" rx="1"/></svg>',
+  b: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20 2.5 9.5A13 13 0 0 1 21.5 9.5z"/><circle cx="12" cy="20" r="2"/></svg>',
+  g: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="1" width="6" height="6.5" rx="1.5"/><rect x="9" y="8.75" width="6" height="6.5" rx="1.5"/><rect x="9" y="16.5" width="6" height="6.5" rx="1.5"/><path d="M15 6c3-2 5-2 7-1-2 2-4 2.5-7 2z"/></svg>',
+  y: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 14 9 22 6 16 12 22 18 14 15 12 23 10 15 2 18 8 12 2 6 10 9z"/></svg>',
+};
+const NAMES = {r:"Lantern", b:"Fan", g:"Bamboo", y:"Firework"};
+const ICON = {
+  S: '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="9"/><path d="M5.6 18.4 18.4 5.6"/></svg>',
+  R: '<svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5"/></svg>',
+};
+const kind = c => c.split("#")[0];
+const colorOf = c => kind(c).startsWith("W") ? null : kind(c)[0];
+const valueOf = c => kind(c).startsWith("W") ? kind(c) : kind(c).slice(1);
+const LABEL = {S:"Block", R:"Turn back", D:"+2", W:"Wild", W4:"Wild +4"};
+const cardName = c => { const v = valueOf(c), col = colorOf(c); return (col ? NAMES[col] + " " : "") + (LABEL[v] || v); };
+function cardHTML(c, cls="", tag="div", attrs=""){
+  const v = valueOf(c), col = colorOf(c), wild = !col;
+  const mid = v === "S" || v === "R" ? ICON[v] : `<span class="v ${v.length > 1 && !wild ? "small" : ""}">${v === "D" ? "+2" : v === "W" ? "" : v === "W4" ? "+4" : v}</span>`;
+  const corner = wild ? (v === "W4" ? "+4" : "") : (v === "D" ? "+2" : v === "S" ? "⦸" : v === "R" ? "⇄" : v);
+  const suit = wild ? "" : SUIT[col];
+  return `<${tag} class="card ${wild ? "wild" : "c-" + col} ${cls}" ${attrs} aria-label="${esc(cardName(c))}">
+    <span class="corner tl">${corner}${suit}</span><span class="oval">${mid}</span><span class="corner br">${corner}${suit}</span></${tag}>`;
+}
+const backHTML = (cls="") => `<div class="card back ${cls}"><svg class="lamp" viewBox="0 0 24 24" fill="currentColor">${SUIT.r.replace(/<\/?svg[^>]*>/g, "")}</svg></div>`;
+
+/* ---------- home ---------- */
+function home(){
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:5vh"><h1 class="title" style="font-size:clamp(44px,12vw,80px)">Last Lantern</h1>
+    <p class="sub">Match the colour or the symbol, hit the next player with action cards, and empty your hand first. Down to one card? Call it before someone catches you.</p></div>
+    <div style="display:grid;gap:14px;margin-top:26px;max-width:520px;margin-left:auto;margin-right:auto">
+    <form class="panel" id="createForm"><h2>Start a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+      <div class="err" id="cErr"></div><button class="btn primary wide">Create game</button><p class="hint">House rules and the turn timer are set in the lobby.</p></form>
+    <form class="panel" id="joinForm"><h2>Join a game</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div>
+      <div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
+  $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
+    try{ const r = await api("/api/rooms", {game:"lantern", title:"Last Lantern"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("ll:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
+  $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
+    if(!c || !n){ $("#jErr").textContent = "Enter the room code and your name."; return; }
+    try{ const m = await api(`/api/rooms/${c}/join`, {name:n}); store("ll:"+c, {...(store("ll:"+c)||{}), me:m}); openRoom(c); }catch(err){ $("#jErr").textContent = err.message; } };
+}
+function openRoom(c){
+  code = c; const s = store("ll:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
+  history.replaceState(null, "", "/lantern?room="+c); $("#hCode").hidden = false; $("#hCode").textContent = c;
+  BackGuard.arm();
+  poll(++pollGen, -1);
+}
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
+      if(r.status === 404){ history.replaceState(null,"","/lantern"); home(); $("#jErr").textContent = "That game doesn't exist anymore."; return; }
+      const d = await r.json(); if(gen !== pollGen) return;
+      clockOffset = d.now - Date.now()/1000;
+      const prev = room; room = d; v = d.version;
+      if(me && !room.players[me.pid]){ me = null; store("ll:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
+      if(!Chat.socialOnly(prev, room)){ react(prev); render(); }  // chat and pranks leave the table alone
+      document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+      Chat.update(room, me); Pranks.update(room, me);
+    }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+/* ---------- what just happened: a line under the table, a buzz when it's about you ---------- */
+let seenEvents = null, lastLine = "";
+function react(prev){
+  const ev = room.table?.events || [];
+  if(seenEvents === null || !prev || prev.round !== room.round){ seenEvents = new Set(ev.map(e=>e.id)); lastLine = ""; }
+  for(const e of ev){
+    if(seenEvents.has(e.id)) continue;
+    seenEvents.add(e.id);
+    const who = e.pid === me?.pid ? "You" : P(e.pid).name, mine = e.pid === me?.pid;
+    const line = {
+      play: () => `${who} played ${cardName(e.card)}${kind(e.card).startsWith("W") ? `, now ${NAMES[e.color]}` : ""}`,
+      drew: () => `${who} drew ${e.n} card${e.n === 1 ? "" : "s"}${e.timeout ? " (out of time)" : ""}`,
+      skip: () => `${who} ${mine ? "are" : "is"} blocked`,
+      reverse: () => `Play turns back`,
+      pass: () => `${who} passed${e.timeout ? " (out of time)" : ""}`,
+      call: () => `${who} called Last lantern!`,
+      caught: () => `${P(e.by).name} caught ${mine ? "you" : who} with one card: +${e.n}`,
+      won: () => `${who} won the round!`,
+      start: () => "",
+    }[e.what]?.() || "";
+    if(line) lastLine = line;
+    if(mine && (e.what === "caught" || (e.what === "drew" && e.forced))){ buzz([80,50,80]); toast(line); }
+  }
+  if(prev?.table && room.table && prev.table.turn !== room.table.turn && room.table.turn === me?.pid) buzz(100);
+}
+
+/* ---------- render ---------- */
+function render(){
+  renderHostbar(); tickTimer();
+  if(!me || !room.players[me.pid]) return gate();
+  if(room.phase === "lobby") return lobby();
+  table();
+}
+function gate(){
+  if($("#gate")) return;
+  $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join this game</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
+  $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
+    try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("ll:"+code, {me, hostKey}); poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
+}
+
+/* ---------- lobby ---------- */
+function lobby(){
+  const H = !!hostKey, s = room.settings, ps = Object.keys(room.players), mine = P(me.pid);
+  const chip = (key, val, text) => `<button type="button" data-set="${key}" data-val="${val}" class="${s[key] === val ? "on" : ""}" ${H ? "" : "disabled"}>${text}</button>`;
+  const tog = (key, title, note) => `<div class="toggle"><div><b>${title}</b><small>${note}</small></div><button type="button" data-tog="${key}" class="${s[key] ? "on" : ""}" ${H ? "" : "disabled"} aria-pressed="${s[key]}" aria-label="${title}"></button></div>`;
+  $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} at the stall</h1><p class="sub">Share the code <b style="color:var(--gold)">${esc(room.code)}</b>. ${ps.length < 2 ? "You need at least 2 players." : "2 to 10 players."}</p></div>
+    <div class="panel" style="margin-top:16px"><div style="display:flex;align-items:center;gap:12px"><button type="button" class="face" id="myPic" style="background:${hue(mine.name)};border:0;cursor:pointer;width:56px;height:56px" aria-label="Change your picture">${picOf(mine)}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">Tap your picture to change it.</p></div></div>
+      <div class="people">${ps.map(pid=>`<div class="person">${face(pid)}<b>${esc(P(pid).name)}${pid === me.pid ? " (you)" : ""}</b>${H && pid !== me.pid ? `<button class="kick" data-kick="${pid}">Kick</button>` : ""}</div>`).join("")}</div></div>
+    <div class="panel" style="margin-top:14px"><h2>${H ? "House rules" : "House rules (the host picks)"}</h2>
+      <div><label>Cards in your starting hand</label><div class="chips">${[5,6,7,8,10].map(n=>chip("hand", n, n)).join("")}</div></div>
+      ${tog("stack", "Stack +2 and +4", "Hit with a +2? Play your own +2 (or a +4) to pass it on bigger.")}
+      ${tog("drawUntil", "Draw until you can play", "Keep drawing until you get a card that fits.")}
+      <div><label>Turn timer</label><div class="chips">${[[0,"Off"],[20,"20s"],[30,"30s"],[45,"45s"],[60,"60s"]].map(([v,t])=>chip("turnSec", v, t)).join("")}</div></div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${ps.length < 2 ? "disabled" : ""}>Deal the cards</button>` : `<p class="hint" style="text-align:center">Waiting for the host to deal.</p>`}</div>
+    <details class="panel" style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">How to play</summary><p class="hint" style="margin-top:8px">
+      Play a card that matches the top card's colour or symbol. <b>Block</b> skips the next player, <b>Turn back</b> reverses the order, <b>+2</b> makes the next player draw two.
+      <b>Wild</b> lets you pick the colour, and <b>Wild +4</b> also makes the next player draw four. Can't play? Draw a card; if it fits you can play it straight away.
+      When you're about to go down to one card, press <b>Last lantern!</b> If you forget, anyone can catch you before the next move and you draw two. First to empty their hand wins the round.</p></details>`;
+  $("#myPic").onclick = ()=>Avatars.open(act);
+  document.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>act("settings", {[b.dataset.set]: Number(b.dataset.val)}).catch(err=>toast(err.message)));
+  document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>act("settings", {[b.dataset.tog]: !s[b.dataset.tog]}).catch(err=>toast(err.message)));
+}
+
+/* ---------- the table ---------- */
+let lastTop = null, picking = null;
+function table(){
+  const t = room.table, mine = room.me, over = room.phase === "roundover";
+  // your turn ended (the timer, or the round is over) while you were picking a colour: close the picker
+  if(picking && (over || t.turn !== me.pid)){ document.querySelector(".scrim")?.remove(); picking = null; }
+  const inRound = !!mine, myTurn = !over && t.turn === me.pid;
+  const others = t.order.filter(pid => pid !== me.pid);
+  const seat = pid => {
+    const n = t.counts[pid] ?? 0, called = t.called.includes(pid), exposed = t.exposed === pid;
+    return `<div class="seat ${t.turn === pid && !over ? "turn" : ""}">${face(pid)}<span class="n" aria-label="${n} cards">${n}</span><b>${esc(P(pid).name)}</b>
+      ${exposed ? `<button class="catch" data-catch="1">Catch!</button>` : called && n === 1 ? `<span class="tag safe">Last lantern</span>` : ""}</div>`;
+  };
+  const top = t.top, topIsNew = lastTop !== null && lastTop !== top;
+  lastTop = top;
+  const turnName = t.turn === me.pid ? "Your turn" : `${esc(P(t.turn).name)}'s turn`;
+  let status = over ? "" : myTurn ? (mine.drawn ? "You drew one that fits. Play it or pass." : t.pending ? `Play a ${room.settings.stack ? "+2 or +4" : ""} or take ${t.pending}` : "Your turn") : turnName;
+  if(!inRound && !over) status = `You're watching. You'll be dealt in next round. ${turnName}.`;
+  const hand = inRound ? mine.hand.slice().sort((a,b)=>sortKey(a).localeCompare(sortKey(b))) : [];
+  const canCall = inRound && !over && ((myTurn && hand.length === 2 && !t.called.includes(me.pid)) || t.exposed === me.pid);
+  $("#stage").innerHTML = `
+    <div class="seats">${others.map(seat).join("")}</div>
+    <div class="middle">
+      <button class="pile ${myTurn && !mine.drawn ? "can" : ""}" id="deck" ${myTurn && !mine.drawn ? "" : "disabled"} aria-label="Draw a card">${backHTML()}<span class="count">${t.deck} left</span></button>
+      <div class="discard">${(t.under || []).map((c,i)=>cardHTML(c, "under", "div", `style="transform:rotate(${(i-1)*9}deg)"`)).join("")}${cardHTML(top, "top" + (topIsNew ? " new" : ""))}</div>
+      <div class="state"><span class="dot c-${t.color}" title="${NAMES[t.color]}">${SUIT[t.color]}</span><span class="dir">${t.dir === 1 ? "↻ clockwise" : "↺ turned back"}</span>
+        ${t.pending ? `<span class="pending">+${t.pending}</span>` : ""}</div>
+    </div>
+    <div class="status ${myTurn ? "mine" : ""}">${over ? "" : status}</div>
+    <div class="feed" aria-live="polite">${over ? "" : esc(lastLine)}</div>
+    ${over ? roundOver() : inRound ? `
+    <div class="hand ${myTurn ? "myturn" : ""}" id="hand">${hand.map(c=>cardHTML(c, (mine.canPlay.includes(c) ? "ok" : "") + (mine.drawn === c ? " drawn" : ""), "button", `data-card="${esc(c)}" ${mine.canPlay.includes(c) ? "" : "tabindex='-1'"}`)).join("")}</div>
+    <div class="actions">
+      ${myTurn && !mine.drawn ? `<button class="btn" data-do="draw">${t.pending ? `Take ${t.pending}` : "Draw a card"}</button>` : ""}
+      ${myTurn && mine.drawn ? `<button class="btn" data-do="pass">Pass</button>` : ""}
+      ${canCall ? `<button class="btn callbtn ${t.exposed === me.pid ? "urgent" : ""}" data-do="call">Last lantern!</button>` : ""}
+    </div>` : ""}`;
+}
+// your hand sorted by colour, then value, wilds last
+const sortKey = c => { const col = colorOf(c) || "z", v = valueOf(c); return col + (v.length === 1 && /\d/.test(v) ? "0" + v : "1" + v); };
+function roundOver(){
+  const t = room.table, w = t.winner;
+  const ps = t.order.slice().sort((a,b)=>(room.wins[b]||0)-(room.wins[a]||0));
+  return `<div class="winner fadeup">${face(w)}<h2 style="font-size:clamp(30px,8vw,44px)">${w === me.pid ? "You win the round!" : `${esc(P(w).name)} wins the round!`}</h2>
+    <p class="sub">${hostKey ? "Deal again when everyone's ready." : "Waiting for the host to deal again."}</p></div>
+    <div class="hands">${ps.map(pid=>`<div class="row">${face(pid)}<b>${esc(P(pid).name)}</b>${(t.hands?.[pid]||[]).map(c=>cardHTML(c)).join("")}<span class="wins">${room.wins[pid]||0} win${(room.wins[pid]||0) === 1 ? "" : "s"}</span></div>`).join("")}</div>`;
+}
+
+/* ---------- moves ---------- */
+async function play(card, color){
+  try{ await act("play", {card, color}); }catch(err){ toast(err.message); }
+}
+function pickColor(card){
+  picking = card;
+  const box = document.createElement("div"); box.className = "scrim";
+  box.innerHTML = `<div class="picker" role="dialog" aria-label="Pick a colour"><h2>Pick a colour</h2><div class="opts">${["r","b","g","y"].map(c=>`<button type="button" data-color="${c}" style="background:var(--c-${c})">${SUIT[c]}${NAMES[c]}</button>`).join("")}</div><button type="button" class="x">Cancel</button></div>`;
+  document.body.appendChild(box);
+  box.onclick = e=>{
+    const c = e.target.closest("[data-color]");
+    if(c){ box.remove(); play(card, c.dataset.color); picking = null; return; }
+    if(e.target === box || e.target.closest(".x")){ box.remove(); picking = null; }
+  };
+}
+BackGuard.onBack(()=>{ const s = document.querySelector(".scrim"); if(s){ s.remove(); picking = null; return true; } return false; });
+document.addEventListener("click", async e=>{
+  const c = e.target.closest("#hand [data-card]"), d = e.target.closest("[data-do]"), deck = e.target.closest("#deck"), k = e.target.closest("[data-catch]");
+  const h = e.target.closest("[data-host]"), kick = e.target.closest("[data-kick]");
+  if(c){
+    if(!c.classList.contains("ok")){ if(room.table.turn === me.pid) toast("That one doesn't match. Same colour or symbol, or draw."); return; }
+    const card = c.dataset.card;
+    kind(card).startsWith("W") ? pickColor(card) : play(card);
+  }
+  if(deck && !deck.disabled){ act("draw").catch(err=>toast(err.message)); }
+  if(d){ act(d.dataset.do).catch(err=>toast(err.message)); }
+  if(k){ act("catch").catch(err=>toast(err.message)); }
+  if(h){ try{ await act(h.dataset.host); }catch(err){ toast(err.message); } }
+  if(kick){ if(kick.dataset.sure !== "1"){ kick.dataset.sure = "1"; kick.textContent = "Sure?"; return; } act("kick", {pid:kick.dataset.kick}).catch(err=>toast(err.message)); }
+});
+
+/* ---------- host controls, timer ---------- */
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "playing") b.push('<button class="btn small" data-host="skip">Skip this turn</button><button class="btn small" data-host="tolobby">End round</button>');
+  if(ph === "roundover") b.push('<button class="btn small" data-host="tolobby">House rules</button><button class="btn primary" data-host="playagain">Deal again</button>');
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !room.deadline || room.phase !== "playing"){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
+  el.classList.toggle("low", left <= 5);
+}
+setInterval(tickTimer, 250);
+
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>

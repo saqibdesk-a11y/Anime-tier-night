@@ -19,10 +19,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import codenames_game
 import draw_game
 import imposter_game
+import lantern_game
 import media
 import werewolf_game
 
-GAMES = {"draw": draw_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game}  # every game module has the same hooks
+GAMES = {"draw": draw_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game, "lantern": lantern_game}  # every game module has the same hooks
 
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -1098,7 +1099,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/icon-512.png": ("image/png", "public, max-age=86400"),
 }
 IMG_DIRS = {"roles", "scenes"}
-PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html"}
+PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html", "/lantern": "lantern.html"}
 
 
 def main():

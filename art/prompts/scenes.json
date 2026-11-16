@@ -66,6 +66,17 @@
     512
    ],
    "prompt": "A festival fortune stall with a wooden counter covered in folded paper fortune slips in a grid, two tassels, one red and one green, hanging from the counter, warm light, no people."
+  },
+  {
+   "id": "stall-lantern",
+   "out": "img/scenes/stall-lantern.webp",
+   "w": 1152,
+   "h": 768,
+   "size": [
+    768,
+    512
+   ],
+   "prompt": "A festival card game stall at night: a low wooden table covered with a scattered fan of colorful playing cards in red, blue, green and gold, a paper lantern hanging above, a small hand-painted sign with no writing, warm lantern glow, no people."
   }
  ]
 }
