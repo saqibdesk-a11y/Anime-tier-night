@@ -4,6 +4,7 @@ then the AI or the players score each drawing, and a host-driven show reveals th
 server.py owns rooms, the lock and HTTP; this module owns the game's rules."""
 import base64
 import random
+import re
 import threading
 import time
 
@@ -354,6 +355,32 @@ def public(room, viewer):
     return r
 
 
+HEX = re.compile(r"#[0-9a-fA-F]{6}")
+
+
+def clean_op(st, pid):
+    """One drawing action on a team canvas, checked: a brush or eraser stroke (points, width, opacity)
+    or a bucket fill (a point and a colour). Every teammate's canvas replays these in the same order."""
+    if not isinstance(st, dict):
+        return None
+    kind = st.get("t") if st.get("t") in ("pen", "erase", "fill") else "pen"
+    color = str(st.get("c") or "#111111")
+    color = color if HEX.fullmatch(color) else "#111111"
+    try:
+        alpha = max(0.05, min(1.0, float(st.get("a", 1))))
+        op = {"by": pid, "id": str(st.get("id") or "")[:16], "t": kind, "a": round(alpha, 2)}
+        if kind == "fill":
+            op.update(c=color, x=max(0, min(799, int(st.get("x")))), y=max(0, min(599, int(st.get("y")))))
+            return op
+        pts = [[int(x), int(y)] for x, y in (st.get("p") or [])[:3000]]
+    except (TypeError, ValueError):
+        return None
+    if not pts:
+        return None
+    op.update(c=color, w=max(1, min(120, int(st.get("w") or 6))), p=pts)
+    return op
+
+
 def strokes_since(code, rnd, team, since, gen):
     s = STROKES.get((code, rnd, team)) or {"gen": 0, "list": []}
     if s["gen"] != gen:
@@ -388,17 +415,22 @@ def player_action(room, action, b, pid):
             raise Refuse("You can't draw right now.", 409)
         key = (room["code"], rnd, owner_of(room, pid))
         s = STROKES.setdefault(key, {"gen": 0, "list": []})
+        gone = s.setdefault("gone", set())  # undone before their stroke even arrived
         if action == "stroke":
             for st in (b.get("strokes") or [])[:20]:
-                pts = [[int(x), int(y)] for x, y in (st.get("p") or [])[:2000]]
-                if pts:
-                    s["list"].append({"by": pid, "c": str(st.get("c") or "#000")[:9], "w": max(1, min(80, int(st.get("w") or 6))), "p": pts})
+                op = clean_op(st, pid)
+                if op and not (op["id"] and op["id"] in gone):
+                    s["list"].append(op)
         elif action == "undo":
+            want = str(b.get("id") or "")
             for i in range(len(s["list"]) - 1, -1, -1):
-                if s["list"][i]["by"] == pid:
+                if s["list"][i]["by"] == pid and (not want or s["list"][i].get("id") == want):
                     del s["list"][i]
                     s["gen"] += 1
                     break
+            else:
+                if want:
+                    gone.add(want)  # it's still on its way: drop it when it lands
         else:
             s["list"].clear()
             s["gen"] += 1
