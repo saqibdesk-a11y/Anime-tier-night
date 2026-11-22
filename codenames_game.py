@@ -322,7 +322,9 @@ def reveal(room, i, pid):
     clue["guesses"] += 1
     room["log"].append({"kind": "guess", "team": team, "by": pid, "i": i, "w": c["w"], "key": c["key"]})
     room["lastReveal"] = {"i": i, "key": c["key"], "team": team, "id": rid(6)}
-    what = {"assassin": "the ASSASSIN", "neutral": "a bystander", team: "their own agent"}.get(c["key"], f"a {TEAM_NAME[c['key']]} agent")
+    # the default is only built for the other team's agent: building it for the assassin or a bystander
+    # would look up a team that doesn't exist and stop the reveal halfway
+    what = {"assassin": "the ASSASSIN", "neutral": "a bystander", team: "their own agent"}.get(c["key"]) or f"a {TEAM_NAME[c['key']]} agent"
     say(room, f"{name(room, pid)} locked {c['w']}: {what}")
     if c["key"] == "assassin":
         stat(room, pid, "assassin")
