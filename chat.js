@@ -22,7 +22,7 @@
   .fc .fc-msgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 12px 12px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
   .fc .fc-m{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:end;max-width:86%}
   .fc .fc-av{width:30px;height:30px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font:700 13px var(--body,system-ui);color:#1E1A2E;background:var(--gold,#D9A441)}
-  .fc .fc-av img{width:100%;height:100%;object-fit:cover;object-position:top}
+  .fc .fc-av img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
   .fc .fc-b{background:rgba(243,235,221,.09);border-radius:14px 14px 14px 4px;padding:7px 11px;overflow-wrap:anywhere;font-size:15px;line-height:1.45}
   .fc .fc-b span{display:block;font-size:12px;font-weight:700;color:var(--gold,#D9A441);margin-bottom:1px}
   .fc .fc-m.fc-mine{align-self:flex-end;grid-template-columns:minmax(0,1fr)}
@@ -92,7 +92,7 @@
       m.innerHTML = list.length ? list.map(x => {
         if(x.sys) return `<div class="fc-sys">${esc(x.text)}</div>`;
         const p = room.players[x.pid] || {name: x.name}, src = pic(p);
-        return `<div class="fc-m ${x.pid === me.pid ? "fc-mine" : ""}"><span class="fc-av">${src ? `<img src="${esc(src)}" alt="">` : esc((x.name || "?")[0].toUpperCase())}</span><div class="fc-b"><span>${esc(x.name)}</span>${esc(x.text)}</div></div>`;
+        return `<div class="fc-m ${x.pid === me.pid ? "fc-mine" : ""}"><span class="fc-av" data-pid="${esc(x.pid)}">${src ? `<img src="${esc(src)}" alt="">` : esc((x.name || "?")[0].toUpperCase())}</span><div class="fc-b"><span>${esc(x.name)}</span>${esc(x.text)}</div></div>`;
       }).join("") : `<div class="fc-empty">${read.length > 1 && ch !== read[0] ? `Only ${esc(name(ch).toLowerCase())} can read this.` : "No messages yet. Say hi."}</div>`;
       if(atBottom || (list.slice(-1)[0] || {}).pid === me.pid) m.scrollTop = m.scrollHeight;
     }

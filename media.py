@@ -25,6 +25,7 @@ class Refuse(Exception):
 CHAT = {}  # room code -> messages
 LAST_CHAT = {}   # (room code, pid) -> when they last sent a message
 LAST_PRANK = {}  # (room code, pid) -> when they last threw something
+RECENT_THROWS = {}  # (room code, pid) -> times of their throws in the last BURST window
 CHAT_KEEP = 150
 DEFAULT_RULES = {"read": ["all"], "write": ["all"], "names": {"all": "Everyone"}, "why": "", "block": []}
 
@@ -97,7 +98,7 @@ def _kinds(game, room, pid):
 
 def _ready_at(room, pid, now):
     """When this player may throw again: the cooldown, or the burst limit, whichever is later."""
-    mine = sorted(x["t"] for x in PRANKS.get(room["code"], []) if x["from"] == pid and now - x["t"] < BURST[1])
+    mine = sorted(t for t in RECENT_THROWS.get((room["code"], pid), []) if now - t < BURST[1])
     ready = LAST_PRANK.get((room["code"], pid), 0) + COOLDOWN
     if len(mine) >= BURST[0]:
         ready = max(ready, mine[-BURST[0]] + BURST[1])
@@ -118,6 +119,8 @@ def prank_post(game, room, pid, b):
     if sum(1 for x in log if x["to"] == to and now - x["t"] < TARGET[1]) >= TARGET[0]:
         raise Refuse(f'{room["players"][to]["name"]} has had enough for now. Pick someone else.', 429)
     LAST_PRANK[(room["code"], pid)] = now
+    key = (room["code"], pid)
+    RECENT_THROWS[key] = [t for t in RECENT_THROWS.get(key, []) if now - t < BURST[1]] + [now]
     log.append({"id": _rid(8), "from": pid, "to": to, "kind": kind, "t": now, "back": bool(b.get("back"))})
     PRANKS[room["code"]] = log[-40:]
     st = PRANK_STATS.setdefault(room["code"], {"sent": {}, "got": {}, "kinds": {}})
@@ -134,6 +137,16 @@ def prank_view(game, room, viewer):
             "prankWait": max(0, _ready_at(room, viewer, now) - now) if joined else 0,
             "prankCooldown": COOLDOWN,
             "prankStats": PRANK_STATS.get(room["code"], {"sent": {}, "got": {}, "kinds": {}})}
+
+
+def forget_gone(codes):
+    """Drops chat and prank memory for rooms that no longer exist, so a long-running server doesn't grow forever."""
+    for d in (CHAT, PRANKS, PRANK_STATS):
+        for code in [c for c in d if c not in codes]:
+            d.pop(code, None)
+    for d in (LAST_CHAT, LAST_PRANK, RECENT_THROWS):
+        for key in [k for k in d if k[0] not in codes]:
+            d.pop(key, None)
 
 
 def prank_reset(room):

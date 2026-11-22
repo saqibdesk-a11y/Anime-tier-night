@@ -659,9 +659,15 @@ def run_roast_with(code, provider, key, model, spice):
 
 
 def ticker():
-    """Ends timed ranking rounds (a 2s grace lets last moves save)."""
+    """Ends timed ranking rounds (a 2s grace lets last moves save), and once a minute forgets
+    chat and prank memory of rooms that are gone."""
+    beat = 0
     while True:
         time.sleep(1)
+        beat += 1
+        if beat % 60 == 0:
+            with lock:
+                media.forget_gone(set(rooms))
         with lock:
             for room in rooms.values():
                 if room.get("game") in GAMES:
@@ -673,6 +679,16 @@ def ticker():
 
 
 # ---------- HTTP ----------
+
+class QuietServer(ThreadingHTTPServer):
+    """A phone that closes the page mid-answer is normal; only real errors go to the log."""
+
+    def handle_error(self, request, client_address):
+        import sys
+        if isinstance(sys.exc_info()[1], (ConnectionAbortedError, ConnectionResetError, BrokenPipeError)):
+            return
+        super().handle_error(request, client_address)
+
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -1120,7 +1136,7 @@ def main():
     threading.Thread(target=avatar_gallery, daemon=True).start()  # warm the character list for random avatars
     threading.Thread(target=lookup_worker, daemon=True).start()
     threading.Thread(target=ticker, daemon=True).start()
-    srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    srv = QuietServer(("0.0.0.0", PORT), Handler)
     srv.daemon_threads = True
     print(f"Anime Tier Night running on http://localhost:{PORT}")
     srv.serve_forever()

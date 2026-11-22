@@ -47,3 +47,24 @@ h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:0;text-wrap:b
 .f-btn:disabled{opacity:.45;cursor:not-allowed}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+
+/* profile pictures: every avatar fills its frame and crops the same way, wherever it appears
+   (a picture without this shows only the top-left corner of the full image, which looks zoomed in) */
+[data-pid] > img, .face > img, .mini > img, .av > img, .pic > img, .owner > img, .pin > img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;object-position:50% 20%;display:block}
+
+/* the curtain header always fits on one line: the back link never wraps, the game name shrinks or
+   trims, and on phones the back link is just the arrow so the code and timer stay on screen */
+.noren{flex-wrap:nowrap}
+.noren > *{flex:none}
+.noren .noren-back{white-space:nowrap}
+.noren h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(19px,5.4vw,24px)}
+.noren .spacer{flex:1 1 0;min-width:0}
+@media (max-width:480px){
+  .noren{gap:8px}
+  .noren .noren-back{font-size:0;width:28px}
+  .noren .noren-back::before{content:"\2190";font-size:24px;line-height:1}
+  .noren h1{font-size:19px}
+  .noren .code{letter-spacing:.06em!important;padding:1px 7px!important;font-size:13px!important}
+  .noren .th-btn,.noren .iconbtn{width:34px!important;height:34px!important}
+  .noren .timer{padding:3px 9px!important;font-size:15px!important}
+}

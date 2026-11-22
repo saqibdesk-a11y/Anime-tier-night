@@ -118,7 +118,7 @@ select option{background:var(--night)}
 .center .small{font-size:clamp(10px,2.8vw,13px);color:var(--muted);font-weight:700}
 .seat{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;width:var(--sz);border:0;background:none;padding:0;transition:transform .2s,filter .4s;z-index:2}
 .seat .av{width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.22);background:var(--night-3);display:grid;place-items:center;font-weight:900;font-size:calc(var(--sz)*.38);color:#0b0820;box-shadow:0 10px 24px -8px rgba(0,0,0,.95);position:relative}
-.seat .av img{width:100%;height:100%;object-fit:cover;object-position:top}
+.seat .av img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
 .seat .nm{font-weight:700;font-size:13px;max-width:calc(var(--sz) + 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 6px #000;background:rgba(5,6,15,.55);border-radius:999px;padding:0 7px}
 .seat.me .av{border-color:var(--moon)}
 .seat.pick{cursor:pointer}
@@ -171,7 +171,7 @@ select option{background:var(--night)}
 .card .front .desc{grid-row:4}
 .card .front::before{content:"";position:absolute;inset:10px;border:2px solid rgba(255,236,190,.45);border-radius:15px;pointer-events:none;z-index:2}
 .card .front .owner{width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;font-weight:900;color:#0b0820;background:#333}
-.card .front .owner img{width:100%;height:100%;object-fit:cover;object-position:top}
+.card .front .owner img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
 .card .front .rname{font-family:var(--display);font-size:28px;line-height:1.1;color:#fff;text-shadow:0 2px 12px var(--c2)}
 .card .front svg{width:58%;margin:auto;filter:drop-shadow(0 0 22px var(--c2))}
 .card .front .desc{font-size:14px;line-height:1.45;color:#EFE9F7}
@@ -207,11 +207,11 @@ body.has-hostbar{--chat-lift:64px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:50;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .me-pic{display:flex;align-items:center;gap:14px}
 .me-pic button{width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px dashed var(--line2);display:grid;place-items:center;background:rgba(0,0,0,.3);flex:none;font-size:12px;color:var(--muted);padding:0}
-.me-pic button img{width:100%;height:100%;object-fit:cover;object-position:top}
+.me-pic button img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
 details summary{cursor:pointer;font-weight:800}
 .rolelist{display:grid;gap:8px;margin-top:10px}
 .pkface{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
-.pkface img{width:100%;height:100%;object-fit:cover;object-position:top}
+.pkface img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
 .rolelist div{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;font-size:15px}
 .rolelist img{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:50% 15%;box-shadow:0 0 0 2px var(--c2)}
 .chip.role img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:50% 15%}
@@ -360,6 +360,7 @@ function render(){
   else tableView();
 }
 function gate(){
+  if($("#gate")) return;  // already showing: rebuilding it would wipe the name being typed
   $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">There's a free seat</div><h2 style="font-size:26px;text-align:center">Join this table</h2>
     <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit down</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;

@@ -2,8 +2,9 @@
    land with a sound and leave a short mark on the target's picture. They never change the game.
    The server says what you may throw (room.prankKinds) and sends recent throws (room.pranks).
    Usage: Pranks.mount({act, seat: pid => element or null}); Pranks.update(room, me, {hide}) after every
-   update. Without a seat function, a thrown thing lands on the first visible [data-pid] element.
-   In Werewolf, tapping a seat that isn't part of a game move opens the tray aimed at that player.
+   update. Without a seat function, a thrown thing flies between the players' biggest visible pictures
+   ([data-pid] elements). Tapping anyone's picture opens the tray aimed at them, unless the picture is
+   part of a game move (inside a button or link); in Werewolf the same goes for seats that aren't moves.
    Sounds are files in /sounds named after each prank (fart.mp3, kiss.wav...), plus whoosh for the throw. */
 (function(){
   const KINDS = {
@@ -47,7 +48,7 @@
   .pk-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px}
   .pk-people button{border:0;background:none;padding:0;display:grid;justify-items:center;gap:4px;cursor:pointer;font:700 13px var(--body,system-ui);color:inherit;min-width:0}
   .pk-people .pic{width:56px;height:56px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--gold,#D9A441);font-weight:900;font-size:20px;box-shadow:0 0 0 0 var(--lantern,#F2603A);transition:box-shadow .15s}
-  .pk-people .pic img{width:100%;height:100%;object-fit:cover;object-position:top}
+  .pk-people .pic img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
   .pk-people button:hover .pic,.pk-people button:focus-visible .pic{box-shadow:0 0 0 3px var(--lantern,#F2603A)}
   .pk-people b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pk-err{color:#B3261E;font-size:14px;min-height:1.3em;margin-top:8px}
@@ -62,6 +63,7 @@
   @keyframes pkpop{from{transform:translateX(-50%) scale(.4);opacity:0}}
   @keyframes pkdrain{to{transform:scaleX(0)}}
   .pk-shake{animation:pkshake .5s}
+  .pk-on [data-pid]{cursor:pointer}
   @keyframes pkshake{20%{translate:-5px 2px}40%{translate:5px -2px}60%{translate:-3px 1px}80%{translate:3px 0}}`;
   const style = document.createElement("style"); style.textContent = css; document.head.appendChild(style);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -100,7 +102,9 @@
   /* ---------- where things are on screen ---------- */
   function center(el){ const r = el.getBoundingClientRect(); return {x: r.left + r.width/2, y: r.top + r.height/2, w: r.width}; }
   const visible = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; };
-  const anyFace = pid => [...document.querySelectorAll(`[data-pid="${CSS.escape(pid)}"]`)].find(visible) || null;
+  const area = el => { const r = el.getBoundingClientRect(); return r.width * r.height; };
+  // the biggest visible picture of that player is their seat or token; small ones are marks, slips and chat
+  const anyFace = pid => [...document.querySelectorAll(`[data-pid="${CSS.escape(pid)}"]`)].filter(visible).sort((a, b) => area(b) - area(a))[0] || null;
   function fromPoint(pid){ const el = seatOf(pid); if(el) return center(el); return {x: window.innerWidth/2, y: window.innerHeight + 40, w: 60}; }
   function toPoint(pid){ const el = seatOf(pid); if(el) return center(el); return {x: window.innerWidth/2, y: window.innerHeight*.35, w: 80}; }
   function spawn(cls, text, x, y, size){
@@ -183,7 +187,8 @@
     b.onclick = async ()=>{
       clearTimeout(t); b.remove(); backBtn = null;
       const kinds = room.prankKinds || [], kind = kinds.includes(x.kind) ? x.kind : kinds[0];
-      if(kind) send(kind, x.from, true);
+      const err = kind ? await send(kind, x.from, true) : "You can't throw anything right now.";
+      if(err){ const line = document.createElement("div"); line.textContent = err; feed.appendChild(line); setTimeout(() => line.remove(), 3500); }
     };
   }
 
@@ -234,9 +239,16 @@
     };
     scrim.onclick = e => {
       if(e.target === scrim || e.target.closest("[data-close]")){ close(); return; }
-      if(e.target.closest("[data-sound]")){ sound = !sound; try{ localStorage.setItem("gn:prankSound", sound ? "on" : "off"); }catch(err){} draw(); tickCool(); return; }
+      const sb = e.target.closest("[data-sound]");
+      if(sb){ sound = !sound; try{ localStorage.setItem("gn:prankSound", sound ? "on" : "off"); }catch(err){}
+        sb.textContent = sound ? "Sound on" : "Sound off"; sb.setAttribute("aria-pressed", sound); return; }
       const k = e.target.closest("[data-kind]");
-      if(k){ if(target) fire(k.dataset.kind, target); else { pick = k.dataset.kind; draw(); } return; }
+      if(k){
+        if(target){ fire(k.dataset.kind, target); return; }
+        pick = k.dataset.kind;
+        scrim.querySelectorAll("[data-kind]").forEach(b => b.classList.toggle("on", b === k));
+        return;
+      }
       const to = e.target.closest("[data-to]");
       if(to) fire(pick, to.dataset.to);
     };
@@ -246,11 +258,15 @@
     act = opts.act; seatOf = opts.seat || seatOf;
     document.body.append(fab, feed);
     fab.onclick = () => open(null);
-    // tapping someone's seat when it isn't a game move aims the tray at them
+    // tapping someone's picture (or a Werewolf seat that isn't a game move) aims the tray at them
     document.addEventListener("click", e => {
+      if(!room || !me || !room.players[me.pid] || close || e.target.closest(".pk-scrim")) return;
       const s = e.target.closest("[data-seat]");
-      if(!s || s.classList.contains("pick") || !room || !me || s.dataset.seat === me.pid) return;
-      open(s.dataset.seat);
+      if(s){ if(!s.classList.contains("pick") && s.dataset.seat !== me.pid && room.players[s.dataset.seat]) open(s.dataset.seat); return; }
+      const f = e.target.closest("[data-pid]");
+      if(!f || f.dataset.pid === me.pid || !room.players[f.dataset.pid]) return;
+      if(f.closest("button, a, label, input, select, textarea, [data-vote], [data-card]")) return;  // that tap is a game move
+      open(f.dataset.pid);
     });
     if(window.BackGuard) BackGuard.onBack(() => { if(!close) return false; close(); return true; });
   }
@@ -258,6 +274,7 @@
     room = r; me = m;
     const joined = !!(me && room && room.players && room.players[me.pid]);
     fab.hidden = !joined || !(room.prankKinds || []).length || !!opts.hide || Object.keys(room.players).length < 2;
+    document.body.classList.toggle("pk-on", joined && !!(room.prankKinds || []).length);
     if(room.prankCooldown) coolTotal = room.prankCooldown;
     if(room.prankWait > 0 && Math.abs(Date.now() + room.prankWait * 1000 - readyAt) > 1500) startCool(room.prankWait);
     const list = (room && room.pranks) || [];

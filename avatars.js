@@ -21,7 +21,7 @@
   .av-chips button.on{background:var(--ink,#1E1A2E);color:var(--paper,#F3EBDD);border-color:var(--ink,#1E1A2E)}
   .av-grid{overflow:auto;min-height:0;overscroll-behavior:contain;padding:4px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;align-content:start}
   .av-tile{border:0;background:none;padding:0;cursor:pointer;color:inherit;font:inherit;display:grid;gap:4px;text-align:center}
-  .av-tile img{width:100%;aspect-ratio:1;object-fit:cover;object-position:top;border-radius:50%;background:var(--night,#1B1F4B);display:block;box-shadow:0 0 0 0 var(--lantern,#F2603A);transition:box-shadow .15s,transform .15s}
+  .av-tile img{width:100%;aspect-ratio:1;object-fit:cover;object-position:50% 20%;border-radius:50%;background:var(--night,#1B1F4B);display:block;box-shadow:0 0 0 0 var(--lantern,#F2603A);transition:box-shadow .15s,transform .15s}
   .av-tile:hover img,.av-tile:focus-visible img{box-shadow:0 0 0 3px var(--lantern,#F2603A);transform:translateY(-2px)}
   .av-tile b{font-size:14px;line-height:1.2}
   .av-tile small{font-size:12px;color:var(--ink-2,#5B5670);line-height:1.2}

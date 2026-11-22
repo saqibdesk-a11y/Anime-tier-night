@@ -248,6 +248,7 @@ def tick(room):
     if room["phase"] != "playing" or not room.get("deadline") or time.time() < room["deadline"]:
         return False
     pid, g = current(room), room["g"]
+    settle_exposure(room, pid)
     if g["pending"]:
         take_pending(room, pid)
     elif g["drawn"]:
@@ -358,17 +359,20 @@ def host_action(room, action, b):
         g = room["g"]
         if g and pid in g["hands"]:
             g["deck"][:0] = g["hands"].pop(pid)  # their cards go back under the deck
-            was = g["order"].index(pid)
+            was, turn = g["order"].index(pid), g["turn"]
             g["order"].remove(pid)
             if g["exposed"] == pid:
                 g["exposed"] = None
+            if pid in g["called"]:
+                g["called"].remove(pid)
             if ph == "playing":
                 if len(g["order"]) < MIN_PLAYERS:
                     finish_round(room, g["order"][0]) if g["order"] else room.update({"phase": "lobby", "g": None})
                 else:
-                    if was < g["turn"]:
-                        g["turn"] -= 1
+                    if was < turn or (was == turn and g["dir"] == -1):
+                        g["turn"] -= 1  # seats after them move up one; going backwards, the turn passes to the seat before
                     g["turn"] %= len(g["order"])
-                    g["drawn"] = None
-                    set_timer(room)
+                    if was == turn:  # it was their turn: the next player starts fresh
+                        g["drawn"] = None
+                        set_timer(room)
     return True
