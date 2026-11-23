@@ -153,12 +153,36 @@ select option{background:var(--night)}
 .thinking{display:flex;justify-content:center;gap:6px;padding:10px}
 .thinking i{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:breathe 1.2s infinite}
 .thinking i:nth-child(2){animation-delay:.2s}.thinking i:nth-child(3){animation-delay:.4s}
+.settled .slip,.settled .fadeup,.settled .rolecard,.settled .wordcard,.settled .srow,.settled .msg,.settled .yourturn{animation:none}
 .fadeup{animation:fadeup .6s cubic-bezier(.2,.8,.2,1) backwards}
 @keyframes fadeup{from{opacity:0;transform:translateY(16px)}}
 .hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
 body.has-hostbar{--chat-lift:66px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .photo-pick{display:flex;align-items:center;gap:14px}
+.rolecard{position:relative;display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--rc) 16%,var(--night-2));border:1.5px solid var(--rc);box-shadow:0 0 30px -10px var(--rc);animation:slip .55s cubic-bezier(.2,1.4,.4,1) backwards}
+.rolecard .ri{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--rc);color:#1e1a2e}
+.rolecard .ri svg{width:30px;height:30px}
+.rolecard > div > b{font-family:var(--display);font-size:22px;color:var(--rc)}
+.rolecard p b{color:var(--rc)}
+.rolecard p{margin:2px 0 0;font-size:14px;line-height:1.4}
+.inplay{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px}
+.inplay span{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;border:1px solid var(--rc);color:var(--rc)}
+.rolechips{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.rolechips button{display:grid;gap:1px;text-align:left;border-radius:12px}
+.rolechips button small{font-weight:600;color:var(--muted);font-size:11px}
+.slip .flag{position:absolute;right:6px;bottom:6px;border:1px solid rgba(30,26,46,.25);background:rgba(255,255,255,.6);border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;color:var(--ink-2);display:flex;gap:4px;align-items:center}
+.slip .flag svg{width:12px;height:12px}
+.slip .flag.on{background:var(--red);border-color:var(--red);color:#fff}
+.slip.flagged{box-shadow:0 0 0 3px var(--red),0 10px 20px -10px rgba(0,0,0,.8)}
+.slip.flagged::after{content:"Too obvious  -1";position:absolute;top:6px;right:-6px;transform:rotate(8deg);background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:2px 8px;border-radius:4px}
+.slip .rl{font-size:11px;font-weight:900;color:var(--rc);margin-left:auto}
+.detective{margin-top:14px}
+.detective .ring{margin-top:6px}
+.why{display:block;font-size:12px;font-weight:600;color:var(--muted);line-height:1.35;margin-top:2px}
+.srow .minus{color:var(--red);font-size:13px}
+.rolelist{display:flex;flex-wrap:wrap;gap:14px}
+.rolelist .tok .tag{font-size:11px;font-weight:900;border-radius:999px;padding:1px 8px;background:var(--rc);color:#1e1a2e}
 .photo-pick .face{width:68px;height:68px;border-radius:50%;overflow:hidden;border:3px dashed var(--line2);display:grid;place-items:center;background:rgba(0,0,0,.3);flex:none;font-size:12px;color:var(--muted);text-align:center}
 .photo-pick .face img{width:100%;height:100%;object-fit:cover}
 details summary{cursor:pointer;font-weight:800}
@@ -260,6 +284,9 @@ function render(){
   const sig = JSON.stringify([room.phase, room.round, room.players, room.roundData[room.round], room.settings, room.scores, room.turnPid, peek, opened]);
   if(sig === lastSig) return;
   lastSig = sig;
+  // a re-render inside the same phase (a vote, a flag) shouldn't replay every entrance animation
+  const key = room.phase + ":" + room.round;
+  $("#stage").classList.toggle("settled", key === render.key); render.key = key;
   const views = {lobby, starting, reveal, clues, discuss:clues, vote, verdict, guess, results, final};
   (views[room.phase] || lobby)();
 }
@@ -269,6 +296,34 @@ function gate(){
     <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("imp:"+code, {me, hostKey}); lastSig=""; poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
+}
+
+/* ---------- roles ---------- */
+const ICON = {
+  jester:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 3 7l5 4 4-7 4 7 5-4-1 11z"/><circle cx="3" cy="6" r="1.4"/><circle cx="12" cy="3" r="1.4"/><circle cx="21" cy="6" r="1.4"/><path d="M4 21h16"/></svg>',
+  detective:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>',
+  accomplice:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10c3-4 7-4 10 0 3-4 7-4 10 0"/><path d="M5 10c0 3 2 5 4 5s3-2 3-4c0 2 1 4 3 4s4-2 4-5"/></svg>',
+  lover:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z"/></svg>',
+  lovers:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z"/></svg>',
+};
+const ROLE = {
+  jester:{name:"Jester", c:"#c98bff", min:4, lobby:"Wants to be voted out", txt:"You have the crew's word, but you win by getting voted out. Act a little suspicious. Not too much."},
+  detective:{name:"Detective", c:"#6cc4ff", min:5, lobby:"Checks one player in secret", txt:"You're crew. Once the clues are in, you can secretly check one player and learn if they're the imposter."},
+  accomplice:{name:"Accomplice", c:"#ff7a7a", min:6, lobby:"Knows the imposter", txt:"You have the crew's word, but you're on the imposter's side. Help them escape. You score if they do."},
+  lovers:{name:"Lovers", c:"#ff8fc6", min:6, lobby:"Two crew who know each other", txt:""},
+  lover:{name:"Lover", c:"#ff8fc6", txt:""},
+};
+const nameOf = pid => P(pid) ? esc(P(pid).name) : "someone";
+function roleCard(m){
+  if(!m.role) return "";
+  const R = ROLE[m.role]; let txt = R.txt;
+  if(m.role==="accomplice") txt += ` The imposter${(m.partners||[]).length>1?"s are":" is"} <b>${(m.partners||[]).map(nameOf).join(" and ")}</b>.`;
+  if(m.role==="lover") txt = `You and <b>${nameOf(m.lover)}</b> are both crew. Trust each other. If you both vote for the imposter, you each get a bonus point.`;
+  return `<div class="rolecard" style="--rc:${R.c}"><span class="ri">${ICON[m.role]}</span><div><b>${R.name}</b><p>${txt}</p></div></div>`;
+}
+function inPlay(r){
+  const l = r.rolesInPlay || [];
+  return l.length ? `<div class="inplay">${l.map(k=>`<span style="--rc:${ROLE[k].c}">${ROLE[k].name}</span>`).join("")}</div>` : "";
 }
 
 /* ---------- lobby ---------- */
@@ -295,13 +350,16 @@ function lobby(){
         <div><label for="sDiscuss">Discussion</label>${sel("sDiscuss", [[45,"45 sec"],[90,"90 sec"],[120,"2 min"],[180,"3 min"]], s.discussSec)}</div>
         <div><label for="sSpice">AI roast</label>${sel("sSpice", [["wholesome","Wholesome"],["spicy","Spicy"],["unhinged","Unhinged"]], s.spice)}</div>
       </div>
+      <div><label>Special roles</label><div class="chips rolechips">${["jester","detective","accomplice","lovers"].map(k=>`<button type="button" class="${(s.roles||[]).includes(k)?"on":""}" data-role="${k}" ${H?"":"disabled"}>${ROLE[k].name}<small>${ROLE[k].lobby} · ${ROLE[k].min}+ players</small></button>`).join("")}</div>
+        <p class="hint" style="margin-top:6px">Roles go to random crew members, and only once there are enough players. Not every role shows up every round.</p></div>
       ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<3?"disabled":""}>${ps.length<3?`Waiting for ${3-ps.length} more`:"Hand out the files"}</button>` : `<p class="hint" style="text-align:center">The host starts when everyone is here.</p>`}</div>
-    <details class="panel" style="margin-top:14px"><summary>How to play</summary><p class="hint" style="margin-top:8px">Everyone opens their envelope to see the secret word. Take turns giving one short clue about it: specific enough that the crew trusts you, vague enough that the imposter can't work out the word. Then argue and vote. If the crew catches the imposter, the imposter gets one guess at the real word to steal points.<br><br>Points: crew who vote for the imposter +1. An imposter who escapes +3. A caught imposter who guesses the word +2.</p></details>`;
+    <details class="panel" style="margin-top:14px"><summary>How to play</summary><p class="hint" style="margin-top:8px">Everyone opens their envelope to see the secret word. Take turns giving one short clue about it: specific enough that the crew trusts you, vague enough that the imposter can't work out the word. Then argue and vote. If the crew catches the imposter, the imposter gets one guess at the real word to steal points.<br><br><b>Roles.</b> Jester: wants to be voted out. Detective: checks one player in secret. Accomplice: knows the imposter and helps them escape. Lovers: two crew who know each other.<br><br><b>Too obvious?</b> After the clues, flag any hint that gave the word away. If half the table flags it, its giver loses 1 point.<br><br><b>Points.</b> Voting for the imposter +2. Lovers who both vote right +1 more. Caught imposter who guesses the word +3. Imposter escapes +3, or +4 if an innocent got voted out (and those voters lose 1). Jester voted out +5, and everyone who fell for it loses 1. Accomplice +2 or +3 when the imposter escapes.</p></details>`;
   $("#photoBtn").onclick = ()=>Avatars.open(act);
   if(H){
     const send = x => act("settings", x).catch(err=>toast(err.message));
     document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>send({mode:b.dataset.mode}));
     document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>send({category:b.dataset.cat}));
+    document.querySelectorAll("[data-role]").forEach(b=>b.onclick=()=>{ const on = new Set(s.roles||[]); on.has(b.dataset.role) ? on.delete(b.dataset.role) : on.add(b.dataset.role); send({roles:[...on]}); });
     $("#sRounds").onchange=e=>send({rounds:+e.target.value}); $("#sClueRounds").onchange=e=>send({clueRounds:+e.target.value});
     $("#sImp").onchange=e=>send({imposters:+e.target.value}); $("#sClue").onchange=e=>send({clueSec:+e.target.value});
     $("#sDiscuss").onchange=e=>send({discussSec:+e.target.value}); $("#sSpice").onchange=e=>send({spice:e.target.value});
@@ -327,28 +385,47 @@ function reveal(){
   $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds}: ${esc(room.categoryLabel)}</div><h1 class="title">Your envelope</h1><p class="sub">Shield your screen, then open it.</p></div>
     <div class="filewrap">${fileHTML(m, {open:opened})}</div>
     <div id="after" ${opened?"":"hidden"} class="fadeup" style="display:grid;gap:10px">
+      ${roleCard(m)}${m.role ? "" : inPlay(r)}
       ${P(me.pid).ready ? `<p class="sub">Waiting for everyone · ${ready}/${act_.length} ready</p>` : `<button class="btn primary wide" id="readyBtn">Got it. Close the file</button>`}</div>`;
   $("#file").onclick = ()=>{ opened = !opened; $("#file").classList.toggle("open", opened); if(opened){ buzz(60); $("#after").hidden = false; } };
   if($("#readyBtn")) $("#readyBtn").onclick = ()=>act("ready").catch(err=>toast(err.message));
 }
 
 /* ---------- clues and discussion ---------- */
+const FLAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 21V4h11l-2 4 2 4H5"/></svg>';
 function slipHTML(c, i, opts={}){
-  const rot = ((i*37)%7 - 3) * .8;
-  return `<div class="slip ${c.late?"late":""} ${opts.imp?"imp":""}" style="--r:${rot}deg;animation-delay:${opts.delay||0}s"><div class="who">${face(c.pid)}${esc(P(c.pid).name)}</div><div class="txt">${esc(c.text)}</div></div>`;
+  const rot = ((i*37)%7 - 3) * .8, r = rd();
+  const n = (r.flagCount||{})[i] || 0, mineF = (r.myFlags||[]).includes(i);
+  const canFlag = opts.flag && ["discuss","vote"].includes(room.phase) && !c.late && c.pid !== me.pid && r.order.includes(me.pid);
+  const flag = canFlag ? `<button class="flag ${mineF?"on":""}" data-flag="${i}" title="This hint gave the word away">${FLAG}${n||"Too obvious"}</button>`
+    : (opts.flag && n ? `<span class="flag">${FLAG}${n}</span>` : "");
+  const role = opts.role ? `<span class="rl" style="--rc:${ROLE[opts.role].c}">${ROLE[opts.role].name}</span>` : "";
+  return `<div class="slip ${c.late?"late":""} ${opts.imp?"imp":""} ${opts.flagged?"flagged":""}" style="--r:${rot}deg;animation-delay:${opts.delay||0}s;${canFlag||n?"padding-bottom:30px":""}"><div class="who">${face(c.pid)}${esc(P(c.pid).name)}${role}</div><div class="txt">${esc(c.text)}</div>${flag}</div>`;
 }
+function detectivePanel(r, m){
+  if(m.role !== "detective") return "";
+  if(m.peek) return `<div class="panel detective" style="--rc:${ROLE.detective.c}"><b>Your check</b><span><b>${nameOf(m.peek.target)}</b> ${m.peek.imposter ? '<b style="color:var(--red)">is the imposter.</b>' : '<b style="color:var(--green)">is not the imposter.</b>'} Use it wisely: say too much and they'll know who you are.</span></div>`;
+  return `<div class="panel detective"><b style="color:${ROLE.detective.c}">Detective: check one player</b><p class="hint">Only you see the answer. You get one check per round.</p>
+    <div class="ring">${r.order.filter(p=>p!==me.pid).map(pid=>`<button class="tok pick" data-check="${pid}">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></button>`).join("")}</div></div>`;
+}
+document.addEventListener("click", e=>{
+  const f = e.target.closest("[data-flag]"), c = e.target.closest("[data-check]");
+  if(f) act("flag", {i:+f.dataset.flag}).then(()=>buzz(20)).catch(err=>toast(err.message));
+  if(c){ if(c.dataset.sure !== "1"){ document.querySelectorAll("[data-check]").forEach(x=>{ x.dataset.sure=""; x.classList.remove("sel"); }); c.dataset.sure = "1"; c.classList.add("sel"); toast(`Tap ${P(c.dataset.check).name} again to check them`); return; }
+    act("peek", {target:c.dataset.check}).then(()=>buzz(60)).catch(err=>toast(err.message)); }
+});
 function clues(){
   const r = rd(), m = r.mine || {}, discuss = room.phase === "discuss";
   const myTurn = !discuss && room.turnPid === me.pid;
   const seq = r.order.flatMap(()=>[]).concat(Array.from({length: room.totalTurns || r.order.length*room.settings.clueRounds}, (_, i)=>r.order[i % r.order.length]));
   const strip = discuss ? "" : `<div class="turns">${seq.map((pid,i)=>`<div class="t ${i<r.turn?"done":""} ${i===r.turn?"now":""}">${face(pid,"face")}<span>${esc(P(pid).name)}</span></div>`).join("")}</div>`;
-  const myWord = `<div class="peek"><button id="peekBtn">${peek ? (m.imposter ? "You're the imposter" : `Your word: <b>${esc(m.word)}</b>`) : "Tap to peek at your word"}</button></div>`;
+  const myWord = `<div class="peek"><button id="peekBtn">${peek ? (m.imposter ? "You're the imposter" : `Your word: <b>${esc(m.word)}</b>`) + (m.role ? ` · ${ROLE[m.role].name}` : "") : "Tap to peek at your word"}</button></div>`;
   $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1}: ${esc(room.categoryLabel)}</div>
     <h1 class="title">${discuss ? "Who's the fake?" : myTurn ? "Your turn" : `${esc(P(room.turnPid).name)} is thinking`}</h1>
-    <p class="sub">${discuss ? "Argue it out. The vote opens when the timer ends." : myTurn ? "Give one short clue. Don't say the word." : "Clues go up on the board as people give them."}</p></div>
-    ${myWord}${strip}
+    <p class="sub">${discuss ? "Argue it out. Flag any hint that gave the word away. The vote opens when the timer ends." : myTurn ? "Give one short clue. Don't say the word." : "Clues go up on the board as people give them."}</p>${inPlay(r)}</div>
+    ${myWord}${strip}${discuss ? detectivePanel(r, m) : ""}
     ${myTurn ? `<form class="yourturn" id="clueForm"><b>Your clue</b><input type="text" id="clueIn" maxlength="40" autocomplete="off" placeholder="One word or a few"><div class="err" id="clueErr" style="color:var(--red)"></div><button class="btn red">Pin it to the board</button></form>` : ""}
-    <div class="board">${r.clues.map((c,i)=>slipHTML(c,i)).join("") || '<p class="hint">No clues yet.</p>'}</div>`;
+    <div class="board">${r.clues.map((c,i)=>slipHTML(c,i,{flag:discuss})).join("") || '<p class="hint">No clues yet.</p>'}</div>`;
   $("#peekBtn").onclick = ()=>{ peek = !peek; render(); };
   if(myTurn){ $("#clueIn").focus(); $("#clueForm").onsubmit = async e=>{ e.preventDefault(); const t = $("#clueIn").value.trim(); if(!t) return;
     try{ await act("clue", {text:t}); }catch(err){ $("#clueErr").textContent = err.message; } }; }
@@ -363,22 +440,27 @@ function vote(){
     <div class="ring">${r.order.map(pid=>{ const vs = tally(pid), self = pid === me.pid;
       return `<button class="tok ${inRound&&!self?"pick":"off"} ${mine===pid?"sel":""}" data-vote="${pid}" ${inRound&&!self?"":"disabled"}>${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${self?" (you)":""}</span><span class="voters">${vs.map(v=>face(v)).join("")}</span>${vs.length?`<span class="count">${vs.length}</span>`:""}</button>`; }).join("")}</div>
     ${inRound ? `<div style="display:flex;justify-content:center;margin-top:14px"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip ${tally("skip").length?`(${tally("skip").length})`:""}</button></div>` : ""}
-    <div class="board" style="margin-top:20px">${r.clues.map((c,i)=>slipHTML(c,i)).join("")}</div>`;
+    ${detectivePanel(r, r.mine||{})}
+    <div class="board" style="margin-top:20px">${r.clues.map((c,i)=>slipHTML(c,i,{flag:true})).join("")}</div>`;
   document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>act("vote", {target:b.dataset.vote}).then(()=>buzz(40)).catch(err=>toast(err.message)));
 }
 
 /* ---------- verdict and last guess ---------- */
-function accusedFile(pid, caught){
+const STAMP = {imposter:["imp","The fox"], crew:["crew","Innocent"], jester:["imp","The Jester"], accomplice:["imp","Accomplice"]};
+function accusedFile(pid, caught, role){
   const p = P(pid);
   return `<div class="filewrap" style="position:relative"><div class="file open"><div class="paper"><span class="pin" style="background:${hue(p.name)}">${picOf(p)}</span>
     <div class="lbl">Accused</div><div class="word">${esc(p.name)}</div><div class="note">${(rd().clues.filter(c=>c.pid===pid).map(c=>`"${esc(c.text)}"`).join(", ")) || "No clues on record."}</div></div></div>
-    <span class="stamp ${caught?"imp":"crew"}">${caught?"The fox":"Innocent"}</span></div>`;
+    <span class="stamp ${STAMP[role||(caught?"imposter":"crew")][0]}" ${role&&ROLE[role]?`style="color:${ROLE[role].c}"`:""}>${STAMP[role||(caught?"imposter":"crew")][1]}</span></div>`;
 }
 function verdict(){
   const r = rd();
   $("#stage").innerHTML = r.accused
-    ? `<div class="fadeup"><div class="eyebrow">The verdict</div><h1 class="title">${esc(P(r.accused).name)} is…</h1></div>${accusedFile(r.accused, r.caught)}
-       <p class="sub fadeup" style="animation-delay:1.6s;font-weight:800;color:${r.caught?"var(--fg)":"var(--red)"}">${r.caught ? "Caught. But they get one last guess at the word." : "Wrong person. The real imposter is still out there."}</p>`
+    ? `<div class="fadeup"><div class="eyebrow">The verdict</div><h1 class="title">${esc(P(r.accused).name)} is…</h1></div>${accusedFile(r.accused, r.caught, r.accusedRole)}
+       <p class="sub fadeup" style="animation-delay:1.6s;font-weight:800;color:${r.caught?"var(--fg)":"var(--red)"}">${r.caught ? "Caught. But they get one last guess at the word."
+         : r.accusedRole==="jester" ? "The Jester wanted this. Everyone who voted for them got played."
+         : r.accusedRole==="accomplice" ? "You caught the accomplice, but the real imposter is still out there."
+         : "Wrong person. The real imposter is still out there."}</p>`
     : `<div class="fadeup" style="margin-top:10vh"><div class="eyebrow">The verdict</div><h1 class="title">Nobody was accused</h1><p class="sub">The vote was split. The imposter slips away into the night.</p></div>`;
   if(r.caught) buzz([200,80,200]);
 }
@@ -400,22 +482,28 @@ function guess(){
 /* ---------- round results ---------- */
 function results(){
   const r = rd(), imps = r.imposters;
-  const outcome = r.caught ? (r.guess && r.guess.correct ? "Caught, but stole the word" : "The crew wins this round") : "The imposter got away";
-  const ai = r.ai;
-  const sc = scoreRows(r.points);
+  const roles = r.roles || {}, jest = r.accused && roles[r.accused]==="jester";
+  const outcome = r.caught ? (r.guess && r.guess.correct ? "Caught, but stole the word" : "The crew wins this round") : jest ? "The Jester fooled you all" : "The imposter got away";
+  const ai = r.ai, flagged = r.flagged || [];
+  const sc = scoreRows(r.points, r.why);
+  const roleList = Object.entries(roles).map(([pid,k])=>`<span class="tok" style="padding:0;--rc:${ROLE[k].c}">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span><span class="tag">${ROLE[k].name}</span></span>`).join("");
+  const peeks = Object.entries(r.peeks||{}).map(([d,x])=>`${nameOf(d)} checked ${nameOf(x.target)}`).join(". ");
   $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds}</div><h1 class="title">${outcome}</h1></div>
     <div class="duo"><div class="wordcard"><div class="lbl">The crew's word</div><div class="w">${esc(r.word)}</div></div>
       <div class="wordcard imp" style="animation-delay:.25s"><div class="lbl">${room.settings.mode==="undercover"?"The imposter's word":"The imposter had"}</div><div class="w">${room.settings.mode==="undercover"?esc(r.decoy):"No word"}</div></div></div>
     <div class="panel" style="margin-top:14px"><b>The imposter${imps.length>1?"s":""}</b><div style="display:flex;flex-wrap:wrap;gap:12px">${imps.map(pid=>`<span class="tok" style="padding:0">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></span>`).join("")}</div>
-      ${r.guess ? `<span>Last guess: <b>"${esc(r.guess.text)}"</b> ${r.guess.correct ? '<b style="color:var(--green)">correct</b>' : '<b style="color:var(--red)">wrong</b>'}</span>` : ""}</div>
-    <div class="board">${r.clues.map((c,i)=>slipHTML(c,i,{imp:imps.includes(c.pid), delay:.1*i})).join("")}</div>
+      ${r.guess ? `<span>Last guess: <b>"${esc(r.guess.text)}"</b> ${r.guess.correct ? '<b style="color:var(--green)">correct</b>' : '<b style="color:var(--red)">wrong</b>'}</span>` : ""}
+      ${roleList ? `<b>Special roles</b><div class="rolelist">${roleList}</div>${peeks ? `<span class="hint">${peeks}.</span>` : ""}` : ""}</div>
+    <div class="board">${r.clues.map((c,i)=>slipHTML(c,i,{imp:imps.includes(c.pid), delay:.1*i, role:roles[c.pid], flag:true, flagged:!c.late && flagged.includes(c.pid)})).join("")}</div>
     <div class="chat">${ai && ai.story ? `<div class="msg"><span class="bot">AI</span><div class="bubble">${esc(ai.story)}</div></div>${(ai.lines||[]).map((l,i)=>{ const pid = Object.keys(room.players).find(x=>P(x).name===l.name); return `<div class="msg" style="animation-delay:${.4+i*.35}s">${pid?face(pid):'<span class="bot">?</span>'}<div class="bubble"><b>${esc(l.name)}</b>${esc(l.line)}</div></div>`; }).join("")}`
       : ai && ai.failed ? "" : '<div class="thinking"><i></i><i></i><i></i></div><p class="hint" style="text-align:center">The AI is reading everyone\'s clues…</p>'}</div>
     <h2 style="margin-top:22px;font-size:22px">Scores</h2>${sc}`;
 }
-function scoreRows(plus){
+function scoreRows(plus, why){
   const rows = Object.keys(room.players).map(pid=>({pid, s: room.scores[pid]||0})).sort((a,b)=>b.s-a.s);
-  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}" style="animation-delay:${i*.08}s"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}</span><span class="plus">${plus&&plus[x.pid]?`+${plus[x.pid]}`:""}</span><span class="pts">${x.s}</span></div>`).join("")}</div>`;
+  const delta = n => n>0 ? `<span class="plus">+${n}</span>` : n<0 ? `<span class="minus">${n}</span>` : "<span></span>";
+  const reasons = pid => why && why[pid] ? `<span class="why">${why[pid].map(([n,t])=>`${n>0?"+":""}${n} ${esc(t)}`).join(" · ")}</span>` : "";
+  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}" style="animation-delay:${i*.08}s"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}${reasons(x.pid)}</span>${delta(plus&&plus[x.pid])}<span class="pts">${x.s}</span></div>`).join("")}</div>`;
 }
 function final(){
   const rows = Object.keys(room.players).map(pid=>({pid, s: room.scores[pid]||0})).sort((a,b)=>b.s-a.s);

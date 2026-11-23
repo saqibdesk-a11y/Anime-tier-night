@@ -4,6 +4,12 @@ short clue, argue, vote, and a caught imposter gets one guess at the real word.
 Two modes: "undercover" (the imposter gets a similar decoy word and doesn't know they're the
 imposter) and "clueless" (the imposter knows, and only sees the category).
 
+Special roles, dealt at random once there are enough players (everyone sees which roles are in
+play, not who has them): the Jester (crew word, wins by getting voted out), the Detective (crew,
+privately checks one player), the Accomplice (knows the imposter, wins if they escape) and two
+Lovers (crew who know each other). After the clues, players can flag hints that gave the word away;
+a hint flagged by at least half the table costs its giver a point.
+
 server.py owns rooms, the lock and HTTP; this module owns the game's rules."""
 import random
 import re
@@ -16,6 +22,10 @@ from media import Refuse
 rooms = lock = changed = rid = None
 
 HOST_ACTIONS = ("start", "next", "skip", "addtime", "kick", "playagain", "settings")
+ROLES = {  # role -> (fewest players for it to be dealt)
+    "jester": 4, "detective": 5, "accomplice": 6, "lovers": 6,
+}
+ROLE_CHANCE = .75  # an eligible role is dealt this often, so nobody can be sure it's in play
 CATEGORIES = {
     "mix": ("Mix of everything", "anything: food, animals, places, objects, jobs, movies, anime"),
     "anime": ("Anime", "anime characters, shows, places and things from anime"),
@@ -63,6 +73,7 @@ def clean_settings(b, old=None):
         "voteSec": max(20, min(120, int(pick("voteSec", 45)))),
         "imposters": max(0, min(3, int(pick("imposters", 0) or 0))),  # 0 = pick for me
         "spice": pick("spice", "spicy") if pick("spice", "spicy") in SPICE else "spicy",
+        "roles": [r for r in (pick("roles", list(ROLES)) or []) if r in ROLES],
     }
 
 
@@ -164,6 +175,7 @@ def roast_round(code, rnd, cid):
         clues = "; ".join(f"{name(room, c['pid'])}: \"{c['text']}\"" for c in rd["clues"]) or "nobody gave clues"
         imps = ", ".join(name(room, p) for p in rd["imposters"])
         votes = "; ".join(f"{name(room, v)} voted {name(room, t) if t != 'skip' else 'skip'}" for v, t in rd["votes"].items())
+        roles = "; ".join(f"{name(room, p)} was the {r}" for p, r in rd.get("roles", {}).items())
         outcome = ("The imposter was caught" if rd["caught"] else "The imposter got away") + (
             f" and then guessed the real word (\"{rd['guess']['text']}\") {'correctly' if rd['guess']['correct'] else 'wrong'}" if rd.get("guess") else "")
         names = {p["name"].lower(): p["name"] for p in room["players"].values()}
@@ -173,7 +185,8 @@ def roast_round(code, rnd, cid):
         prompt = (f"The crew's word was \"{rd['word']}\". The imposter ({imps}) "
                   + (f"had the decoy word \"{rd['decoy']}\" and didn't know they were the imposter. " if room["settings"]["mode"] == "undercover" else "had no word, only the category. ")
                   + f"Clues in order: {clues}. Votes: {votes or 'none'}. {outcome}. "
-                  "Write a 2-3 sentence recap, then one short line for each player roasting or praising their clue (who almost gave it away, "
+                  + (f"Special roles: {roles}. " if roles else "")
+                  + "Write a 2-3 sentence recap, then one short line for each player roasting or praising their clue (who almost gave it away, "
                   'who bluffed best). Return only JSON: {"story": "...", "lines": [{"name": "<player name>", "line": "..."}]}')
     try:
         out, _, _ = ai.ask_builtin(system, prompt, timeout=25, text_first=True)
@@ -219,9 +232,24 @@ def start_round(room, rnd):
     room["round"] = rnd
     room["phase"] = "reveal"
     room["deadline"] = None
-    room["roundData"].append({"word": word, "decoy": decoy, "imposters": random.sample(pids, k), "order": order,
+    imposters = random.sample(pids, k)
+    room["roundData"].append({"word": word, "decoy": decoy, "imposters": imposters, "order": order,
                               "clues": [], "turn": 0, "votes": {}, "accused": None, "caught": None, "guess": None,
-                              "ai": None, "aiId": None, "points": {}})
+                              "ai": None, "aiId": None, "points": {}, "why": {},
+                              "roles": deal_roles(room, pids, imposters), "peeks": {}, "flags": {}})
+
+
+def deal_roles(room, pids, imposters):
+    """Hands the special roles to crew members. Lovers come as a pair."""
+    crew = [p for p in pids if p not in imposters]
+    random.shuffle(crew)
+    roles = {}
+    for role in ("jester", "detective", "accomplice", "lovers"):
+        need = 2 if role == "lovers" else 1
+        if role in room["settings"]["roles"] and len(pids) >= ROLES[role] and len(crew) >= need and random.random() < ROLE_CHANCE:
+            for _ in range(need):
+                roles[crew.pop()] = "lover" if role == "lovers" else role
+    return roles
 
 
 def turns(room):
@@ -283,23 +311,66 @@ def after_verdict(room):
         finish_round(room)
 
 
+def flagged_hints(room, rd):
+    """Players whose hints were flagged as too obvious by at least half of the others."""
+    givers = {c["pid"] for c in rd["clues"] if not c.get("late")}
+    need = max(2, -(-(len(rd["order"]) - 1) // 2))
+    out = []
+    for g in givers:
+        by = {f for f, idx in rd["flags"].items() if f != g and any(rd["clues"][i]["pid"] == g for i in idx if i < len(rd["clues"]))}
+        if len(by) >= need:
+            out.append(g)
+    return out
+
+
 def finish_round(room):
+    """Works out who earned what this round, with a reason for every point."""
     rd = cur(room)
     room["deadline"] = None
-    pts = {}
-    if rd["caught"]:
-        for v, t in rd["votes"].items():
-            if t in rd["imposters"] and v not in rd["imposters"]:
-                pts[v] = pts.get(v, 0) + 1
+    why = {}
+    def add(pid, n, reason):
+        why.setdefault(pid, []).append([n, reason])
+    imps, roles, votes, acc = rd["imposters"], rd["roles"], rd["votes"], rd["accused"]
+    honest = lambda p: p not in imps and roles.get(p) not in ("accomplice", "jester")
+    sidekick = [p for p, r in roles.items() if r == "accomplice"]
+    if acc and acc in imps:  # caught
+        for v, t in votes.items():
+            if t in imps and honest(v):
+                add(v, 2, "voted for the imposter")
+        lovers = [p for p, r in roles.items() if r == "lover"]
+        if len(lovers) == 2 and all(votes.get(p) in imps for p in lovers):
+            for p in lovers:
+                add(p, 1, "lovers voted together")
         if rd["guess"] and rd["guess"]["correct"]:
-            for imp in rd["imposters"]:
-                pts[imp] = pts.get(imp, 0) + 2
-    else:
-        for imp in rd["imposters"]:
-            pts[imp] = pts.get(imp, 0) + 3
-    for pid, p in pts.items():
-        room["scores"][pid] = room["scores"].get(pid, 0) + p
-    rd["points"] = pts
+            for imp in imps:
+                add(imp, 3, "guessed the crew's word")
+    elif acc and roles.get(acc) == "jester":  # the Jester fooled everyone
+        add(acc, 5, "got voted out as the Jester")
+        for v, t in votes.items():
+            if t == acc and honest(v):
+                add(v, -1, "fell for the Jester")
+        for imp in imps:
+            add(imp, 2, "survived the vote")
+        for p in sidekick:
+            add(p, 1, "the imposter survived")
+    else:  # the imposter got away
+        caught_sidekick = acc in sidekick
+        for imp in imps:
+            add(imp, 3 if caught_sidekick or not acc else 4, "escaped")
+        for p in sidekick:
+            add(p, 0 if p == acc else (3 if acc else 2), "covered for the imposter" if p != acc else "got caught covering")
+        if acc:
+            for v, t in votes.items():
+                if t == acc and v != acc and v not in imps:
+                    add(v, 1 if caught_sidekick else -1, "caught the accomplice" if caught_sidekick else "voted out an innocent")
+    for g in flagged_hints(room, rd):
+        add(g, -1, "hint flagged as too obvious")
+    pts = {}
+    for pid, items in why.items():
+        items[:] = [x for x in items if x[0]]
+        pts[pid] = sum(n for n, _ in items)
+        room["scores"][pid] = room["scores"].get(pid, 0) + pts[pid]
+    rd["points"], rd["why"] = pts, {p: v for p, v in why.items() if v}
     room["phase"] = "results"
     rd["aiId"] = rid(6)
     threading.Thread(target=roast_round, args=(room["code"], room["round"], rd["aiId"]), daemon=True).start()
@@ -362,11 +433,13 @@ def public(room, viewer):
     for i, rd in enumerate(room["roundData"]):
         live = i == room["round"] and room["phase"] in ("reveal", "clues", "discuss", "vote", "verdict", "guess")
         out = {"order": rd["order"], "clues": rd["clues"], "turn": rd["turn"], "votes": rd["votes"],
-               "accused": rd["accused"]}
+               "accused": rd["accused"], "rolesInPlay": sorted({("lovers" if r == "lover" else r) for r in rd.get("roles", {}).values()}),
+               "flagCount": {i: sum(1 for idx in rd.get("flags", {}).values() if i in idx) for i in range(len(rd["clues"]))},
+               "myFlags": rd.get("flags", {}).get(viewer, [])}
         if live:
             if room["phase"] in ("verdict", "guess"):
                 out["caught"] = rd["caught"]  # the accused's file gets stamped, everything else stays secret
-                out["accusedRole"] = "imposter" if rd["caught"] else "crew"
+                out["accusedRole"] = "imposter" if rd["caught"] else (rd.get("roles", {}).get(rd["accused"]) if rd.get("roles", {}).get(rd["accused"]) in ("jester", "accomplice") else "crew")
             if viewer in rd["order"]:
                 imp = viewer in rd["imposters"]
                 if room["settings"]["mode"] == "clueless" and imp:
@@ -375,9 +448,20 @@ def public(room, viewer):
                     out["mine"] = {"imposter": False, "word": rd["decoy"] if imp else rd["word"]}
                 if room["phase"] == "guess" and imp:
                     out["mine"]["guessing"] = True  # caught: now they know, and get one shot at the real word
+                role = rd.get("roles", {}).get(viewer)
+                if role:
+                    out["mine"]["role"] = role
+                if role == "accomplice":
+                    out["mine"]["partners"] = rd["imposters"]
+                if role == "lover":
+                    out["mine"]["lover"] = next((p for p, r in rd["roles"].items() if r == "lover" and p != viewer), None)
+                if role == "detective":
+                    out["mine"]["peek"] = rd["peeks"].get(viewer)
         else:
             out.update({"word": rd["word"], "decoy": rd["decoy"], "imposters": rd["imposters"], "caught": rd["caught"],
-                        "guess": rd["guess"], "ai": rd["ai"], "points": rd["points"], "aiPending": rd["ai"] is None})
+                        "guess": rd["guess"], "ai": rd["ai"], "points": rd["points"], "aiPending": rd["ai"] is None,
+                        "roles": rd.get("roles", {}), "why": rd.get("why", {}), "peeks": rd.get("peeks", {}),
+                        "flagged": flagged_hints(room, rd)})
         rounds.append(out)
     r["roundData"] = rounds
     r["turnPid"] = None
@@ -411,6 +495,25 @@ def player_action(room, action, b, pid):
             raise Refuse("You can't say your word. Be sneakier.")
         rd["clues"].append({"pid": pid, "text": text, "turn": rd["turn"]})
         next_turn(room)
+        return True
+    if action == "peek":
+        if room["phase"] not in ("discuss", "vote") or not rd or rd["roles"].get(pid) != "detective":
+            raise Refuse("Only the Detective can do that, once the clues are in.", 409)
+        if pid in rd["peeks"]:
+            raise Refuse("You already used your peek this round.", 409)
+        t = b.get("target")
+        if t not in rd["order"] or t == pid:
+            raise Refuse("Pick another player in this round.")
+        rd["peeks"][pid] = {"target": t, "imposter": t in rd["imposters"]}
+        return True
+    if action == "flag":
+        if room["phase"] not in ("discuss", "vote") or not rd or pid not in rd["order"]:
+            raise Refuse("You can flag hints once the clues are in.", 409)
+        i = int(b.get("i", -1))
+        if not 0 <= i < len(rd["clues"]) or rd["clues"][i]["pid"] == pid or rd["clues"][i].get("late"):
+            raise Refuse("You can't flag that one.")
+        mine = rd["flags"].setdefault(pid, [])
+        mine.remove(i) if i in mine else mine.append(i)
         return True
     if action == "vote":
         if room["phase"] != "vote" or pid not in rd["order"]:

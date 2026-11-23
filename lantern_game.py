@@ -2,6 +2,9 @@
 the next player, and be the first to empty your hand. When you're down to one card you must call
 "Last lantern!"; if someone catches you first, you draw two.
 
+Speed mode: 10-second turns, and anyone holding a card identical to the top card (same colour and
+symbol, not a wild) can slam it down out of turn. The turn then carries on from them.
+
 Cards are strings like "r7#12": a colour (r lantern, b fan, g bamboo, y firework), a value
 (0-9, S skip, R reverse, D draw two) and a serial so every card is unique. Wilds are "W#n" and
 "W4#n" (wild draw four). server.py owns rooms, the lock and HTTP; this module owns the rules."""
@@ -16,6 +19,7 @@ HOST_ACTIONS = ("start", "settings", "kick", "playagain", "tolobby", "skip")
 COLORS = ("r", "b", "g", "y")
 MIN_PLAYERS, MAX_PLAYERS = 2, 10
 EVENTS_KEEP = 20
+SPEED_SEC = 10
 
 
 def setup(rooms_, lock_, changed_, rid_):
@@ -28,6 +32,7 @@ def clean_settings(b, old=None):
     pick = lambda k, d: b.get(k, old.get(k, d))
     sec = int(pick("turnSec", 30) or 0)
     return {
+        "mode": "speed" if pick("mode", "classic") == "speed" else "classic",
         "hand": max(5, min(10, int(pick("hand", 7)))),
         "stack": bool(pick("stack", True)),          # +2 on +2 and +4 on anything pending
         "drawUntil": bool(pick("drawUntil", False)),  # keep drawing until you can play
@@ -104,7 +109,7 @@ def start_round(room):
 
 
 def set_timer(room):
-    s = room["settings"]["turnSec"]
+    s = SPEED_SEC if room["settings"].get("mode") == "speed" else room["settings"]["turnSec"]
     room["deadline"] = time.time() + s + 1 if s and room["phase"] == "playing" else None
 
 
@@ -145,6 +150,13 @@ def playable(room, card):
     if k.startswith("W"):
         return True
     return color_of(card) == g["color"] or v == value_of(top)
+
+
+def can_jump(room, pid, card):
+    """Speed mode: an identical card (not a wild) can be played out of turn, unless a draw stack is waiting."""
+    g = room["g"]
+    return (room["settings"].get("mode") == "speed" and current(room) != pid and not g["pending"]
+            and not kind(card).startswith("W") and kind(card) == kind(g["discard"][-1]))
 
 
 def end_turn(room, extra_steps=0):
@@ -282,7 +294,8 @@ def public(room, viewer):
         if mine is not None:
             your_turn = current(room) == viewer and room["phase"] == "playing"
             r["me"] = {"hand": mine, "drawn": g["drawn"] if your_turn else None,
-                       "canPlay": [c for c in mine if your_turn and playable(room, c) and (not g["drawn"] or c == g["drawn"])]}
+                       "canPlay": [c for c in mine if your_turn and playable(room, c) and (not g["drawn"] or c == g["drawn"])],
+                       "canJump": [c for c in mine if room["phase"] == "playing" and can_jump(room, viewer, c)]}
     return r
 
 
@@ -312,6 +325,15 @@ def player_action(room, action, b, pid):
         got = draw_cards(room, target, 2)
         g["exposed"] = None
         event(room, "caught", target, by=pid, n=len(got))
+        return True
+    if action == "play" and turn != pid:
+        card = str(b.get("card") or "")
+        if card not in g["hands"][pid] or not can_jump(room, pid, card):
+            raise Refuse("It's not your turn." + (" In Speed you can only jump in with the exact same card." if room["settings"].get("mode") == "speed" else ""), 409)
+        g["drawn"] = None  # whoever's turn it was loses it
+        g["turn"] = g["order"].index(pid)
+        event(room, "jump", pid, card=card, from_=turn)
+        play_card(room, pid, card)
         return True
     if turn != pid:
         raise Refuse("It's not your turn.", 409)
