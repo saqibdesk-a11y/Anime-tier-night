@@ -255,6 +255,7 @@ select option{background:var(--panel-solid)}
       <a class="back" href="/">&larr; Festival</a>
       <h1>Tier List Night <span class="tiers"><i style="background:var(--S)">S</i><i style="background:var(--A)">A</i><i style="background:var(--B)">B</i><i style="background:var(--C)">C</i></span></h1>
       <p>Rank anime, characters, movies or anything else with friends. Then the boards are revealed and the AI roasts your taste.</p>
+      <div id="howHome" style="max-width:420px"></div>
     </div>
     <div class="home-grid">
       <form class="panel" id="createForm">
@@ -353,6 +354,7 @@ select option{background:var(--panel-solid)}
         <div class="board" id="myBoard"></div>
         <div class="pool" data-tier="pool"><h3 id="poolTitle">Unranked</h3><div class="drop" data-tier="pool" id="pool"></div></div>
         <p class="hint">Drag posters into a tier. On a phone, tap a poster, then tap a tier letter or another poster to place it. The ranking ends when everyone taps I'm done, or when the timer runs out.</p>
+        <div class="howSlot"></div>
         <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
           <button class="btn" id="doneBtn">I'm done ranking</button>
           <button class="btn small" id="resetBtn">Move everything back to unranked</button>
@@ -430,6 +432,8 @@ select option{background:var(--panel-solid)}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/howto.js"></script>
+<script>document.addEventListener("DOMContentLoaded",()=>{ const h=document.getElementById("howHome"); if(h) h.innerHTML=HowTo.button("tierlist"); document.querySelectorAll(".howSlot").forEach(x=>x.innerHTML=HowTo.button("tierlist","margin-top:8px")); });</script>
 <script>
 const TIERS = ["S","A","B","C","D","F"];
 const SCORE = {S:6,A:5,B:4,C:3,D:2,F:1};

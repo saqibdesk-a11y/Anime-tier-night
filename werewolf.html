@@ -235,6 +235,7 @@ details summary{cursor:pointer;font-weight:800}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -551,8 +552,7 @@ function lobby(){
         <div><label for="sVote">Voting</label>${sel("sVote", [[30,"30 sec"],[60,"1 min"],[90,"90 sec"]], s.voteSec)}</div>
       </div>
       ${H ? `<button class="btn primary wide" data-host="start" ${n<4?"disabled":""}>${n<4?`Waiting for ${4-n} more`:"Deal the cards"}</button>` : '<p class="hint" style="text-align:center">The host deals the cards when everyone is seated.</p>'}</div>
-    <details class="panel"><summary>How to play</summary><div class="rolelist">${Object.keys(ART).filter(r=>r!=="hidden").map(r=>`<div class="r-${r}"><img src="/img/roles/${r}.webp" alt="" loading="lazy"><span><b>${rname(r)}.</b> ${DESC[r]}</span></div>`).join("")}</div>
-      <p class="hint" style="margin-top:8px">The game runs itself: night, dawn, discussion, vote, repeat. Good wins when the whole evil team is gone. Evil wins when they match the good team in number. Roles follow Plato's Werewolf.</p></details></div>`;
+    ${HowTo.button("werewolf")}</div>`;
   $("#avBtn").onclick = ()=>Avatars.open(act);
   if(H){
     const send = x => act("settings", x).catch(err=>toast(err.message));

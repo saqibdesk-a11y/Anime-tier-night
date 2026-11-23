@@ -317,6 +317,7 @@ body.quake .stage{animation:quake .6s}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -498,11 +499,7 @@ function lobby(){
         <p class="hint" style="margin-top:6px">Spymasters can read, but can't type while a game is on.</p></div>
       <div class="toggle"><div><b>AI spymaster</b><p class="hint">${room.aiReady ? "Fills any empty spymaster seat. It's sneaky." : "Not available: no AI key on this server."}</p></div><button type="button" id="aiSpy" class="${s.aiSpy&&room.aiReady?"on":""}" ${H&&room.aiReady?"":"disabled"} aria-label="AI spymaster"></button></div>
       ${H ? `<button class="btn primary wide" data-host="start" ${n<2?"disabled":""}>${n<2 ? "Waiting for one more agent" : "Deal the board"}</button>` : `<p class="hint" style="text-align:center">The host deals when everyone's in.</p>`}</div>
-    <details class="panel" style="margin-top:14px"><summary style="font-weight:800;cursor:pointer">How to play</summary><p class="hint" style="margin-top:8px">
-      Each team has a <b>spymaster</b> who sees the secret key: which cards are Lantern agents, Shrine agents, innocent bystanders, and the <b>assassin</b>.<br><br>
-      On your turn the spymaster gives <b>one word and a number</b>, like <i>OCEAN 2</i>, meaning "two of our cards connect to ocean". The clue can't be a word on the board.<br><br>
-      Guessers tap a card to <b>mark</b> it (your team sees your marks) and tap it again to unmark it. Press <b>Lock in</b> on your marked card to reveal it. Your agent: keep going, up to the number plus one. A bystander or the other team's agent ends your turn. The assassin loses the game on the spot.<br><br>
-      A <b>0</b> or <b>∞</b> clue means guess as many as you like. First team to find all its agents wins.</p></details></div>`;
+    ${HowTo.button("codenames")}</div>`;
   $("#photoBtn").onclick = ()=>Avatars.open(act);
   if(H){
     const send = x => act("settings", x).catch(err=>toast(err.message));

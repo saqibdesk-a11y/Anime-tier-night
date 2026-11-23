@@ -1109,6 +1109,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/theme.js": ("text/javascript; charset=utf-8", "no-store"),
     "/chat.js": ("text/javascript; charset=utf-8", "no-store"),
     "/pranks.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/howto.js": ("text/javascript; charset=utf-8", "no-store"),
     "/festival.css": ("text/css; charset=utf-8", "no-store"),
     "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),
     "/icon-192.png": ("image/png", "public, max-age=86400"),

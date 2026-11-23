@@ -206,6 +206,7 @@ details summary{cursor:pointer;font-weight:800}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -353,7 +354,7 @@ function lobby(){
       <div><label>Special roles</label><div class="chips rolechips">${["jester","detective","accomplice","lovers"].map(k=>`<button type="button" class="${(s.roles||[]).includes(k)?"on":""}" data-role="${k}" ${H?"":"disabled"}>${ROLE[k].name}<small>${ROLE[k].lobby} · ${ROLE[k].min}+ players</small></button>`).join("")}</div>
         <p class="hint" style="margin-top:6px">Roles go to random crew members, and only once there are enough players. Not every role shows up every round.</p></div>
       ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<3?"disabled":""}>${ps.length<3?`Waiting for ${3-ps.length} more`:"Hand out the files"}</button>` : `<p class="hint" style="text-align:center">The host starts when everyone is here.</p>`}</div>
-    <details class="panel" style="margin-top:14px"><summary>How to play</summary><p class="hint" style="margin-top:8px">Everyone opens their envelope to see the secret word. Take turns giving one short clue about it: specific enough that the crew trusts you, vague enough that the imposter can't work out the word. Then argue and vote. If the crew catches the imposter, the imposter gets one guess at the real word to steal points.<br><br><b>Roles.</b> Jester: wants to be voted out. Detective: checks one player in secret. Accomplice: knows the imposter and helps them escape. Lovers: two crew who know each other.<br><br><b>Too obvious?</b> After the clues, flag any hint that gave the word away. If half the table flags it, its giver loses 1 point.<br><br><b>Points.</b> Voting for the imposter +2. Lovers who both vote right +1 more. Caught imposter who guesses the word +3. Imposter escapes +3, or +4 if an innocent got voted out (and those voters lose 1). Jester voted out +5, and everyone who fell for it loses 1. Accomplice +2 or +3 when the imposter escapes.</p></details>`;
+    ${HowTo.button("imposter")}`;
   $("#photoBtn").onclick = ()=>Avatars.open(act);
   if(H){
     const send = x => act("settings", x).catch(err=>toast(err.message));

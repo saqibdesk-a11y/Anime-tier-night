@@ -368,6 +368,7 @@ body.focus .dock .closetools{display:block}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -536,7 +537,7 @@ function renderLobby(){
     <div><span>Drawing</span><span style="text-align:right">${esc(room.categoryLabel)}</span></div></div>
     ${room.visionAI.length ? "" : '<p class="hint" style="color:var(--danger)">No AI that can see pictures is set up on this server, so AI scoring and roasts will not work.</p>'}
     <div class="me-row">${avatar(room.players[me.pid].name)}<div><b>${esc(room.players[me.pid].name)}</b><div><button class="btn small" id="avBtn" type="button">${Avatars.src(room.players[me.pid]) ? "Change avatar" : "Choose your avatar"}</button></div></div></div>
-    ${hostKey ? `<button class="btn primary" data-h="start">Start the game</button>` : '<p class="hint">Waiting for the host to start.</p>'}</div>`;
+    ${hostKey ? `<button class="btn primary" data-h="start">Start the game</button>` : '<p class="hint">Waiting for the host to start.</p>'}${HowTo.button("draw","margin-top:0")}</div>`;
   let people;
   if(room.mode === "team"){
     people = `<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>Teams</h2>${hostKey?`<div style="display:flex;gap:6px;flex-wrap:wrap">${[2,3,4].map(n=>`<button class="btn small ${room.teams.length===n?"primary":""}" data-h="teams" data-n="${n}">${n} teams</button>`).join("")}<button class="btn small" data-h="shuffle">Shuffle</button></div>`:""}</div>
