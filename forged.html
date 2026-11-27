@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Forged Brush</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+/* Layout: the forgery stall. One shared rice-paper canvas in the center where every artist paints in
+   their own ink colour, one continuous stroke per turn. Colors come from festival.css. */
+:root{
+  --cloth:#7A4BC7; --on-cloth:#F3EBDD;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
+  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --red:var(--lantern); --green:var(--shrine);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+
+.noren{background:var(--cloth);color:var(--on-cloth)}
+.noren .th-btn,.noren .iconbtn{border-color:rgba(243,235,221,.35)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.88}
+.iconbtn{border:1px solid rgba(243,235,221,.35);background:none;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;padding:0;color:inherit}
+.iconbtn svg{width:18px;height:18px}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--lantern);color:var(--on-lantern);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+
+.stage{width:min(820px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
+.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s,background .2s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern);box-shadow:0 8px 24px -10px color-mix(in srgb,var(--lantern) 70%,transparent)}
+.btn.paper{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+.btn.small{padding:6px 13px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--amber)}
+select option{background:var(--night)}
+.err{color:var(--danger);font-size:14px;min-height:1.3em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:540px){.row3{grid-template-columns:1fr 1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px}
+.chips button.on{border-color:var(--amber);background:rgba(217,164,65,.14);color:var(--amber)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:11px;text-align:left;display:grid;gap:2px}
+.seg button small{color:var(--muted);font-weight:500;line-height:1.35}
+.seg button.on{border-color:var(--amber);background:rgba(217,164,65,.12)}
+
+/* home hero */
+.hero-art{width:min(240px,62vw);aspect-ratio:4/3;margin:2vh auto 12px;background:#FFFDF8;border-radius:14px;box-shadow:0 24px 50px -20px #000,inset 0 0 0 2px rgba(30,26,46,.08);display:grid;place-items:center;position:relative;overflow:hidden}
+.hero-art svg{width:84%;height:84%}
+.hero-art path{stroke-dasharray:260;stroke-dashoffset:260;animation:drawloop 5.5s ease-in-out infinite}
+.hero-art path:nth-child(2){animation-delay:.7s}
+.hero-art path:nth-child(3){animation-delay:1.4s}
+@keyframes drawloop{0%,10%{stroke-dashoffset:260}45%,78%{stroke-dashoffset:0}95%,100%{stroke-dashoffset:260}}
+
+/* avatars & rings */
+.face{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.face img,.mini img,.pin img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.mini{width:22px;height:22px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:10px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);vertical-align:middle;flex:none}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:64px;height:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px;margin-top:14px}
+.tok{position:relative;display:grid;justify-items:center;gap:5px;border:0;background:none;padding:6px 2px;border-radius:14px;transition:transform .15s}
+.tok .face{width:68px;height:68px;border:3px solid var(--inkc,rgba(255,255,255,.22));font-size:24px;box-shadow:0 10px 24px -10px rgba(0,0,0,.9)}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tok.pick{cursor:pointer}
+.tok.pick:hover{transform:translateY(-3px)}
+.tok.sel .face{box-shadow:0 0 0 4px color-mix(in srgb,var(--lantern) 45%,transparent),0 0 26px var(--lantern)}
+.tok.off{opacity:.42;cursor:not-allowed}
+.voters{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;min-height:22px}
+.voters .mini{animation:drop .35s cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes drop{from{transform:translateY(-12px) scale(.4);opacity:0}}
+.count{font-size:16px;color:var(--lantern);font-weight:900}
+
+/* secret scroll card */
+.scrollwrap{display:grid;justify-items:center;margin:20px 0 8px;perspective:1200px}
+.scroll{position:relative;width:min(340px,88vw);aspect-ratio:4/5;cursor:pointer}
+.scroll .paper{position:absolute;left:5%;right:5%;top:7%;bottom:4%;background:var(--paper);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.25);color:var(--ink);padding:20px 18px;display:grid;align-content:start;gap:10px}
+.scroll .paper .lbl{font-size:13px;font-weight:700;color:var(--ink-2)}
+.scroll .paper .word{margin-right:64px;font-family:var(--display);font-size:clamp(30px,8.5vw,44px);line-height:1.1;overflow-wrap:anywhere}
+.scroll .paper .note{font-size:15px;line-height:1.48}
+.scroll .inkpill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(30,26,46,.08);font-weight:800;font-size:14px;width:fit-content}
+.scroll .inkpill i{width:16px;height:16px;border-radius:50%;display:block;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.scroll.forger .paper .word{color:#9E2A5C}
+.scroll .pin{position:absolute;top:11%;right:9%;width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.3);display:grid;place-items:center;font-weight:900;font-size:22px;color:var(--ink)}
+.scroll .cover{position:absolute;inset:0;transform-origin:left center;transition:transform .95s cubic-bezier(.4,1.2,.4,1);background:linear-gradient(160deg,#7A4BC7,#432578);border-radius:8px 16px 16px 8px;box-shadow:0 28px 60px -18px rgba(0,0,0,.95),inset 0 0 0 1px rgba(255,255,255,.18);display:grid;place-items:center;backface-visibility:hidden;z-index:2}
+.scroll .cover::before{content:"";position:absolute;left:12%;right:12%;top:64%;height:3px;background:var(--gold);border-radius:2px}
+.scroll .cover .seal{width:34%;color:var(--paper);margin-top:-12%}
+.scroll .cover .seal svg{display:block;width:100%}
+.scroll .cover .artist{position:absolute;bottom:20%;font-family:var(--display);color:var(--paper);font-size:22px}
+.scroll .cover .tap{position:absolute;bottom:7%;font-weight:700;font-size:14px;color:var(--paper);animation:breathe 2s infinite}
+.scroll.open .cover{transform:rotateY(-160deg)}
+@keyframes breathe{50%{opacity:.35}}
+
+/* shared canvas easel */
+.turns{display:flex;gap:10px;overflow-x:auto;padding:8px 4px 6px;scrollbar-width:none;justify-content:safe center}
+.turns .t{flex:none;display:grid;justify-items:center;gap:3px;opacity:.48;transition:opacity .25s,transform .25s}
+.turns .t .face{width:46px;height:46px;border:3px solid var(--inkc,var(--line2));font-size:16px}
+.turns .t span{font-size:12px;font-weight:700;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.turns .t.done{opacity:.82}
+.turns .t.now{opacity:1;transform:scale(1.12)}
+.turns .t.now .face{box-shadow:0 0 0 3px var(--night),0 0 0 5px var(--inkc),0 0 22px var(--inkc)}
+
+.easel{position:relative;margin:10px auto 0;width:min(100%,calc((100dvh - 245px) * 4 / 3),700px);background:#FFFDF8;border-radius:16px;overflow:hidden;box-shadow:0 28px 64px -24px rgba(0,0,0,.95),0 0 0 3px rgba(243,235,221,.14);transition:box-shadow .25s}
+.easel.myturn{box-shadow:0 28px 64px -24px rgba(0,0,0,.95),0 0 0 3px var(--myink,var(--lantern)),0 0 36px -6px var(--myink,var(--lantern))}
+.easel canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;touch-action:none;cursor:default}
+.easel.myturn canvas{cursor:crosshair}
+.easel.locked canvas{cursor:default}
+.easel .badge{position:absolute;left:10px;top:10px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(27,31,75,.86);color:#F3EBDD;padding:5px 12px 5px 6px;border-radius:999px;font-size:13px;font-weight:700;backdrop-filter:blur(6px);pointer-events:none;animation:fadeup .25s}
+.easel .badge i{width:12px;height:12px;border-radius:50%;display:block;border:2px solid #fff}
+.easel .passchip{position:absolute;right:10px;top:10px;z-index:3;background:rgba(27,31,75,.82);color:#F3EBDD;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;pointer-events:none}
+
+.brushbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.inkbadge{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-weight:700;font-size:14px}
+.inkbadge i{width:16px;height:16px;border-radius:50%;display:block;border:2px solid #fff}
+.sizes{display:inline-flex;gap:6px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:4px}
+.sizes button{width:38px;height:34px;border-radius:999px;border:0;background:none;display:grid;place-items:center}
+.sizes button i{display:block;border-radius:50%;background:var(--myink,#fff);border:1.5px solid rgba(255,255,255,.55)}
+.sizes button.on{background:rgba(243,235,221,.16);box-shadow:inset 0 0 0 1.5px var(--amber)}
+
+.peek{display:flex;justify-content:center;margin-top:8px}
+.peek button{border:1px dashed var(--line2);background:none;border-radius:999px;padding:6px 16px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:7px}
+.peek button i{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+/* artist palette spotlight & replay bar */
+.inspectbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}
+.palette{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:10px}
+.achip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--glass);border-radius:999px;padding:4px 12px 4px 5px;font-size:13px;font-weight:700;transition:transform .12s,border-color .15s,background .15s}
+.achip:active{transform:scale(.96)}
+.achip .dot{width:12px;height:12px;border-radius:50%;flex:none;border:2px solid rgba(255,255,255,.7)}
+.achip.on{border-color:var(--inkc,var(--amber));background:color-mix(in srgb,var(--inkc,var(--amber)) 24%,var(--night-2));box-shadow:0 0 18px -4px var(--inkc,var(--amber))}
+.achip .ftag{background:var(--lantern);color:var(--on-lantern);border-radius:999px;padding:1px 7px;font-size:11px;font-weight:900}
+
+/* verdict stamp & guess */
+.verdict-card{position:relative;display:grid;justify-items:center;margin:16px 0 8px}
+.acc-box{background:var(--paper);color:var(--ink);border-radius:14px;padding:22px 24px;width:min(340px,88vw);display:grid;justify-items:center;gap:10px;text-align:center;box-shadow:0 24px 50px -20px #000}
+.acc-box .face{width:80px;height:80px;border:4px solid var(--inkc,var(--ink));font-size:30px}
+.acc-box h2{font-size:34px;line-height:1.1}
+.stamp{position:absolute;left:50%;top:54%;z-index:4;transform:translate(-50%,-50%) rotate(-13deg) scale(2.6);opacity:0;font-family:var(--display);font-size:clamp(30px,8vw,46px);border:6px solid currentColor;border-radius:8px;padding:2px 16px;mix-blend-mode:multiply;animation:slam .45s .75s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
+.stamp.forger{color:#C62828} .stamp.crew{color:#237A5E}
+@keyframes slam{to{opacity:.94;transform:translate(-50%,-50%) rotate(-13deg) scale(1)}}
+
+.guessbox{background:var(--paper);color:var(--ink);border-radius:14px;padding:16px;display:grid;gap:10px;margin-top:14px;box-shadow:0 20px 40px -20px rgba(0,0,0,.9)}
+.guessbox b{font-family:var(--display);font-size:24px}
+.guessbox input{background:#fff;color:var(--ink);border-color:rgba(30,26,46,.3);font-family:var(--display);font-size:20px}
+
+/* results, scores, AI critic, final gallery */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.wordcard{background:var(--paper);color:var(--ink);border-radius:10px;padding:14px;text-align:center;box-shadow:0 16px 30px -16px rgba(0,0,0,.9)}
+.wordcard .lbl{font-size:13px;font-weight:700;color:var(--ink-2)}
+.wordcard .w{font-family:var(--display);font-size:clamp(22px,5.5vw,32px);overflow-wrap:anywhere}
+.wordcard.imp .w{color:#B3261E}
+.chat{display:grid;gap:9px;margin-top:14px}
+.msg{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:start;animation:fadeup .4s backwards}
+.msg .bot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:12px;background:var(--amber);color:var(--ink)}
+.msg .mini{width:32px;height:32px;font-size:13px}
+.bubble{background:var(--glass2);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:9px 12px;overflow-wrap:anywhere}
+.bubble b{margin-right:6px}
+.scores{display:grid;gap:8px;margin-top:12px}
+.srow{display:grid;grid-template-columns:34px 30px 1fr auto auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800}
+.srow .rk{font-weight:900;font-size:18px;color:var(--muted);text-align:center}
+.srow.first{border-color:var(--amber);background:rgba(217,164,65,.12)}
+.srow.first .rk{color:var(--amber)}
+.srow .plus{color:var(--green);font-size:13px}
+.srow .minus{color:var(--danger);font-size:13px}
+.srow .pts{font-weight:900;font-size:18px}
+.why{display:block;font-size:12px;font-weight:600;color:var(--muted);line-height:1.35;margin-top:2px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:14px;margin-top:14px}
+.gcard{background:var(--glass);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
+.gcard canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#FFFDF8}
+.gcard .meta{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gcard .meta b{display:block;font-size:16px}
+.gcard .meta small{color:var(--muted);font-size:12px}
+
+.thinking{display:flex;justify-content:center;gap:6px;padding:10px}
+.thinking i{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:breathe 1.2s infinite}
+.thinking i:nth-child(2){animation-delay:.2s}.thinking i:nth-child(3){animation-delay:.4s}
+.fadeup{animation:fadeup .45s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+body.has-hostbar{--chat-lift:66px}
+body.has-hostbar .stage{padding-bottom:calc(168px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <h1>Forged Brush</h1>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+  <button type="button" class="iconbtn" id="soundBtn" aria-label="Sound" title="Sound"></button>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script src="/howto.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 72%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+/* ---------- subtle sound effects (Web Audio) ---------- */
+let soundOn = (()=>{ try{ return localStorage.getItem("fb:sound") !== "off"; }catch(e){ return true; } })();
+let actx = null;
+function audio(){
+  if(!soundOn) return null;
+  if(!actx){ try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(actx.state === "suspended") actx.resume().catch(()=>{});
+  return actx;
+}
+function paintSoundBtn(){
+  $("#soundBtn").innerHTML = soundOn
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>';
+}
+$("#soundBtn").onclick = ()=>{ soundOn = !soundOn; try{ localStorage.setItem("fb:sound", soundOn?"on":"off"); }catch(e){} paintSoundBtn(); };
+paintSoundBtn();
+const SFX = {
+  tone(freq, dur, vol=.12, type="sine", delay=0){
+    const c = audio(); if(!c) return;
+    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + delay;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(vol, t + .015);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .02);
+  },
+  swish(){
+    const c = audio(); if(!c) return;
+    const n = Math.floor(c.sampleRate * .14), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1) * Math.sin(Math.PI * i / n);
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.frequency.setValueAtTime(900, c.currentTime);
+    f.frequency.exponentialRampToValueAtTime(1800, c.currentTime + .12);
+    g.gain.value = .12; src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+  },
+  myturn(){ SFX.tone(523, .14, .12, "triangle", 0); SFX.tone(659, .2, .14, "triangle", .1); },
+  stamp(){ SFX.tone(140, .18, .22, "triangle", 0); SFX.tone(95, .24, .18, "sine", .05); },
+  win(){ [523,659,784,1046].forEach((f,i)=>SFX.tone(f, .24, .1, "triangle", i*.09)); },
+};
+
+/* ---------- state ---------- */
+const CW = 800, CH = 600;
+const INK_NAMES = {"#E63946":"Crimson","#2563EB":"Cobalt","#16A34A":"Emerald","#D97706":"Amber","#9333EA":"Violet","#EC4899":"Magenta","#0D9488":"Teal","#9A3412":"Sienna","#4F46E5":"Indigo","#1E293B":"Sumi Ink"};
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
+let opened=false, peek=false, brushW=9, spotlight=null;
+let draft=null, drawingNow=false, committing=false, draftKey="", lastStrokeIds=new Set();
+let replayTimer=null, replayCount=null, animRaf=null;
+
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+const P = pid => room.players[pid] || {name:"Someone who left"};
+const rd = () => room.roundData[room.round] || {};
+const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
+const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+const inkOf = (r, pid) => (r.colors && r.colors[pid]) || "#7A4BC7";
+
+/* ---------- home & room connection ---------- */
+function home(){
+  $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
+  document.body.classList.remove("has-hostbar");
+  $("#stage").innerHTML = `
+    <div class="hero-art fadeup" aria-hidden="true">
+      <svg viewBox="0 0 240 180" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 132 Q80 42 126 98 T202 58" stroke="#E63946" stroke-width="9"/>
+        <path d="M54 64 Q120 150 188 124" stroke="#2563EB" stroke-width="8"/>
+        <path d="M88 38 C154 28 178 106 112 146" stroke="#9333EA" stroke-width="7"/>
+      </svg>
+    </div>
+    <div class="fadeup"><div class="eyebrow">The Forgery Stall</div><h1 class="title">Forged Brush</h1>
+      <p class="sub">Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.</p></div>
+    <div class="row2 fadeup" style="margin-top:20px">
+      <form class="panel" id="createForm"><h2>Host a gallery</h2>
+        <div><label for="cName">Your name</label><input type="text" id="cName" placeholder="e.g. Saqib" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="cErr"></div>
+        <button class="btn primary wide">Create room</button></form>
+      <form class="panel" id="joinForm"><h2>Join with a code</h2>
+        <div><label for="jCode">Room code</label><input type="text" id="jCode" placeholder="e.g. K7QX" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="jErr"></div>
+        <button class="btn wide">Join</button></form>
+    </div>
+    <div class="fadeup">${HowTo.button("forged")}</div>`;
+  $("#createForm").onsubmit = async e=>{
+    e.preventDefault(); $("#cErr").textContent = "";
+    const n = $("#cName").value.trim(); if(!n) return $("#cErr").textContent = "Enter your name.";
+    try{
+      const r = await api("/api/rooms", {game:"forged", title:"Forged Brush"});
+      const m = await api(`/api/rooms/${r.code}/join`, {name:n});
+      store("fb:"+r.code, {me:m, hostKey:r.hostKey});
+      history.replaceState({}, "", "/forged?room="+r.code);
+      openRoom(r.code);
+    }catch(err){ $("#cErr").textContent = err.message; }
+  };
+  $("#joinForm").onsubmit = async e=>{
+    e.preventDefault(); $("#jErr").textContent = "";
+    const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
+    if(!c || !n) return $("#jErr").textContent = "Enter both the code and your name.";
+    try{
+      const m = await api(`/api/rooms/${c}/join`, {name:n});
+      store("fb:"+c, {me:m, hostKey:null});
+      history.replaceState({}, "", "/forged?room="+c);
+      openRoom(c);
+    }catch(err){ $("#jErr").textContent = err.message; }
+  };
+}
+
+function openRoom(c){
+  code = c; const saved = store("fb:"+c) || {}; me = saved.me || null; hostKey = saved.hostKey || null;
+  $("#hCode").textContent = c; $("#hCode").hidden = false;
+  BackGuard.arm();
+  poll(++pollGen, -1);
+}
+
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const q = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const next = await api(`/api/rooms/${code}?v=${v}${q}`);
+      if(gen !== pollGen) return;
+      const prev = room; room = next; v = room.version;
+      clockOffset = room.now - Date.now()/1000;
+      if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
+      if(room.game && room.game !== "forged"){ location.href = `/${room.game}?room=${code}`; return; }
+      const phaseChanged = !prev || prev.phase !== room.phase || prev.round !== room.round;
+      if(phaseChanged){
+        stopReplay();
+        spotlight = null;
+        if(room.phase === "reveal"){ opened = false; peek = false; lastStrokeIds = new Set(); draft = null; }
+        if(room.phase === "verdict"){ SFX.stamp(); if(rd().caught) buzz([180,70,180]); }
+        if(room.phase === "results" || room.phase === "final"){ SFX.win(); }
+      }
+      if(!Chat.socialOnly(prev, room)) render(prev);
+      Chat.update(room, me); Pranks.update(room, me);
+    }catch(e){
+      if(e.message.includes("not found")){ toast("Room not found"); return home(); }
+      await new Promise(r=>setTimeout(r, 2000));
+    }
+  }
+}
+
+/* ---------- smooth canvas rendering ---------- */
+function drawStrokePath(ctx, pts, color, width, alpha=1, glow=false, progress=1){
+  if(!pts || !pts.length) return;
+  const end = Math.max(1, Math.ceil(pts.length * progress));
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  if(glow){ ctx.shadowColor = color; ctx.shadowBlur = 14; }
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  if(end === 1){
+    ctx.lineTo(pts[0][0] + .1, pts[0][1]);
+  } else {
+    for(let i = 1; i < end - 1; i++){
+      const mx = (pts[i][0] + pts[i+1][0]) / 2, my = (pts[i][1] + pts[i+1][1]) / 2;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    ctx.lineTo(pts[end-1][0], pts[end-1][1]);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function paintCanvas(cv, strokes, opts={}){
+  if(!cv) return;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#FFFDF8";
+  ctx.fillRect(0, 0, CW, CH);
+  // subtle rice-paper guide border
+  ctx.strokeStyle = "rgba(30,26,46,.05)"; ctx.lineWidth = 2;
+  ctx.strokeRect(14, 14, CW - 28, CH - 28);
+  const limit = opts.limit ?? strokes.length;
+  const spot = opts.spotlight || null;
+  const animId = opts.animId || null, animP = opts.animP ?? 1;
+  for(let i = 0; i < Math.min(limit, strokes.length); i++){
+    const s = strokes[i];
+    if(!s.p || !s.p.length) continue;
+    const isSpot = spot && s.pid === spot;
+    const alpha = spot ? (isSpot ? 1 : .14) : 1;
+    const prog = (animId && s.id === animId) ? animP : 1;
+    drawStrokePath(ctx, s.p, s.c, s.w || 8, alpha, isSpot, prog);
+  }
+  if(opts.draft && opts.draft.p && opts.draft.p.length){
+    drawStrokePath(ctx, opts.draft.p, opts.draft.c, opts.draft.w, .92, true, 1);
+  }
+}
+
+function exportPainting(strokes, filename){
+  const off = document.createElement("canvas"); off.width = CW; off.height = CH;
+  paintCanvas(off, strokes, {});
+  const a = document.createElement("a");
+  a.href = off.toDataURL("image/png");
+  a.download = filename;
+  a.click();
+}
+
+function stopReplay(){
+  if(replayTimer){ clearInterval(replayTimer); replayTimer = null; }
+  replayCount = null;
+}
+
+function startReplay(canvasId, badgeId, strokes){
+  stopReplay();
+  const real = strokes.filter(s => s.p && s.p.length);
+  if(!real.length) return toast("No strokes to replay yet");
+  spotlight = null;
+  updatePaletteUI();
+  let step = 0;
+  const advance = () => {
+    const cv = document.getElementById(canvasId), badge = document.getElementById(badgeId);
+    if(!cv){ stopReplay(); return; }
+    step++;
+    if(step > real.length){
+      stopReplay();
+      paintCanvas(cv, real, {});
+      if(badge) badge.hidden = true;
+      const btn = document.querySelector(`[data-replay="${canvasId}"]`);
+      if(btn) btn.textContent = "▶ Replay";
+      return;
+    }
+    const s = real[step - 1];
+    if(badge){
+      badge.hidden = false;
+      badge.innerHTML = `<i style="background:${s.c}"></i>${esc(P(s.pid).name)} · #${step}/${real.length}`;
+    }
+    SFX.swish();
+    animateSingle(cv, real.slice(0, step), s.id, 340);
+  };
+  const btn = document.querySelector(`[data-replay="${canvasId}"]`);
+  if(btn) btn.textContent = "■ Stop replay";
+  advance();
+  replayTimer = setInterval(advance, 560);
+}
+
+function animateSingle(cv, strokes, animId, dur=400){
+  if(animRaf) cancelAnimationFrame(animRaf);
+  const t0 = performance.now();
+  const frame = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    paintCanvas(cv, strokes, {spotlight, draft, animId, animP: p});
+    if(p < 1) animRaf = requestAnimationFrame(frame);
+    else animRaf = null;
+  };
+  animRaf = requestAnimationFrame(frame);
+}
+
+/* ---------- rendering ---------- */
+let curView = "";
+function render(prev){
+  renderHostbar();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  if(!me || !room.players[me.pid]) return gate();
+  const ph = room.phase;
+  if(ph === "lobby") lobby();
+  else if(ph === "starting") starting();
+  else if(ph === "reveal") reveal();
+  else if(ph === "drawing") drawing(prev);
+  else if(ph === "discuss") inspectPhase("discuss");
+  else if(ph === "vote") inspectPhase("vote");
+  else if(ph === "verdict") verdict();
+  else if(ph === "guess") guess();
+  else if(ph === "results") results();
+  else final();
+  tickTimer();
+}
+
+function gate(){
+  if($("#gate")) return;
+  curView = "gate";
+  $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">Pick up a brush</div><h2 style="text-align:center">Join Forged Brush</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit at the easel</button></form>`;
+  $("#gate").onsubmit = async e=>{
+    e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
+    try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("fb:"+code, {me, hostKey}); curView = ""; poll(++pollGen, -1); }
+    catch(err){ $("#gErr").textContent = err.message; }
+  };
+}
+
+/* ---------- lobby ---------- */
+const CATS = [["mix","Mix"],["anime","Anime"],["food","Food"],["animals","Animals"],["objects","Objects"],["places","Places"],["movies","Movies & TV"],["custom","Custom"]];
+function lobby(){
+  curView = "lobby";
+  const s = room.settings, ps = Object.keys(room.players), mine = P(me.pid), H = !!hostKey;
+  const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} artist${ps.length===1?"":"s"}</h1>
+    <p class="sub">Share the code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b> (or tap it in the header). Need at least 3 artists.</p></div>
+    <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Choose your avatar">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">${Avatars.src(mine) ? "Tap to change your picture." : "Pick an anime character or upload a photo."}</p></div></div></div>
+    <div class="ring">${ps.map(pid=>`<div class="tok fadeup">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span>${H&&pid!==me.pid?`<button class="btn small" data-kick="${pid}" style="padding:2px 10px;font-size:11px">Kick</button>`:""}</div>`).join("")}</div>
+    <div class="panel" style="margin-top:16px"><h2>${H ? "Set up the gallery" : "Game settings"}</h2>
+      <div><label>Mode</label><div class="seg">
+        <button type="button" class="${s.mode==="clueless"?"on":""}" data-mode="clueless" ${H?"":"disabled"}><b>Clueless Forger</b><small>The Forger sees only the category and improvises strokes to blend in</small></button>
+        <button type="button" class="${s.mode==="decoy"?"on":""}" data-mode="decoy" ${H?"":"disabled"}><b>Decoy Forger</b><small>The Forger gets a similar subject and doesn't know they're the Forger</small></button></div></div>
+      <div><label>Subjects</label><div class="chips">${CATS.map(([v,t])=>`<button type="button" class="${s.category===v?"on":""}" data-cat="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+      ${s.category==="custom" ? `<div><label for="sCustom">Describe what to draw</label><input type="text" id="sCustom" maxlength="200" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. One Piece characters, Pakistani street food, memes"></div>` : ""}
+      <div class="row3">
+        <div><label for="sRounds">Rounds</label>${sel("sRounds", [1,2,3,4,5,6,8].map(n=>[n,n]), s.rounds)}</div>
+        <div><label for="sStrokes">Strokes each</label>${sel("sStrokes", [[1,"1 stroke"],[2,"2 strokes"],[3,"3 strokes"]], s.strokeRounds)}</div>
+        <div><label for="sForgers">Forgers</label>${sel("sForgers", [[0,"Auto"],[1,"1"],[2,"2"]], s.forgers)}</div>
+        <div><label for="sStrokeSec">Time per stroke</label>${sel("sStrokeSec", [[15,"15 sec"],[20,"20 sec"],[30,"30 sec"],[45,"45 sec"]], s.strokeSec)}</div>
+        <div><label for="sDiscuss">Discussion</label>${sel("sDiscuss", [[45,"45 sec"],[60,"1 min"],[90,"90 sec"],[120,"2 min"]], s.discussSec)}</div>
+        <div><label for="sSpice">AI critic</label>${sel("sSpice", [["wholesome","Wholesome"],["spicy","Spicy"],["unhinged","Unhinged"]], s.spice)}</div>
+      </div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<3?"disabled":""}>${ps.length<3?`Waiting for ${3-ps.length} more`:"Prepare the canvas"}</button>` : '<p class="hint" style="text-align:center">The host starts when everyone is ready.</p>'}</div>
+    ${HowTo.button("forged")}`;
+  $("#photoBtn").onclick = ()=>Avatars.open(act);
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>send({mode:b.dataset.mode}));
+    document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>send({category:b.dataset.cat}));
+    $("#sRounds").onchange=e=>send({rounds:+e.target.value});
+    $("#sStrokes").onchange=e=>send({strokeRounds:+e.target.value});
+    $("#sForgers").onchange=e=>send({forgers:+e.target.value});
+    $("#sStrokeSec").onchange=e=>send({strokeSec:+e.target.value});
+    $("#sDiscuss").onchange=e=>send({discussSec:+e.target.value});
+    $("#sSpice").onchange=e=>send({spice:e.target.value});
+    if($("#sCustom")) $("#sCustom").onchange=e=>send({custom:e.target.value});
+  }
+}
+
+function starting(){
+  curView = "starting";
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:12vh"><h1 class="title">Mixing the inks</h1><div class="thinking"><i></i><i></i><i></i></div><p class="sub">Picking secret subjects about ${esc(room.categoryLabel)}.</p></div>`;
+}
+
+/* ---------- reveal ---------- */
+function reveal(){
+  curView = "reveal";
+  const r = rd(), m = r.mine;
+  if(!m){
+    $("#stage").innerHTML = `<div class="fadeup" style="margin-top:10vh"><h1 class="title">Round ${room.round+1} is starting</h1><p class="sub">You joined mid-round, so you'll watch this one and join next round.</p></div>`;
+    return;
+  }
+  const act_ = r.order.map(pid=>P(pid)), ready = act_.filter(p=>p.ready).length;
+  const col = m.color || "#7A4BC7", colName = INK_NAMES[col] || "Ink";
+  const inner = m.forger
+    ? `<div class="lbl">Your role</div><div class="word">You are the Forger</div><div class="note">You have <b>no subject</b>. The category is <b>${esc(room.categoryLabel)}</b>. Watch everyone's strokes, fake confident lines, and figure out what they're drawing!</div>`
+    : `<div class="lbl">Draw together</div><div class="word">${esc(m.word)}</div><div class="note">${room.settings.mode==="decoy" ? "Careful: one artist got a slightly different subject and doesn't know it—it might be you. Don't make it too obvious!" : "One artist has no idea what the subject is. Be clear enough to prove you know it, without giving it away!"}</div>`;
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds} · ${esc(room.categoryLabel)}</div><h1 class="title">Your secret scroll</h1><p class="sub">Hide your screen, then tap to open.</p></div>
+    <div class="scrollwrap"><div class="scroll ${opened?"open":""} ${m.forger?"forger":""}" id="scroll">
+      <div class="paper"><span class="pin" style="background:${hue(P(me.pid).name)}">${picOf(P(me.pid))}</span>
+        ${inner}<div class="inkpill"><i style="background:${col}"></i>Your ink: ${colName}</div></div>
+      <div class="cover"><span class="seal"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M22 78 L66 20 L80 34 L36 92 Z" fill="currentColor" opacity=".2"/><path d="M22 78 L66 20 M16 84 C20 74 28 74 30 82 C26 90 14 92 16 84 Z"/><circle cx="72" cy="24" r="6" fill="var(--gold)" stroke="none"/></svg></span>
+        <span class="artist">${esc(P(me.pid).name)}</span><span class="tap">Tap to open</span></div>
+    </div></div>
+    <div id="after" ${opened?"":"hidden"} class="fadeup" style="display:grid;gap:10px">
+      ${P(me.pid).ready ? `<p class="sub">Waiting for the other artists · ${ready}/${act_.length} ready</p>` : `<button class="btn primary wide" id="readyBtn">Got it · Ready to paint</button>`}
+    </div>`;
+  $("#scroll").onclick = ()=>{ opened = !opened; $("#scroll").classList.toggle("open", opened); if(opened){ buzz(50); $("#after").hidden = false; } };
+  if($("#readyBtn")) $("#readyBtn").onclick = ()=>act("ready").catch(err=>toast(err.message));
+}
+
+/* ---------- turn-by-turn shared canvas ---------- */
+function drawing(prev){
+  const r = rd(), m = r.mine || {}, myTurn = room.turnPid === me.pid;
+  const total = room.totalTurns || r.order.length * room.settings.strokeRounds;
+  const pass = Math.min(room.settings.strokeRounds, Math.floor(r.turn / Math.max(1, r.order.length)) + 1);
+  const key = `${room.round}:${r.turn}`;
+  if(key !== draftKey){ draftKey = key; draft = null; drawingNow = false; committing = false; if(myTurn){ SFX.myturn(); buzz([50,40,50]); } }
+
+  // build the drawing layout once per round so the canvas & draft stroke are never wiped on poll updates
+  if(curView !== "drawing:" + room.round){
+    curView = "drawing:" + room.round;
+    $("#stage").innerHTML = `<div class="fadeup">
+      <div class="eyebrow" id="dEye"></div>
+      <h1 class="title" id="dTitle"></h1>
+      <p class="sub" id="dSub"></p>
+      <div class="peek" id="dPeek"></div>
+      <div class="turns" id="dTurns"></div>
+      <div class="easel" id="easel"><span class="badge" id="dBadge" hidden></span><span class="passchip" id="dPass"></span><canvas id="cv" width="${CW}" height="${CH}"></canvas></div>
+      <div class="brushbar" id="dTools"></div>
+    </div>`;
+    bindCanvas();
+  }
+
+  $("#dEye").textContent = `Round ${room.round+1} · ${room.categoryLabel}`;
+  $("#dTitle").textContent = myTurn ? (draft ? "Happy with that stroke?" : "Your brushstroke") : `${P(room.turnPid).name} is painting…`;
+  $("#dSub").textContent = myTurn
+    ? (draft ? "Tap Lock stroke to keep it, or Redraw to try again." : "Draw ONE continuous line on the paper, then lock it in.")
+    : "Watch closely—every artist only gets one continuous stroke per turn.";
+  $("#dPass").textContent = `Pass ${pass}/${room.settings.strokeRounds} · ${Math.min(r.turn+1, total)}/${total}`;
+
+  // peek button
+  const pcol = m.color || "#7A4BC7";
+  $("#dPeek").innerHTML = r.mine
+    ? `<button type="button" id="peekBtn"><i style="background:${pcol}"></i>${peek ? (m.forger ? `Forger · ${esc(room.categoryLabel)}` : `Subject: <b>${esc(m.word)}</b>`) : "Tap to peek at your subject"}</button>`
+    : '<span class="hint">Spectating this round</span>';
+  if($("#peekBtn")) $("#peekBtn").onclick = ()=>{ peek = !peek; drawing(room); };
+
+  // turn strip
+  const seq = Array.from({length: total}, (_, i) => r.order[i % r.order.length]);
+  $("#dTurns").innerHTML = seq.map((pid, i) => `<div class="t ${i<r.turn?"done":""} ${i===r.turn?"now":""}" style="--inkc:${inkOf(r,pid)}">${face(pid,"face")}<span>${esc(P(pid).name)}</span></div>`).join("");
+  const nowEl = $("#dTurns .t.now"); if(nowEl) nowEl.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+
+  // easel state & tools
+  const easel = $("#easel");
+  easel.classList.toggle("myturn", myTurn && !draft);
+  easel.classList.toggle("locked", !myTurn || !!draft);
+  easel.style.setProperty("--myink", pcol);
+  renderBrushBar();
+
+  // animate newly arrived strokes from other artists
+  const strokes = r.strokes || [];
+  let newest = null;
+  for(const s of strokes){
+    if(!lastStrokeIds.has(s.id)){ lastStrokeIds.add(s.id); if(s.p && s.p.length) newest = s; }
+  }
+  const cv = $("#cv");
+  if(newest && newest.pid !== me.pid){
+    SFX.swish();
+    const b = $("#dBadge");
+    b.hidden = false; b.innerHTML = `<i style="background:${newest.c}"></i>${esc(P(newest.pid).name)} painted`;
+    animateSingle(cv, strokes, newest.id, 420);
+  } else if(!drawingNow){
+    paintCanvas(cv, strokes, {draft});
+  }
+}
+
+function renderBrushBar(){
+  const box = $("#dTools"); if(!box || !room || room.phase !== "drawing") return;
+  const r = rd(), m = r.mine || {}, myTurn = room.turnPid === me.pid, col = m.color || "#7A4BC7";
+  if(!myTurn){
+    box.innerHTML = r.mine ? `<span class="inkbadge"><i style="background:${col}"></i>Your ink: ${INK_NAMES[col]||"Ink"}</span>` : "";
+    return;
+  }
+  if(draft){
+    box.innerHTML = `<button type="button" class="btn" id="redrawBtn">Redraw</button>
+      <button type="button" class="btn primary" id="lockStrokeBtn" ${committing?"disabled":""}>${committing?"Locking…":"Lock stroke"}</button>`;
+    $("#redrawBtn").onclick = ()=>{
+      draft = null;
+      $("#easel").classList.add("myturn"); $("#easel").classList.remove("locked");
+      $("#dTitle").textContent = "Your brushstroke";
+      $("#dSub").textContent = "Draw ONE continuous line on the paper, then lock it in.";
+      paintCanvas($("#cv"), rd().strokes || [], {});
+      renderBrushBar();
+    };
+    $("#lockStrokeBtn").onclick = commitDraft;
+    return;
+  }
+  box.innerHTML = `<span class="inkbadge"><i style="background:${col}"></i>${INK_NAMES[col]||"Your ink"}</span>
+    <div class="sizes" style="--myink:${col}" role="group" aria-label="Brush size">
+      ${[[5,8,"Thin"],[9,13,"Medium"],[16,19,"Bold"]].map(([w,px,lbl])=>`<button type="button" data-bw="${w}" class="${brushW===w?"on":""}" title="${lbl}"><i style="width:${px}px;height:${px}px"></i></button>`).join("")}
+    </div>`;
+  box.querySelectorAll("[data-bw]").forEach(b=>b.onclick=()=>{ brushW = +b.dataset.bw; renderBrushBar(); });
+}
+
+async function commitDraft(){
+  if(!draft || committing || !room || room.phase !== "drawing" || room.turnPid !== me.pid) return;
+  committing = true; renderBrushBar();
+  const payload = {p: draft.p, w: draft.w};
+  try{
+    SFX.swish(); buzz(25);
+    await act("stroke", payload);
+    draft = null;
+  }catch(err){
+    committing = false; renderBrushBar(); toast(err.message);
+  }
+}
+
+function bindCanvas(){
+  const cv = $("#cv"); if(!cv) return;
+  const ptOf = e => {
+    const rect = cv.getBoundingClientRect();
+    return [Math.max(0, Math.min(CW, Math.round((e.clientX - rect.left) * CW / rect.width))),
+            Math.max(0, Math.min(CH, Math.round((e.clientY - rect.top) * CH / rect.height)))];
+  };
+  cv.addEventListener("pointerdown", e => {
+    if(!room || room.phase !== "drawing" || room.turnPid !== me.pid || draft || committing || e.button > 0) return;
+    e.preventDefault();
+    if(animRaf){ cancelAnimationFrame(animRaf); animRaf = null; }
+    try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+    drawingNow = true;
+    const pt = ptOf(e), col = (rd().mine || {}).color || "#7A4BC7";
+    draft = {c: col, w: brushW, p: [pt]};
+    paintCanvas(cv, rd().strokes || [], {draft});
+  });
+  cv.addEventListener("pointermove", e => {
+    if(!drawingNow || !draft) return;
+    const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for(const pe of (events.length ? events : [e])){
+      const pt = ptOf(pe), last = draft.p[draft.p.length - 1];
+      if(Math.abs(pt[0] - last[0]) + Math.abs(pt[1] - last[1]) < 3) continue;
+      if(draft.p.length < 360) draft.p.push(pt);
+    }
+    paintCanvas(cv, rd().strokes || [], {draft});
+  });
+  const finish = () => {
+    if(!drawingNow) return;
+    drawingNow = false;
+    if(draft && draft.p.length === 1) draft.p.push([draft.p[0][0], draft.p[0][1]]);
+    $("#easel").classList.remove("myturn"); $("#easel").classList.add("locked");
+    $("#dTitle").textContent = "Happy with that stroke?";
+    $("#dSub").textContent = "Tap Lock stroke to keep it, or Redraw to try again.";
+    paintCanvas(cv, rd().strokes || [], {draft});
+    renderBrushBar();
+  };
+  cv.addEventListener("pointerup", finish);
+  cv.addEventListener("pointercancel", finish);
+}
+
+/* ---------- artist spotlight palette helper ---------- */
+function paletteHTML(r, opts={}){
+  const forgers = opts.forgers || [];
+  return `<div class="palette" id="palette">
+    <button type="button" class="achip ${!spotlight?"on":""}" data-spot=""><span class="dot" style="background:conic-gradient(#E63946,#2563EB,#16A34A,#D97706,#9333EA,#E63946)"></span>All strokes</button>
+    ${r.order.map(pid=>{
+      const col = inkOf(r, pid);
+      const isF = forgers.includes(pid);
+      return `<button type="button" class="achip ${spotlight===pid?"on":""}" data-spot="${esc(pid)}" style="--inkc:${col}">${face(pid,"mini")}<span class="dot" style="background:${col}"></span>${esc(P(pid).name)}${isF?'<span class="ftag">FORGER</span>':""}</button>`;
+    }).join("")}
+  </div>`;
+}
+function updatePaletteUI(){
+  document.querySelectorAll("#palette [data-spot]").forEach(b=>b.classList.toggle("on", (b.dataset.spot||null) === spotlight));
+}
+
+/* ---------- discuss & vote ---------- */
+function inspectPhase(ph){
+  const r = rd(), votes = r.votes || {}, mine = votes[me.pid], inRound = r.order.includes(me.pid);
+  const tally = t => Object.entries(votes).filter(([v,x])=>x===t).map(([v])=>v);
+  const isVote = ph === "vote";
+  const viewKey = `${ph}:${room.round}`;
+  if(curView !== viewKey){
+    curView = viewKey;
+    $("#stage").innerHTML = `<div class="fadeup">
+      <div class="eyebrow">Round ${room.round+1} · ${esc(room.categoryLabel)}</div>
+      <h1 class="title">${isVote ? "Spot the Forger" : "Inspect the painting"}</h1>
+      <p class="sub" id="insSub"></p>
+      <div class="easel"><span class="badge" id="insBadge" hidden></span><canvas id="insCv" width="${CW}" height="${CH}"></canvas></div>
+      <div class="inspectbar">
+        <span class="hint">Tap any artist below to spotlight only their strokes.</span>
+        <button type="button" class="btn small" data-replay="insCv">▶ Replay</button>
+      </div>
+      <div id="insPalette"></div>
+      <div id="insVote"></div>
+    </div>`;
+    paintCanvas($("#insCv"), r.strokes || [], {spotlight});
+  }
+  $("#insSub").textContent = isVote
+    ? `Tap who you think is faking it. ${Object.keys(votes).length} of ${r.order.length} voted.`
+    : "Who drew something suspicious? Use the artist chips or Replay, then debate in chat.";
+  $("#insPalette").innerHTML = paletteHTML(r);
+  if(!replayTimer) paintCanvas($("#insCv"), r.strokes || [], {spotlight});
+  if(isVote){
+    $("#insVote").innerHTML = `<div class="ring">${r.order.map(pid=>{
+      const vs = tally(pid), self = pid === me.pid;
+      return `<button type="button" class="tok ${inRound&&!self?"pick":"off"} ${mine===pid?"sel":""}" data-vote="${pid}" style="--inkc:${inkOf(r,pid)}" ${inRound&&!self?"":"disabled"}>${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${self?" (you)":""}</span><span class="voters">${vs.map(v=>face(v)).join("")}</span>${vs.length?`<span class="count">${vs.length}</span>`:""}</button>`;
+    }).join("")}</div>
+    ${inRound ? `<div style="display:flex;justify-content:center;margin-top:12px"><button type="button" class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip vote ${tally("skip").length?`(${tally("skip").length})`:""}</button></div>` : ""}`;
+  } else {
+    $("#insVote").innerHTML = "";
+  }
+}
+
+/* ---------- verdict & guess ---------- */
+function verdict(){
+  curView = "verdict:" + room.round;
+  const r = rd(), acc = r.accused;
+  $("#stage").innerHTML = acc
+    ? `<div class="fadeup"><div class="eyebrow">The gallery's verdict</div><h1 class="title">${esc(P(acc).name)} is…</h1></div>
+       <div class="verdict-card"><div class="acc-box" style="--inkc:${inkOf(r,acc)}">${face(acc,"face")}<h2>${esc(P(acc).name)}</h2><span class="hint" style="color:var(--ink-2)">Accused artist</span></div>
+         <span class="stamp ${r.caught?"forger":"crew"}">${r.caught?"The Forger":"Innocent"}</span></div>
+       <p class="sub fadeup" style="font-weight:800;color:${r.caught?"var(--fg)":"var(--danger)"}">${r.caught ? "Caught! Now they get one last guess at the secret subject." : "Wrong artist! The real Forger fooled the room."}</p>
+       <div class="easel" style="margin-top:16px"><canvas id="vCv" width="${CW}" height="${CH}"></canvas></div>`
+    : `<div class="fadeup" style="margin-top:10vh"><div class="eyebrow">The gallery's verdict</div><h1 class="title">No one was accused</h1><p class="sub">The vote split. The Forger slips away cleanly.</p></div>`;
+  if(acc) paintCanvas($("#vCv"), r.strokes || [], {spotlight: acc});
+}
+
+function guess(){
+  const r = rd(), m = r.mine || {};
+  if(curView === "guess:" + room.round) return;  // keep focus in guess input
+  curView = "guess:" + room.round;
+  if(m.guessing){
+    $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Busted!</div><h1 class="title" style="color:var(--lantern)">You were the Forger</h1>
+      <p class="sub">${room.settings.mode==="decoy" ? `Your decoy subject was <b>${esc(m.word)}</b>.` : `The category was <b>${esc(room.categoryLabel)}</b>.`} Study the painting—one guess to steal the round!</p></div>
+      <div class="easel"><canvas id="gCv" width="${CW}" height="${CH}"></canvas></div>
+      <form class="guessbox" id="guessForm"><b>What were they drawing?</b><input type="text" id="guessIn" maxlength="40" autocomplete="off" placeholder="Type your guess"><button class="btn primary">Lock in guess</button></form>`;
+    paintCanvas($("#gCv"), r.strokes || [], {});
+    $("#guessIn").focus();
+    $("#guessForm").onsubmit = async e=>{
+      e.preventDefault(); const t = $("#guessIn").value.trim(); if(!t) return;
+      try{ await act("guess", {text:t}); }catch(err){ toast(err.message); }
+    };
+  } else {
+    $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Last chance</div><h1 class="title">The Forger is guessing</h1>
+      <p class="sub">${esc(P(r.accused).name)} is studying the canvas for one shot at the real subject.</p><div class="thinking"><i></i><i></i><i></i></div>
+      <div class="easel"><canvas id="gCv" width="${CW}" height="${CH}"></canvas></div></div>`;
+    paintCanvas($("#gCv"), r.strokes || [], {});
+  }
+}
+
+/* ---------- results & final gallery ---------- */
+function scoreRows(plus, why){
+  const rows = Object.keys(room.players).map(pid=>({pid, s: room.scores[pid]||0})).sort((a,b)=>b.s-a.s);
+  const delta = n => n>0 ? `<span class="plus">+${n}</span>` : n<0 ? `<span class="minus">${n}</span>` : "<span></span>";
+  const reasons = pid => why && why[pid] ? `<span class="why">${why[pid].map(([n,t])=>`${n>0?"+":""}${n} ${esc(t)}`).join(" · ")}</span>` : "";
+  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}${reasons(x.pid)}</span>${delta(plus&&plus[x.pid])}<span class="pts">${x.s}</span></div>`).join("")}</div>`;
+}
+
+function results(){
+  const r = rd(), forgers = r.forgers || [];
+  const outcome = r.caught ? (r.guess && r.guess.correct ? "Caught, but stole the subject!" : "The artists win this round") : "The Forger fooled everyone";
+  const ai = r.ai;
+  const viewKey = `results:${room.round}`;
+  if(curView !== viewKey){
+    curView = viewKey;
+    $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds}</div><h1 class="title">${outcome}</h1></div>
+      <div class="duo"><div class="wordcard"><div class="lbl">The real subject</div><div class="w">${esc(r.word)}</div></div>
+        <div class="wordcard imp"><div class="lbl">${room.settings.mode==="decoy"?"The Forger's decoy":"The Forger had"}</div><div class="w">${room.settings.mode==="decoy"?esc(r.decoy):"No word"}</div></div></div>
+      <div class="easel" style="margin-top:14px"><span class="badge" id="resBadge" hidden></span><canvas id="resCv" width="${CW}" height="${CH}"></canvas></div>
+      <div class="inspectbar">
+        <span class="hint">Tap any artist to spotlight their strokes.</span>
+        <div style="display:flex;gap:8px"><button type="button" class="btn small" data-replay="resCv">▶ Replay</button><button type="button" class="btn small paper" id="saveArtBtn">Save PNG</button></div>
+      </div>
+      <div id="resPalette"></div>
+      <div class="panel" style="margin-top:14px"><b>The Forger${forgers.length>1?"s":""}</b>
+        <div style="display:flex;flex-wrap:wrap;gap:12px">${forgers.map(pid=>`<span class="tok" style="padding:0;--inkc:${inkOf(r,pid)}">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></span>`).join("")}</div>
+        ${r.guess ? `<span>Last guess: <b>"${esc(r.guess.text)}"</b> ${r.guess.correct ? '<b style="color:var(--green)">correct!</b>' : '<b style="color:var(--danger)">wrong</b>'}</span>` : ""}</div>
+      <div class="chat" id="resAI"></div>
+      <h2 style="margin-top:20px;font-size:22px">Scores</h2>${scoreRows(r.points, r.why)}`;
+    $("#saveArtBtn").onclick = ()=>exportPainting(r.strokes || [], `forged-brush-${(r.word||"art").replace(/[^a-z0-9]+/gi,"-").toLowerCase()}.png`);
+  }
+  $("#resPalette").innerHTML = paletteHTML(r, {forgers});
+  if(!replayTimer) paintCanvas($("#resCv"), r.strokes || [], {spotlight});
+  $("#resAI").innerHTML = ai && ai.story
+    ? `<div class="msg"><span class="bot">AI</span><div class="bubble">${esc(ai.story)}</div></div>${(ai.lines||[]).map(l=>{
+        const pid = Object.keys(room.players).find(x=>P(x).name===l.name);
+        return `<div class="msg">${pid?face(pid):'<span class="bot">?</span>'}<div class="bubble"><b>${esc(l.name)}</b>${esc(l.line)}</div></div>`;
+      }).join("")}`
+    : ai && ai.failed ? "" : '<div class="thinking"><i></i><i></i><i></i></div><p class="hint" style="text-align:center">The AI art critic is studying the painting…</p>';
+}
+
+function final(){
+  if(curView === "final") return;
+  curView = "final";
+  const rows = Object.keys(room.players).map(pid=>({pid, s: room.scores[pid]||0})).sort((a,b)=>b.s-a.s);
+  const top = rows[0];
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Final scores</div><h1 class="title">${top && top.s>0 ? `${esc(P(top.pid).name)} wins!` : "Gallery closed"}</h1></div>
+    ${scoreRows(null)}
+    <h2 style="margin-top:24px;font-size:24px">Gallery of the night</h2>
+    <div class="gallery">${room.roundData.map((r,i)=>`<div class="gcard">
+      <canvas id="gal-${i}" width="${CW}" height="${CH}"></canvas>
+      <div class="meta"><div><b>${esc(r.word)}</b><small>Forger: ${(r.forgers||[]).map(pid=>esc(P(pid).name)).join(", ")}</small></div>
+        <button type="button" class="btn small" data-save-gal="${i}">Save</button></div></div>`).join("")}</div>`;
+  room.roundData.forEach((r, i) => paintCanvas(document.getElementById("gal-" + i), r.strokes || [], {}));
+}
+
+/* ---------- shared events, hostbar, timer ---------- */
+document.addEventListener("click", async e => {
+  const sp = e.target.closest("[data-spot]");
+  if(sp){
+    stopReplay();
+    const target = sp.dataset.spot || null;
+    spotlight = (spotlight === target) ? null : target;
+    updatePaletteUI();
+    const cv = $("#insCv") || $("#resCv");
+    if(cv) paintCanvas(cv, rd().strokes || [], {spotlight});
+    const b = $("#insBadge") || $("#resBadge");
+    if(b){
+      if(spotlight){ b.hidden = false; b.innerHTML = `<i style="background:${inkOf(rd(),spotlight)}"></i>${esc(P(spotlight).name)}'s strokes`; }
+      else b.hidden = true;
+    }
+    return;
+  }
+  const rep = e.target.closest("[data-replay]");
+  if(rep){
+    const id = rep.dataset.replay, badgeId = id === "insCv" ? "insBadge" : "resBadge";
+    if(replayTimer){
+      stopReplay(); rep.textContent = "▶ Replay";
+      const b = document.getElementById(badgeId); if(b) b.hidden = true;
+      paintCanvas(document.getElementById(id), rd().strokes || [], {spotlight});
+    } else {
+      startReplay(id, badgeId, rd().strokes || []);
+    }
+    return;
+  }
+  const sg = e.target.closest("[data-save-gal]");
+  if(sg){
+    const r = room.roundData[+sg.dataset.saveGal];
+    if(r) exportPainting(r.strokes || [], `forged-brush-${(r.word||"art").replace(/[^a-z0-9]+/gi,"-").toLowerCase()}.png`);
+    return;
+  }
+  const v = e.target.closest("[data-vote]");
+  if(v && !v.disabled){ act("vote", {target:v.dataset.vote}).then(()=>buzz(35)).catch(err=>toast(err.message)); return; }
+  const h = e.target.closest("[data-host]");
+  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); }catch(err){ toast(err.message); } return; }
+  const k = e.target.closest("[data-kick]");
+  if(k){ if(k.dataset.sure !== "1"){ k.dataset.sure = "1"; k.textContent = "Sure?"; return; } act("kick", {pid:k.dataset.kick}).catch(err=>toast(err.message)); }
+});
+
+$("#hCode").onclick = async ()=>{
+  if(!code) return;
+  const link = location.origin + "/forged?room=" + code;
+  try{ await navigator.clipboard.writeText(link); toast(`Invite link copied · ${code}`); }
+  catch(e){ toast(link); }
+};
+
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "reveal") b.push('<button class="btn small" data-host="next">Start painting now</button>');
+  if(ph === "drawing") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Skip this stroke</button>');
+  if(ph === "discuss") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn paper" data-host="next">Start the vote</button>');
+  if(ph === "vote") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Count the votes</button>');
+  if(ph === "verdict") b.push('<button class="btn primary" data-host="next">Continue</button>');
+  if(ph === "guess") b.push('<button class="btn small" data-host="skip">Skip the guess</button>');
+  if(ph === "results") b.push(`<button class="btn primary" data-host="next">${room.round+1 < room.settings.rounds ? "Next round" : "Final gallery"}</button>`);
+  if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !room.deadline){ el.hidden = true; return; }
+  const rem = room.deadline - serverNow();
+  const left = Math.max(0, Math.ceil(rem));
+  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
+  el.classList.toggle("low", left <= 5);
+  // auto-lock a drawn draft stroke right before the buzzer so nobody loses their line at 0s
+  if(room.phase === "drawing" && room.turnPid === me?.pid && draft && !committing && rem <= 1.2){
+    drawingNow = false;
+    commitDraft();
+  }
+}
+setInterval(tickTimer, 200);
+
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>

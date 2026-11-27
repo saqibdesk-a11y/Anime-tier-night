@@ -18,12 +18,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import codenames_game
 import draw_game
+import forged_game
 import imposter_game
 import lantern_game
 import media
 import werewolf_game
 
-GAMES = {"draw": draw_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game, "lantern": lantern_game}  # every game module has the same hooks
+GAMES = {"draw": draw_game, "forged": forged_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game, "lantern": lantern_game}  # every game module has the same hooks
 
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -802,11 +803,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"avatars": avatar_gallery()})
 
         # the site's art: Werewolf role cards and festival scenes (made offline, see art/gen.py)
-        if len(parts) == 3 and parts[0] == "img" and parts[1] in IMG_DIRS and re.fullmatch(r"[a-z0-9-]+\.webp", parts[2]):
+        if len(parts) == 3 and parts[0] == "img" and parts[1] in IMG_DIRS and re.fullmatch(r"[a-z0-9-]+\.(webp|jpg)", parts[2]):
             path = os.path.join(HERE, "img", parts[1], parts[2])
             if os.path.isfile(path):
+                ctype = "image/jpeg" if parts[2].endswith(".jpg") else "image/webp"
                 with open(path, "rb") as f:
-                    return self.send_bytes(f.read(), "image/webp", "public, max-age=604800")
+                    return self.send_bytes(f.read(), ctype, "public, max-age=604800")
             return self.err("Not found", 404)
 
         # prank sound effects: /sounds/fart serves sounds/fart.mp3, .ogg or .wav, whichever is there
@@ -1157,7 +1159,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/icon-512.png": ("image/png", "public, max-age=86400"),
 }
 IMG_DIRS = {"roles", "scenes"}
-PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html", "/lantern": "lantern.html"}
+PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/forged": "forged.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html", "/lantern": "lantern.html"}
 
 
 def main():

@@ -288,6 +288,42 @@ Holding the exact same card as the top one (same colour, same number)? Play it a
 आपके पास बिल्कुल वही पत्ता है जो ऊपर है (वही रंग, वही नंबर)? उसे कभी भी खेल दें, चाहे आपकी बारी न हो। खेल आपसे आगे चलेगा।`,
   };
 
+  /* ---------- Forged Brush ---------- */
+  T.forged = {
+    en:`Everyone draws the same secret subject together on one shared canvas—except the <b>Forger</b>.
+<b>Clueless Forger</b> mode: the Forger sees only the category and has to fake confident strokes. <b>Decoy Forger</b> mode: the Forger gets a similar subject and doesn't know they're the Forger.
+Each artist gets their own ink colour. On your turn, draw <b>one continuous brushstroke</b>, then tap <b>"Lock stroke"</b> (or <b>"Redraw"</b> before time runs out).
+Don't make your stroke too obvious—or the Forger will figure out the subject!
+After all passes, inspect the finished painting: tap any artist's chip to spotlight only their strokes, or hit <b>"Replay"</b> to watch the drawing unfold stroke by stroke.
+Vote on who you think the Forger is. If caught, the Forger gets one last guess at the real subject to steal the round!
+# Points
+Spot the Forger: +2. Forger escapes: +3, or +4 if an innocent artist was framed. Caught Forger guesses the subject: +3. Framing an innocent: -1.`,
+    ar:`يرسم الجميع نفس الموضوع السرّي معًا على لوحة واحدة مشتركة—إلا <b>المزوّر (Forger)</b>.
+وضع <b>Clueless Forger</b>: يرى المزوّر الفئة فقط وعليه التظاهر برسم خطوط واثقة. وضع <b>Decoy Forger</b>: يحصل المزوّر على موضوع قريب ولا يعرف أنه المزوّر.
+يحصل كل رسام على لون حبر خاص به. في دورك، ارسم <b>ضربة فرشاة واحدة متصلة</b>، ثم اضغط <b>"Lock stroke"</b> (أو <b>"Redraw"</b> قبل انتهاء الوقت).
+لا تجعل خطّك واضحًا جدًا—وإلا سيكتشف المزوّر الموضوع!
+بعد انتهاء الجولات، افحص اللوحة: اضغط على اسم أي رسام لإبراز خطوطه فقط، أو اضغط <b>"Replay"</b> لمشاهدة الرسم خطوة بخطوة.
+صوّت على من تظن أنه المزوّر. إذا انكشف، يحصل على محاولة أخيرة لتخمين الموضوع الحقيقي وسرقة الجولة!
+# النقاط
+كشف المزوّر: ‎+2. هروب المزوّر: ‎+3، أو ‎+4 إذا طُرد بريء. المزوّر المكشوف يخمّن الموضوع: ‎+3. التصويت ضد بريء: ‎-1.`,
+    ur:`سب لوگ ایک ہی مشترکہ کینوس پر ایک خفیہ چیز مل کر بناتے ہیں—سوائے <b>جعلساز (Forger)</b> کے۔
+<b>Clueless Forger</b> موڈ: جعلساز کو صرف کیٹیگری نظر آتی ہے اور اسے نقل کر کے لکیریں بنانی ہوتی ہیں۔ <b>Decoy Forger</b> موڈ: جعلساز کو ملتی جلتی چیز ملتی ہے اور اسے خود پتا نہیں ہوتا کہ وہ جعلساز ہے۔
+ہر کھلاڑی کو اپنا الگ رنگ ملتا ہے۔ اپنی باری پر <b>ایک مسلسل لکیر</b> کھینچیں، پھر <b>"Lock stroke"</b> دبائیں (یا وقت ختم ہونے سے پہلے <b>"Redraw"</b> کریں)۔
+اپنی لکیر بہت زیادہ آسان نہ بنائیں—ورنہ جعلساز فوراً سمجھ جائے گا!
+ڈرائنگ مکمل ہونے کے بعد اس کا معائنہ کریں: کسی بھی کھلاڑی کے نام پر ٹیپ کر کے صرف اس کی لکیریں دیکھیں، یا <b>"Replay"</b> دبا کر پوری ڈرائنگ دوبارہ چلائیں۔
+ووٹ دیں کہ جعلساز کون ہے۔ اگر پکڑا گیا تو اسے اصل چیز بوجھ کر راؤنڈ چرانے کا ایک آخری موقع ملتا ہے!
+# پوائنٹس
+جعلساز کو پکڑنا: ‎+2۔ جعلساز بچ جائے: ‎+3، اور اگر کوئی بےقصور پھنس جائے تو ‎+4۔ پکڑا گیا جعلساز چیز بوجھ لے: ‎+3۔ بےقصور کو ووٹ دینا: ‎-1۔`,
+    hi:`सब लोग एक ही साझा कैनवस पर एक गुप्त चीज़ मिलकर बनाते हैं—सिवाय <b>नक़लची (Forger)</b> के।
+<b>Clueless Forger</b> मोड: नक़लची को सिर्फ़ कैटेगरी दिखती है और उसे अंदाज़े से लाइन बनानी होती है। <b>Decoy Forger</b> मोड: नक़लची को मिलती-जुलती चीज़ मिलती है और उसे पता नहीं होता कि वह नक़लची है।
+हर कलाकार को अपना अलग रंग मिलता है। अपनी बारी पर <b>एक लगातार ब्रशस्ट्रोक</b> बनाएँ, फिर <b>"Lock stroke"</b> दबाएँ (या समय ख़त्म होने से पहले <b>"Redraw"</b> करें)।
+अपनी लाइन बहुत आसान न बनाएँ—वरना नक़लची असली चीज़ समझ जाएगा!
+पेंटिंग पूरी होने के बाद जाँच करें: किसी भी कलाकार के नाम पर टैप करके सिर्फ़ उसकी लाइनें देखें, या <b>"Replay"</b> दबाकर पूरी पेंटिंग एक-एक लाइन बनते देखें।
+वोट करें कि नक़लची कौन है। पकड़े जाने पर उसे असली चीज़ बूझकर राउंड चुराने का एक आख़िरी मौक़ा मिलता है!
+# पॉइंट्स
+नक़लची को पकड़ना: +2। नक़लची बच जाए: +3, और अगर कोई बेक़सूर फँस जाए तो +4। पकड़ा गया नक़लची चीज़ बूझ ले: +3। बेक़सूर को वोट देना: -1।`,
+  };
+
   /* ---------- the sheet ---------- */
   const css = `
 .howto-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;border:1px solid var(--line-2,rgba(255,255,255,.2));background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:13px 16px;font:700 15px var(--body,system-ui);cursor:pointer}
