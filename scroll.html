@@ -209,6 +209,7 @@ body.has-hostbar .stage{padding-bottom:calc(168px + env(safe-area-inset-bottom,0
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
 <script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
@@ -272,6 +273,7 @@ const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
 Pranks.mount({act});
+RoomBar.mount({act, game:"scroll", onHostChange:(hk, became)=>{ hostKey = hk; curView = ""; showSig = ""; if(became) toast("You are now the host!"); if(room) render(); }});
 const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
 const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
@@ -336,11 +338,12 @@ function openRoom(c){
 async function poll(gen, v){
   while(gen === pollGen){
     try{
-      const q = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const q = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
       const next = await api(`/api/rooms/${code}?v=${v}${q}`);
       if(gen !== pollGen) return;
       const prev = room; room = next; v = room.version;
       clockOffset = room.now - Date.now()/1000;
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("bs:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
       if(room.game && room.game !== "scroll"){ location.href = `/${room.game}?room=${code}`; return; }
       playReactBursts(room.reactBurst || [], !prev);
@@ -354,7 +357,7 @@ async function poll(gen, v){
         SFX.unroll();
       }
       if(!Chat.socialOnly(prev, room)) render();
-      Chat.update(room, me); Pranks.update(room, me);
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
     }catch(e){
       if(e.message.includes("not found")){ toast("Room not found"); return home(); }
       await new Promise(r=>setTimeout(r, 2000));

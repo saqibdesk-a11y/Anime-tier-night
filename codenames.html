@@ -317,6 +317,7 @@ body.quake .stage{animation:quake .6s}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
 <script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
@@ -405,6 +406,7 @@ function openRoom(c){
 BackGuard.onBack(()=>{ if(sheet){ closeSheet(); return true; } return false; });
 Chat.mount({act});
 Pranks.mount({act});
+RoomBar.mount({act, game:"codenames", onHostChange:(hk, became)=>{ hostKey = hk; lobbySig = ""; dockSig = ""; if(became) toast("You are now the host!"); if(room) render(); }});
 // a new card style redraws the turned cards with its own pictures
 if(window.Theme) Theme.onChange(()=>{ if(view === "game") updateBoard(); });
 
@@ -413,16 +415,16 @@ let prev = null;
 async function poll(gen, v){
   while(gen === pollGen){
     try{
-      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
       const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
       if(r.status === 404){ history.replaceState(null,"","/codenames"); home(); $("#jErr").textContent = "That game doesn't exist anymore."; return; }
       const d = await r.json(); if(gen !== pollGen) return;
       clockOffset = d.now - Date.now()/1000;
       prev = room; room = d; v = d.version;
-      if(me && !room.players[me.pid]){ me = null; store("cn:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("cn:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       if(!Chat.socialOnly(prev, room)){ render(); moments(); }  // chat and pranks leave the board and your clue box alone
-      Chat.update(room, me); Pranks.update(room, me);
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
     }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
   }
 }

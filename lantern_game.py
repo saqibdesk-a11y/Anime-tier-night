@@ -91,7 +91,9 @@ def event(room, what, pid=None, **extra):
 # ---------- the round ----------
 
 def start_round(room):
-    order = [pid for pid in room["players"]]
+    order = [pid for pid, p in room["players"].items() if not p.get("wantSitout")]
+    if len(order) < MIN_PLAYERS:
+        order = [pid for pid in room["players"]]
     random.shuffle(order)
     deck = new_deck()
     hands = {pid: [deck.pop() for _ in range(room["settings"]["hand"])] for pid in order}
@@ -362,11 +364,12 @@ def host_action(room, action, b):
     elif action in ("start", "playagain"):
         if ph == "playing":
             raise Refuse("A round is already going.")
-        n = len(room["players"])
+        active_n = len([p for p in room["players"].values() if not p.get("wantSitout")])
+        n = active_n if active_n >= MIN_PLAYERS else len(room["players"])
         if n < MIN_PLAYERS:
             raise Refuse(f"You need at least {MIN_PLAYERS} players ({n} so far).")
         if n > MAX_PLAYERS:
-            raise Refuse(f"Up to {MAX_PLAYERS} players can play. Kick someone or start a second room.")
+            raise Refuse(f"Up to {MAX_PLAYERS} players can play. Kick someone or have someone sit out.")
         start_round(room)
     elif action == "tolobby":
         room.update({"phase": "lobby", "deadline": None, "g": None})

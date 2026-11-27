@@ -68,6 +68,6 @@ h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:0;text-wrap:b
   .noren .noren-back::before{content:"\2190";font-size:24px;line-height:1}
   .noren h1{font-size:19px}
   .noren .code{letter-spacing:.06em!important;padding:1px 7px!important;font-size:13px!important}
-  .noren .th-btn,.noren .iconbtn{width:34px!important;height:34px!important}
+  .noren .th-btn,.noren .iconbtn,.noren .rb-btn{width:34px!important;height:34px!important}
   .noren .timer{padding:3px 9px!important;font-size:15px!important}
 }

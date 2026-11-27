@@ -88,13 +88,19 @@ def cleanup(code):
 
 
 def owners(room):
-    """Who makes a drawing this round: each player (solo) or each team that has members."""
+    """Who makes a drawing this round: each active player (solo) or each team that has active members."""
     if room["mode"] == "solo":
-        return {pid: [pid] for pid in room["players"]}
+        active = {pid: [pid] for pid, p in room["players"].items() if not p.get("wantSitout")}
+        return active or {pid: [pid] for pid in room["players"]}
     out = {}
     for pid, p in room["players"].items():
-        if p.get("team"):
+        if p.get("team") and not p.get("wantSitout"):
             out.setdefault(p["team"], []).append(pid)
+    if len(out) < 2:
+        out = {}
+        for pid, p in room["players"].items():
+            if p.get("team"):
+                out.setdefault(p["team"], []).append(pid)
     return out
 
 

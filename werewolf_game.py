@@ -124,7 +124,12 @@ def has(room, pid, power):
 # ---------- phases ----------
 
 def assign_roles(room):
-    pids = [pid for pid, p in room["players"].items() if not p.get("spectator")]
+    pids = [pid for pid, p in room["players"].items() if not p.get("spectator") and not p.get("wantSitout")]
+    if len(pids) < 4:
+        pids = [pid for pid, p in room["players"].items() if not p.get("spectator")]
+    for pid, p in room["players"].items():
+        if pid not in pids:
+            p.update({"role": None, "alive": False, "spectator": True})
     random.shuffle(pids)
     s = room["settings"]
     k = evil_count(room)

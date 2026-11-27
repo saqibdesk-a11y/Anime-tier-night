@@ -432,6 +432,7 @@ select option{background:var(--panel-solid)}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
 <script src="/howto.js"></script>
 <script>document.addEventListener("DOMContentLoaded",()=>{ const h=document.getElementById("howHome"); if(h) h.innerHTML=HowTo.button("tierlist"); document.querySelectorAll(".howSlot").forEach(x=>x.innerHTML=HowTo.button("tierlist","margin-top:8px")); });</script>
 <script>
@@ -555,14 +556,16 @@ $("#nameGate").onsubmit = async e => {
 
 /* ---------- chat (shared with every game) ---------- */
 const chatAct = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {...(me||{}), ...extra});
+const roomAct = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act: chatAct});
 Pranks.mount({act: chatAct});
+RoomBar.mount({act: roomAct, game:"tierlist", onHostChange:(hk, became)=>{ hostKey = hk; saveLocal(); if(became) toast("You are now the host!"); if(room) render(); }});
 
 /* ---------- live sync (long-poll) ---------- */
 async function poll(gen, v){
   while(gen === pollGen){
     try{
-      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
       const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
       if(r.status === 404){ $("#room").hidden=true; $("#home").hidden=false; $("#jErr").textContent="That room doesn't exist anymore."; history.replaceState(null,"","/"); return; }
       const data = await r.json();
@@ -575,10 +578,10 @@ async function poll(gen, v){
       }
       const prev = room;
       room = data; v = data.version;
-      if(me && !room.players[me.pid]){ me = null; myTiers = null; saveLocal(); toast("You were removed from this room by the host"); }
+      if(me && !room.players[me.pid]){ me = null; myTiers = null; if(!room.roomMeta?.isHost) hostKey = null; saveLocal(); toast("You were removed from this room by the host"); }
       if(me) Avatars.apply(chatAct, room.players[me.pid]);  // your saved picture shows next to your chat messages
       if(!Chat.socialOnly(prev, room)) render();  // chat and pranks leave your board and picks alone
-      Chat.update(room, me); Pranks.update(room, me);
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }

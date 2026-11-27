@@ -220,9 +220,11 @@ def give_up_on_ai(code, rnd, cid):
 # ---------- phases ----------
 
 def start_round(room, rnd):
-    pids = [pid for pid, p in room["players"].items()]
-    for pid in pids:
-        room["players"][pid].update({"sitout": False, "ready": False})
+    pids = [pid for pid, p in room["players"].items() if not p.get("wantSitout")]
+    if len(pids) < 3:
+        pids = list(room["players"])
+    for pid in room["players"]:
+        room["players"][pid].update({"sitout": pid not in pids, "ready": False})
     n = len(pids)
     k = room["settings"]["imposters"] or (1 if n < 7 else 2)
     k = max(1, min(k, (n - 1) // 2))

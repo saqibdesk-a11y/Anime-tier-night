@@ -368,6 +368,7 @@ body.focus .dock .closetools{display:block}
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
 <script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
@@ -393,6 +394,7 @@ const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
 Pranks.mount({act});
+RoomBar.mount({act, game:"draw", onHostChange:(hk, became)=>{ hostKey = hk; showSig = ""; if(became) toast("You are now the host!"); if(room) render(); }});
 const cur = () => room && room.round >= 0 ? room.roundData[room.round] : null;
 
 /* ---------- home ---------- */
@@ -434,16 +436,16 @@ function openRoom(c){
 async function poll(gen, v){
   while(gen === pollGen){
     try{
-      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
       const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
       if(r.status === 404){ $("#room").hidden = true; $("#home").hidden = false; $("#jErr").textContent = "That game doesn't exist anymore."; history.replaceState(null,"","/draw"); return; }
       const data = await r.json(); if(gen !== pollGen) return;
       clockOffset = data.now - Date.now()/1000;
       const prev = room; room = data; v = data.version;
-      if(me && !room.players[me.pid]){ me = null; store("draw:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("draw:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       if(!Chat.socialOnly(prev, room)){ onChange(prev); render(); }  // chat and pranks leave your drawing and comments alone
-      Chat.update(room, me); Pranks.update(room, me, {hide: room.phase === "drawing"});
+      Chat.update(room, me); Pranks.update(room, me, {hide: room.phase === "drawing"}); RoomBar.update(room, me, hostKey);
     }catch(e){ await new Promise(r=>setTimeout(r,2000)); }
   }
 }

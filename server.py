@@ -140,6 +140,200 @@ def safe_int(val, default):
         return default
 
 
+# ---------- Discord Open Graph previews, presence & host takeover ----------
+
+STALL_META = {
+    "/": ("Anime Game Night", "Party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
+    "/index.html": ("Anime Game Night", "Party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
+    "/codenames": ("Codenames", "Two teams, one grid of words. Give one-word clues and find all your agents before the other team.", "/img/scenes/stall-codenames.webp"),
+    "/lantern": ("Last Lantern", "Match the colour or symbol and empty your hand first. Call your last card before someone catches you.", "/img/scenes/stall-lantern.webp"),
+    "/forged": ("Forged Brush", "Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.", "/img/scenes/stall-forged.jpg"),
+    "/scroll": ("Broken Scroll", "Write a prompt, draw it, guess the drawing, repeat—then watch every scroll derail in the reveal theater.", "/img/scenes/stall-scroll.jpg"),
+    "/werewolf": ("Werewolf", "Secret roles. Wolves hunt at night, the village votes by day. 13 roles with built-in chat.", "/img/scenes/stall-werewolf.webp"),
+    "/imposter": ("Imposter", "Everyone gets the same secret word except one. Give clues, spot the fake, and roast the round.", "/img/scenes/stall-imposter.webp"),
+    "/tierlist": ("Tier List Night", "Rank anime, characters or anything else together. Watch the reveal show and get roasted by AI.", "/img/scenes/stall-tierlist.webp"),
+    "/draw": ("Draw It", "The AI picks what everyone draws. Play solo or on a shared team canvas, then friends or AI score it.", "/img/scenes/stall-draw.webp"),
+}
+
+
+def html_esc(s):
+    return str(s or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def inject_og(raw_bytes, path, qs, proto, host):
+    """Injects Open Graph / Discord embed meta tags so pasted room links unfurl with stall art and live status."""
+    title, desc, img = STALL_META.get(path, STALL_META["/"])
+    room_code = ((qs.get("room") or [""])[0]).strip().upper()
+    if room_code:
+        with lock:
+            r = rooms.get(room_code)
+            if r:
+                g = r.get("game") or "tierlist"
+                g_title, _, g_img = STALL_META.get("/" + g, (title, desc, img))
+                title, img = f"{g_title} · Room {room_code}", g_img
+                n = len(r.get("players", {}))
+                ph = r.get("phase") or "lobby"
+                where = "waiting in the lobby" if ph in ("lobby", "submit") else "playing right now"
+                desc = f"{n} player{'s' if n != 1 else ''} {where} — tap to join Anime Game Night!"
+    base = f"{proto}://{host}" if host else ""
+    img_url = (base + img) if base else img
+    tags = (
+        f'\n<meta property="og:site_name" content="Anime Game Night">'
+        f'\n<meta property="og:type" content="website">'
+        f'\n<meta property="og:title" content="{html_esc(title)}">'
+        f'\n<meta property="og:description" content="{html_esc(desc)}">'
+        f'\n<meta property="og:image" content="{html_esc(img_url)}">'
+        f'\n<meta name="twitter:card" content="summary_large_image">'
+        f'\n<meta name="twitter:title" content="{html_esc(title)}">'
+        f'\n<meta name="twitter:description" content="{html_esc(desc)}">'
+        f'\n<meta name="twitter:image" content="{html_esc(img_url)}">'
+    ).encode("utf-8")
+    idx = raw_bytes.lower().find(b"</head>")
+    if idx < 0:
+        return raw_bytes
+    return raw_bytes[:idx] + tags + raw_bytes[idx:]
+
+
+def kick_from_room(room, pid):
+    """Removes a player using the game's own kick logic so turn order and win states stay intact."""
+    if not pid or pid not in room["players"]:
+        return
+    g = room.get("game")
+    if g in GAMES:
+        GAMES[g].host_action(room, "kick", {"pid": pid})
+    else:
+        room["players"].pop(pid, None)
+        for a in list(room.get("anime", [])):
+            if pid in a.get("by", []):
+                a["by"].remove(pid)
+                if not a["by"] and room.get("phase") == "submit":
+                    room["anime"].remove(a)
+    media.HOST_VOTES.get(room["code"], {}).pop(pid, None)
+    for v, t in list(media.HOST_VOTES.get(room["code"], {}).items()):
+        if t == pid:
+            media.HOST_VOTES[room["code"]].pop(v, None)
+
+
+def host_status(room, now=None):
+    """Returns (host_pid, offline_sec, can_vote, eligible_voters, need_votes)."""
+    now = time.time() if now is None else now
+    code = room["code"]
+    hpid = room.get("hostPid")
+    if hpid and hpid not in room["players"]:
+        hpid = None
+    # if no hostPid is tracked yet, wait until someone joins or claims host
+    if not hpid:
+        return None, 0, False, [], 1
+    off_sec = int(media.offline_for(code, hpid, room.get("created", now), now))
+    voters = [p for p in room["players"] if p != hpid and media.is_online(code, p, now)]
+    can_vote = off_sec >= media.HOST_OFFLINE_SEC and len(voters) >= 1
+    need = max(1, (len(voters) // 2) + 1)
+    return hpid, off_sec, can_vote, voters, need
+
+
+def room_meta(room, viewer, hk=""):
+    now = time.time()
+    code = room["code"]
+    hpid, off_sec, can_vote, voters, need = host_status(room, now)
+    online = media.online_pids(room, now)
+    votes = {v: t for v, t in media.HOST_VOTES.get(code, {}).items() if v in voters and t in room["players"] and t != hpid}
+    is_host = bool((hk and hk == room["hostKey"]) or (viewer and viewer == hpid))
+    grant = media.HOST_GRANTS.get((code, viewer)) if (viewer and viewer == hpid) else None
+    if grant and hk == grant:
+        media.HOST_GRANTS.pop((code, viewer), None)
+        grant = None
+    moved = room.get("movedTo")
+    moved_out = None
+    if moved:
+        nr = rooms.get(moved["code"])
+        moved_out = {"game": moved["game"], "code": moved["code"],
+                     "hostKey": nr["hostKey"] if (nr and viewer and viewer == nr.get("hostPid")) else None}
+    return {
+        "roomMeta": {
+            "online": online,
+            "hostPid": hpid,
+            "isHost": is_host,
+            "newHostKey": grant,
+            "hostOffline": can_vote,
+            "hostOfflineSec": off_sec,
+            "hostVotes": votes,
+            "hostVoteNeed": need,
+            "wantSitout": [pid for pid, p in room["players"].items() if p.get("wantSitout")],
+        },
+        "movedTo": moved_out,
+    }
+
+
+def make_room_dict(code, game, title, b):
+    if game in GAMES:
+        room = {"code": code, "hostKey": rid(16), "title": (title or "Game Night")[:80],
+                "players": {}, "created": time.time(), "version": 0}
+        GAMES[game].create(room, b)
+        return room
+    mode = b.get("mode") if b.get("mode") in ("picks", "classic", "ai") else "classic"
+    category = b.get("category") if b.get("category") in CATEGORY_KIND else "anime"
+    room = {"code": code, "hostKey": rid(16), "title": (title or "Tier List Night")[:80],
+            "titleAuto": not b.get("title"), "category": category,
+            "catLabel": str(b.get("catLabel") or "").strip()[:40] if category == "custom" else "",
+            "aiTheme": str(b.get("aiTheme") or "").strip()[:120], "aiCount": max(5, min(40, safe_int(b.get("aiCount"), 15))),
+            "aiState": None, "mode": mode, "phase": "submit" if mode == "picks" else "lobby", "autoStart": None,
+            "picksPer": max(1, min(10, safe_int(b.get("picksPer"), 5))),
+            "timerSec": max(30, min(1800, safe_int(b.get("timerSec"), 120 if mode == "picks" else 180))), "deadline": None,
+            "spice": b.get("spice") if b.get("spice") in SPICE else "spicy", "show": None, "roastState": None,
+            "anime": [], "players": {}, "revealed": False, "tiers": TIERS, "roasts": [],
+            "created": time.time(), "version": 0}
+    if mode == "classic":
+        add_anime(room, b.get("list") or [])
+    elif mode == "ai":
+        start_ai_list(room)
+    return room
+
+
+def hurry_offline_turn(room, now):
+    """Shortens a turn timer when the active player has been offline for 15+ seconds so nobody waits forever."""
+    dl = room.get("deadline")
+    if not dl or dl <= now + 5:
+        return False
+    g = room.get("game")
+    code = room["code"]
+    turn_pid = None
+    if g == "lantern" and room.get("phase") == "playing":
+        turn_pid = lantern_game.current(room)
+    elif g == "imposter" and room.get("phase") == "clues":
+        rd = imposter_game.cur(room)
+        t = imposter_game.turns(room) if rd else []
+        turn_pid = t[rd["turn"]] if rd and rd["turn"] < len(t) else None
+    elif g == "forged" and room.get("phase") == "drawing":
+        rd = forged_game.cur(room)
+        t = forged_game.turns(room) if rd else []
+        turn_pid = t[rd["turn"]] if rd and rd["turn"] < len(t) else None
+    elif g == "scroll" and room.get("phase") == "playing":
+        # in Broken Scroll, if all online active players are done and remaining unfinished players are offline 15s+
+        act_pids = scroll_game.active_order(room)
+        online = [p for p in act_pids if media.is_online(code, p, now)]
+        if online and len(online) < len(act_pids):
+            step_idx = room["step"]
+            all_online_done = all(
+                (scroll_game.entry_of(scroll_game.chain_for(room, p, step_idx), step_idx) or {}).get("done")
+                for p in online
+            )
+            missing_offline = all(
+                (scroll_game.entry_of(scroll_game.chain_for(room, p, step_idx), step_idx) or {}).get("done")
+                or media.offline_for(code, p, room.get("created", now), now) >= 15
+                for p in act_pids if p not in online
+            )
+            if all_online_done and missing_offline:
+                room["deadline"] = now + 3
+                return True
+        return False
+    if turn_pid and media.offline_for(code, turn_pid, room.get("created", now), now) >= 15:
+        # only speed up when at least one other player is actively watching
+        if any(p != turn_pid and media.is_online(code, p, now) for p in room["players"]):
+            room["deadline"] = now + 5
+            return True
+    return False
+
+
 # ---------- AniList poster lookup ----------
 
 _api_lock = threading.Lock()
@@ -711,7 +905,20 @@ def ticker():
             with lock:
                 prune_rooms()
         with lock:
-            for room in rooms.values():
+            now = time.time()
+            for room in list(rooms.values()):
+                code = room["code"]
+                # wake clients when host crosses the 20s offline threshold (or returns online)
+                hpid, off_sec, can_vote, _, _ = host_status(room, now)
+                if not can_vote and media.HOST_VOTES.get(code):
+                    media.HOST_VOTES.pop(code, None)
+                    changed(room, persist=False)
+                was_alerted = bool(media.HOST_ALERTED.get(code))
+                if can_vote != was_alerted:
+                    media.HOST_ALERTED[code] = can_vote
+                    changed(room, persist=False)
+                if hurry_offline_turn(room, now):
+                    changed(room, persist=False)
                 if room.get("game") in GAMES:
                     if GAMES[room["game"]].tick(room):
                         changed(room)
@@ -778,7 +985,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if u.path in PAGES:
             with open(os.path.join(HERE, PAGES[u.path]), "rb") as f:
-                return self.send_bytes(f.read(), "text/html; charset=utf-8", "no-store")
+                raw = f.read()
+            proto = (self.headers.get("X-Forwarded-Proto") or "http").split(",")[0].strip()
+            host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").split(",")[0].strip()
+            return self.send_bytes(inject_og(raw, u.path, qs, proto, host), "text/html; charset=utf-8", "no-store")
 
         if parts[:2] == ["api", "img"] and len(parts) == 3:
             raw = media.IMAGES.get(parts[2])
@@ -842,21 +1052,36 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 v = -1
             pid, key = (qs.get("pid") or [""])[0], (qs.get("key") or [""])[0]
+            hk = (qs.get("hk") or [""])[0]
             deadline = time.time() + 25
+            entered = False
             with lock:
-                while code in rooms and rooms[code]["version"] <= v and time.time() < deadline:
-                    lock.wait(timeout=deadline - time.time())
                 room = rooms.get(code)
-                if not room:
-                    return self.err("Room not found. Check the code.", 404)
-                p = room["players"].get(pid)
+                p = room["players"].get(pid) if room else None
                 viewer = pid if p and p["key"] == key else None
-                game = GAMES.get(room.get("game"))
-                out = game.public(room, viewer) if game else public(room, viewer)
-                out.pop("lastActive", None)
-                out.update(media.chat_view(game, room, viewer))
-                out.update(media.prank_view(game, room, viewer))
-                return self.send_json(out)
+                if viewer:
+                    media.poll_enter(code, viewer)
+                    entered = True
+                    if hk and hk == room["hostKey"] and not room.get("hostPid"):
+                        room["hostPid"] = viewer
+                try:
+                    while code in rooms and rooms[code]["version"] <= v and time.time() < deadline:
+                        lock.wait(timeout=deadline - time.time())
+                    room = rooms.get(code)
+                    if not room:
+                        return self.err("Room not found. Check the code.", 404)
+                    p = room["players"].get(pid)
+                    viewer = pid if p and p["key"] == key else None
+                    game = GAMES.get(room.get("game"))
+                    out = game.public(room, viewer) if game else public(room, viewer)
+                    out.pop("lastActive", None)
+                    out.update(media.chat_view(game, room, viewer))
+                    out.update(media.prank_view(game, room, viewer))
+                    out.update(room_meta(room, viewer, hk))
+                    return self.send_json(out)
+                finally:
+                    if entered:
+                        media.poll_leave(code, viewer)
 
         self.err("Not found", 404)
 
@@ -878,30 +1103,8 @@ class Handler(BaseHTTPRequestHandler):
                 code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
                 while code in rooms:
                     code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
-                if b.get("game") in GAMES:
-                    room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Game Night")[:80],
-                            "players": {}, "created": time.time(), "version": 0}
-                    GAMES[b["game"]].create(room, b)
-                    rooms[code] = room
-                    changed(room)
-                    return self.send_json({"code": code, "hostKey": room["hostKey"]})
-                mode = b.get("mode") if b.get("mode") in ("picks", "classic", "ai") else "classic"
-                category = b.get("category") if b.get("category") in CATEGORY_KIND else "anime"
-                room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Tier List Night")[:80],
-                        "titleAuto": not b.get("title"), "category": category,
-                        "catLabel": str(b.get("catLabel") or "").strip()[:40] if category == "custom" else "",
-                        "aiTheme": str(b.get("aiTheme") or "").strip()[:120], "aiCount": max(5, min(40, safe_int(b.get("aiCount"), 15))),
-                        "aiState": None, "mode": mode, "phase": "submit" if mode == "picks" else "lobby", "autoStart": None,
-                        "picksPer": max(1, min(10, safe_int(b.get("picksPer"), 5))),
-                        "timerSec": max(30, min(1800, safe_int(b.get("timerSec"), 120 if mode == "picks" else 180))), "deadline": None,
-                        "spice": b.get("spice") if b.get("spice") in SPICE else "spicy", "show": None, "roastState": None,
-                        "anime": [], "players": {}, "revealed": False, "tiers": TIERS, "roasts": [],
-                        "created": time.time(), "version": 0}
+                room = make_room_dict(code, b.get("game"), b.get("title"), b)
                 rooms[code] = room
-                if mode == "classic":
-                    add_anime(room, b.get("list") or [])
-                elif mode == "ai":
-                    start_ai_list(room)
                 changed(room)
                 return self.send_json({"code": code, "hostKey": room["hostKey"]})
 
@@ -920,20 +1123,33 @@ class Handler(BaseHTTPRequestHandler):
             player = room["players"].get(b.get("pid"))
             if player and player["key"] != b.get("key"):
                 player = None
+            if player:
+                media.touch(code, b.get("pid"))
+                if is_host and not room.get("hostPid"):
+                    room["hostPid"] = b.get("pid")
 
             if action == "join":
                 name = (b.get("name") or "").strip()[:24]
                 if not name:
                     return self.err("Enter a name to join.")
-                # same name rejoins the same board (handy if someone switches device)
+                # same name rejoins the same board ONLY when that player is offline (stops mid-game role/hand peeking)
                 for pid, p in room["players"].items():
                     if p["name"].lower() == name.lower():
+                        if media.is_online(code, pid):
+                            return self.err(f'{p["name"]} is already online in this room. Pick another name.', 409)
+                        media.touch(code, pid)
+                        if is_host and not room.get("hostPid"):
+                            room["hostPid"] = pid
                         return self.send_json({"pid": pid, "key": p["key"]})
                 if len(room["players"]) >= 30:
                     return self.err("This room is full (30 players).")
                 pid = rid(8)
+                first_player = len(room["players"]) == 0
                 room["players"][pid] = {"name": name, "key": rid(16), "tiers": {t: [] for t in TIERS},
                                         "joined": time.time(), "done": False}
+                if is_host or (first_player and not room.get("hostPid")):
+                    room["hostPid"] = pid
+                media.touch(code, pid)
                 auto = random_avatar(room)
                 if auto:  # a stand-in face until they pick their own (avatarAuto lets their saved pick replace it)
                     room["players"][pid].update(avatar=auto, avatarAuto=True)
@@ -941,6 +1157,94 @@ class Handler(BaseHTTPRequestHandler):
                     GAMES[room["game"]].on_join(room, pid)
                 changed(room)
                 return self.send_json({"pid": pid, "key": room["players"][pid]["key"]})
+
+            if action == "sitout":
+                if not player:
+                    return self.err("You're not in this room. Rejoin with your name.", 403)
+                player["wantSitout"] = bool(b.get("sitout"))
+                changed(room)
+                return self.send_json({"ok": True})
+
+            if action == "votehost":
+                if not player:
+                    return self.err("You're not in this room. Rejoin with your name.", 403)
+                pid = b.get("pid")
+                hpid, _, can_vote, voters, need = host_status(room)
+                if not can_vote:
+                    return self.err("The host is still online (wait 20 seconds after they disconnect).", 409)
+                if pid == hpid:
+                    return self.err("You are the host.", 409)
+                target = b.get("target")
+                if target not in room["players"] or target == hpid or not media.is_online(code, target):
+                    return self.err("Pick an online player to become the new host.")
+                votes = media.HOST_VOTES.setdefault(code, {})
+                votes[pid] = target
+                tally = sum(1 for v, t in votes.items() if v in voters and t == target)
+                if tally >= need:
+                    old_host = hpid
+                    old_name = room["players"].get(old_host, {}).get("name", "The old host")
+                    new_name = room["players"][target]["name"]
+                    room["hostKey"] = rid(16)
+                    room["hostPid"] = target
+                    media.HOST_GRANTS[(code, target)] = room["hostKey"]
+                    media.HOST_VOTES.pop(code, None)
+                    media.HOST_ALERTED[code] = False
+                    if old_host and old_host in room["players"]:
+                        kick_from_room(room, old_host)
+                    media.chat_say(room, f"{old_name} was offline and kicked. {new_name} is now the host!")
+                    changed(room)
+                else:
+                    changed(room, persist=False)
+                return self.send_json({"ok": True})
+
+            if action == "passhost":
+                if not is_host:
+                    return self.err("Only the host can pass host.", 403)
+                target = b.get("target")
+                if target not in room["players"] or target == room.get("hostPid"):
+                    return self.err("Pick another player to make host.")
+                old_name = room["players"].get(room.get("hostPid"), {}).get("name", "The host")
+                new_name = room["players"][target]["name"]
+                room["hostKey"] = rid(16)
+                room["hostPid"] = target
+                media.HOST_GRANTS[(code, target)] = room["hostKey"]
+                media.HOST_VOTES.pop(code, None)
+                media.HOST_ALERTED[code] = False
+                media.chat_say(room, f"{old_name} passed host to {new_name}!")
+                changed(room)
+                return self.send_json({"ok": True})
+
+            if action == "switchgame":
+                if not is_host:
+                    return self.err("Only the host can switch the game.", 403)
+                to = str(b.get("to") or "")
+                valid_games = set(GAMES) | {"tierlist"}
+                if to not in valid_games:
+                    return self.err("Pick a valid stall.")
+                new_code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+                while new_code in rooms:
+                    new_code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+                g_title = STALL_META.get("/" + to, ("Game Night",))[0]
+                nr = make_room_dict(new_code, None if to == "tierlist" else to, g_title, {"mode": "picks"} if to == "tierlist" else {})
+                nr["hostPid"] = room.get("hostPid") or b.get("pid")
+                for pid_x, px in room["players"].items():
+                    nr["players"][pid_x] = {
+                        "name": px["name"], "key": px["key"], "tiers": {t: [] for t in TIERS},
+                        "joined": time.time(), "done": False,
+                        "wantSitout": bool(px.get("wantSitout")),
+                    }
+                    if px.get("avatar"):
+                        nr["players"][pid_x].update(avatar=px["avatar"], avatarAuto=bool(px.get("avatarAuto")))
+                    if px.get("photo"):
+                        nr["players"][pid_x]["photo"] = px["photo"]
+                    media.touch(new_code, pid_x)
+                    if to in GAMES:
+                        GAMES[to].on_join(nr, pid_x)
+                rooms[new_code] = nr
+                room["movedTo"] = {"game": to, "code": new_code}
+                changed(nr)
+                changed(room)
+                return self.send_json({"ok": True, "game": to, "code": new_code, "hostKey": nr["hostKey"]})
 
             if action == "chat":  # one chat for every game; each game says who may talk where
                 if not player:
@@ -1157,6 +1461,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/theme.js": ("text/javascript; charset=utf-8", "no-store"),
     "/chat.js": ("text/javascript; charset=utf-8", "no-store"),
     "/pranks.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/roombar.js": ("text/javascript; charset=utf-8", "no-store"),
     "/howto.js": ("text/javascript; charset=utf-8", "no-store"),
     "/festival.css": ("text/css; charset=utf-8", "no-store"),
     "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),

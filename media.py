@@ -140,11 +140,11 @@ def prank_view(game, room, viewer):
 
 
 def forget_gone(codes, keep_images=None):
-    """Drops chat, prank and image memory for rooms that no longer exist, so a long-running server doesn't grow forever."""
-    for d in (CHAT, PRANKS, PRANK_STATS):
+    """Drops chat, prank, presence and image memory for rooms that no longer exist, so a long-running server doesn't grow forever."""
+    for d in (CHAT, PRANKS, PRANK_STATS, HOST_VOTES, HOST_ALERTED):
         for code in [c for c in d if c not in codes]:
             d.pop(code, None)
-    for d in (LAST_CHAT, LAST_PRANK, RECENT_THROWS):
+    for d in (LAST_CHAT, LAST_PRANK, RECENT_THROWS, ACTIVE_POLLS, LAST_SEEN, HOST_GRANTS):
         for key in [k for k in d if k[0] not in codes]:
             d.pop(key, None)
     if keep_images is not None:
@@ -155,3 +155,61 @@ def forget_gone(codes, keep_images=None):
 def prank_reset(room):
     """A new game starts the prank awards from zero."""
     PRANK_STATS.pop(room["code"], None)
+
+
+# ---------- live presence & host takeover (in memory only) ----------
+
+ACTIVE_POLLS = {}  # (code, pid) -> open long-poll count
+LAST_SEEN = {}     # (code, pid) -> last active timestamp
+HOST_VOTES = {}    # code -> {voter_pid: target_pid}
+HOST_GRANTS = {}   # (code, pid) -> newly granted hostKey (cleared once acknowledged)
+HOST_ALERTED = {}  # code -> bool (whether we already woke clients at the 20s offline mark)
+ONLINE_GRACE = 8   # seconds between long-poll reconnects before someone counts as offline
+HOST_OFFLINE_SEC = 20
+
+
+def touch(code, pid, now=None):
+    if code and pid:
+        LAST_SEEN[(code, pid)] = time.time() if now is None else now
+
+
+def poll_enter(code, pid):
+    if not code or not pid:
+        return
+    key = (code, pid)
+    ACTIVE_POLLS[key] = ACTIVE_POLLS.get(key, 0) + 1
+    LAST_SEEN[key] = time.time()
+
+
+def poll_leave(code, pid):
+    if not code or not pid:
+        return
+    key = (code, pid)
+    n = ACTIVE_POLLS.get(key, 0) - 1
+    if n <= 0:
+        ACTIVE_POLLS.pop(key, None)
+    else:
+        ACTIVE_POLLS[key] = n
+    LAST_SEEN[key] = time.time()
+
+
+def is_online(code, pid, now=None):
+    if not code or not pid:
+        return False
+    now = time.time() if now is None else now
+    key = (code, pid)
+    return ACTIVE_POLLS.get(key, 0) > 0 or (now - LAST_SEEN.get(key, 0)) < ONLINE_GRACE
+
+
+def offline_for(code, pid, fallback=0, now=None):
+    now = time.time() if now is None else now
+    if is_online(code, pid, now):
+        return 0.0
+    last = LAST_SEEN.get((code, pid), fallback)
+    return max(0.0, now - last)
+
+
+def online_pids(room, now=None):
+    now = time.time() if now is None else now
+    code = room["code"]
+    return [pid for pid in room.get("players", {}) if is_online(code, pid, now)]

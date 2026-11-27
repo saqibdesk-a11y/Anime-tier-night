@@ -171,7 +171,9 @@ def free_images(room):
 
 def start_game(room):
     free_images(room)
-    pids = list(room["players"])[:MAX_PLAYERS]
+    pids = [pid for pid, p in room["players"].items() if not p.get("wantSitout")][:MAX_PLAYERS]
+    if len(pids) < MIN_PLAYERS:
+        pids = list(room["players"])[:MAX_PLAYERS]
     for pid in room["players"]:
         room["players"][pid]["sitout"] = pid not in pids
     random.shuffle(pids)

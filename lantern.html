@@ -271,6 +271,7 @@ body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0
 <script src="/theme.js"></script>
 <script src="/chat.js"></script>
 <script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
 <script src="/howto.js"></script>
 <script>
 const $ = s => document.querySelector(s);
@@ -291,6 +292,7 @@ const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
 Pranks.mount({act});
+RoomBar.mount({act, game:"lantern", onHostChange:(hk, became)=>{ hostKey = hk; if(became) toast("You are now the host!"); if(room){ render(); document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden); } }});
 const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc(p.name[0].toUpperCase()); };
 const face = (pid, cls="face") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
@@ -357,17 +359,17 @@ function openRoom(c){
 async function poll(gen, v){
   while(gen === pollGen){
     try{
-      const who = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
       const r = await fetch(`/api/rooms/${code}?v=${v}${who}`);
       if(r.status === 404){ history.replaceState(null,"","/lantern"); home(); $("#jErr").textContent = "That game doesn't exist anymore."; return; }
       const d = await r.json(); if(gen !== pollGen) return;
       clockOffset = d.now - Date.now()/1000;
       const prev = room; room = d; v = d.version;
-      if(me && !room.players[me.pid]){ me = null; store("ll:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("ll:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       if(!Chat.socialOnly(prev, room)){ react(prev); render(); }  // chat and pranks leave the table alone
       document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
-      Chat.update(room, me); Pranks.update(room, me);
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
     }catch(e){ console.error(e); await new Promise(r=>setTimeout(r,2000)); }
   }
 }
