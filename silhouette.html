@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Guess the Silhouette</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+:root{
+  --cloth:#1E7F9E; --on-cloth:#F3EBDD;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
+  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --mint:var(--shrine);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+.noren{background:var(--cloth);color:var(--on-cloth)}
+.noren .th-btn,.noren .iconbtn,.noren .rb-btn{border-color:rgba(243,235,221,.35)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.9}
+.iconbtn{border:1px solid rgba(243,235,221,.35);background:none;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;padding:0;color:inherit}
+.iconbtn svg{width:18px;height:18px}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--lantern);color:var(--on-lantern);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+
+.stage{width:min(820px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
+.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s,background .2s;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
+.btn.small{padding:6px 13px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--amber)}
+select option{background:var(--night)}
+.err{color:var(--danger);font-size:14px;min-height:1.3em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:580px){.row2,.row3{grid-template-columns:1fr}}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:620px){.seg3{grid-template-columns:1fr}}
+.seg3 button,.chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:10px;text-align:left;display:grid;gap:2px}
+.seg3 button small{color:var(--muted);font-weight:500;font-size:12px;line-height:1.3}
+.seg3 button.on,.chips button.on{border-color:var(--amber);background:rgba(217,164,65,.14);color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px;display:inline-block}
+.chips button.on{color:var(--amber)}
+
+.face{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.face img,.mini img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.mini{width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);flex:none}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:64px;height:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:12px}
+.tok{display:grid;justify-items:center;gap:4px}
+.tok .face{width:62px;height:62px;border:3px solid rgba(255,255,255,.18);font-size:22px}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* silhouette shadow screen */
+.screen{position:relative;width:min(320px,82vw);aspect-ratio:3/4;margin:14px auto;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 45%,#FFF6DF,#E6C98C);box-shadow:0 28px 60px -20px #000,0 0 0 4px rgba(243,235,221,.18)}
+.screen img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;display:block;will-change:filter,transform}
+.screen .tag{position:absolute;top:10px;left:10px;background:rgba(27,31,75,.84);color:#F3EBDD;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:800;letter-spacing:.04em}
+.screen .showtag{position:absolute;bottom:10px;left:10px;right:10px;text-align:center;background:rgba(27,31,75,.86);color:var(--paper);border-radius:12px;padding:7px 12px;font-family:var(--display);font-size:22px}
+
+/* higher or lower */
+.vs-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:16px auto}
+@media (max-width:560px){.vs-grid{grid-template-columns:1fr;gap:10px}}
+.vs-badge{width:46px;height:46px;border-radius:50%;background:var(--amber);color:var(--ink);font-family:var(--display);font-size:20px;display:grid;place-items:center;margin:0 auto;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.vcard{position:relative;border:3px solid var(--line2);background:var(--paper);color:var(--ink);border-radius:16px;overflow:hidden;padding:0;text-align:center;transition:transform .15s,border-color .2s,box-shadow .2s}
+.vcard:hover:not(:disabled){transform:translateY(-4px);border-color:var(--amber)}
+.vcard.sel{border-color:var(--lantern);box-shadow:0 0 0 4px color-mix(in srgb,var(--lantern) 35%,transparent)}
+.vcard.win{border-color:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.4)}
+.vcard.lose{opacity:.6}
+.vcard img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 18%;display:block}
+.vcard .info{padding:10px 12px}
+.vcard b{display:block;font-family:var(--display);font-size:21px;line-height:1.15}
+.vcard small{color:var(--ink-2);font-size:13px}
+.vcard .favs{margin-top:6px;display:inline-block;background:var(--ink);color:var(--gold);border-radius:999px;padding:3px 12px;font-weight:900;font-size:14px}
+
+/* trivia & choices */
+.qbox{background:var(--paper);color:var(--ink);border-radius:16px;padding:20px;text-align:center;margin:14px auto;max-width:640px;box-shadow:0 22px 48px -18px #000}
+.qbox h2{font-size:clamp(22px,5vw,30px);line-height:1.25}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px;margin:14px auto 0}
+@media (max-width:520px){.opts{grid-template-columns:1fr}}
+.opt{border:2px solid var(--line2);background:var(--glass);border-radius:14px;padding:14px 16px;font-weight:800;font-size:16px;text-align:left;display:flex;align-items:center;gap:10px;transition:transform .12s,border-color .15s,background .15s}
+.opt:active:not(:disabled){transform:scale(.97)}
+.opt .ltr{width:30px;height:30px;border-radius:50%;background:rgba(243,235,221,.12);display:grid;place-items:center;font-size:14px;flex:none}
+.opt.sel{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 22%,var(--night-2))}
+.opt.ok{border-color:#22C55E;background:color-mix(in srgb,#22C55E 26%,var(--night-2))}
+.opt.bad{border-color:#FF5A7A;background:color-mix(in srgb,#FF5A7A 22%,var(--night-2));opacity:.75}
+.typebox{display:flex;gap:8px;max-width:480px;margin:14px auto 0}
+
+.prog{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:12px;font-weight:700}
+.pchip.ok{border-color:#22C55E}
+.scores{display:grid;gap:8px;margin-top:14px;max-width:640px;margin-inline:auto}
+.srow{display:grid;grid-template-columns:34px 30px 1fr auto auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800}
+.srow.first{border-color:var(--amber);background:rgba(217,164,65,.14)}
+.srow .rk{text-align:center;color:var(--muted)} .srow.first .rk{color:var(--amber)}
+.srow .plus{color:#4ADE80;font-size:13px} .srow .pts{font-size:18px;font-variant-numeric:tabular-nums}
+.streak{background:var(--lantern);color:var(--on-lantern);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:6px}
+.fadeup{animation:fadeup .4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+body.has-hostbar{--chat-lift:66px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <h1>Silhouette</h1>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+  <button type="button" class="iconbtn" id="soundBtn" aria-label="Sound" title="Sound"></button>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
+<script src="/howto.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 72%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+let soundOn = (()=>{ try{ return localStorage.getItem("sil:sound") !== "off"; }catch(e){ return true; } })();
+let actx = null;
+function audio(){ if(!soundOn) return null; if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(actx.state==="suspended") actx.resume().catch(()=>{}); return actx; }
+function paintSoundBtn(){ $("#soundBtn").innerHTML = soundOn ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>'; }
+$("#soundBtn").onclick = ()=>{ soundOn = !soundOn; try{ localStorage.setItem("sil:sound", soundOn?"on":"off"); }catch(e){} paintSoundBtn(); };
+paintSoundBtn();
+const SFX = {
+  tone(f,d,v=.11,t="triangle",dl=0){ const c=audio(); if(!c) return; const o=c.createOscillator(),g=c.createGain(),now=c.currentTime+dl; o.type=t; o.frequency.setValueAtTime(f,now); g.gain.setValueAtTime(.001,now); g.gain.exponentialRampToValueAtTime(v,now+.015); g.gain.exponentialRampToValueAtTime(.001,now+d); o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+d+.02); },
+  lock(){ SFX.tone(540,.08,.09,"sine"); },
+  right(){ SFX.tone(587,.12,.12,"triangle",0); SFX.tone(880,.2,.14,"triangle",.09); },
+  wrong(){ SFX.tone(200,.18,.14,"sawtooth",0); SFX.tone(150,.22,.12,"sawtooth",.1); },
+  win(){ [523,659,784,1046].forEach((f,i)=>SFX.tone(f,.22,.1,"triangle",i*.08)); },
+};
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, curView="", fxRaf=null;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+RoomBar.mount({act, game:"silhouette", onHostChange:(hk, became)=>{ hostKey = hk; curView = ""; if(became) toast("You are now the host!"); if(room) render(); }});
+const P = pid => room.players[pid] || {name:"Someone"};
+const picOf = p => { const s = Avatars.src(p); return s ? `<img src="${esc(s)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
+const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+
+function home(){
+  $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
+  document.body.classList.remove("has-hostbar"); curView = "home";
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">Shadow-Puppet Quiz Stall</div><h1 class="title">Guess the Silhouette</h1>
+    <p class="sub">Race to spot clearing anime silhouettes, play Higher or Lower on AniList popularity, or battle in AI speed trivia!</p></div>
+    <div class="row2 fadeup" style="margin-top:20px">
+      <form class="panel" id="createForm"><h2>Host a quiz</h2>
+        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
+      <form class="panel" id="joinForm"><h2>Join with a code</h2>
+        <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="jErr"></div><button class="btn wide">Join</button></form>
+    </div>
+    <div class="fadeup">${HowTo.button("silhouette")}</div>`;
+  $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n=$("#cName").value.trim(); if(!n) return $("#cErr").textContent="Enter your name.";
+    try{ const r=await api("/api/rooms",{game:"silhouette",title:"Guess the Silhouette"}); const m=await api(`/api/rooms/${r.code}/join`,{name:n}); store("sil:"+r.code,{me:m,hostKey:r.hostKey}); history.replaceState({},"","/silhouette?room="+r.code); openRoom(r.code); }catch(err){ $("#cErr").textContent=err.message; } };
+  $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c=$("#jCode").value.trim().toUpperCase(), n=$("#jName").value.trim(); if(!c||!n) return $("#jErr").textContent="Enter code and name.";
+    try{ const m=await api(`/api/rooms/${c}/join`,{name:n}); store("sil:"+c,{me:m,hostKey:null}); history.replaceState({},"","/silhouette?room="+c); openRoom(c); }catch(err){ $("#jErr").textContent=err.message; } };
+}
+function openRoom(c){
+  code = c; const s = store("sil:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
+  $("#hCode").textContent = c; $("#hCode").hidden = false; BackGuard.arm(); poll(++pollGen, -1);
+}
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
+      const next = await api(`/api/rooms/${code}?v=${v}${who}`);
+      if(gen !== pollGen) return;
+      const prev = room; room = next; v = room.version; clockOffset = room.now - Date.now()/1000;
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("sil:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
+      if(prev && prev.phase !== room.phase){
+        if(room.phase === "reveal"){ const my = room.answers?.[me?.pid]; my?.correct ? SFX.right() : SFX.wrong(); }
+        if(room.phase === "final") SFX.win();
+      }
+      if(!Chat.socialOnly(prev, room)) render();
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
+    }catch(e){ if(e.message.includes("not found")){ toast("Room not found"); return home(); } await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+function render(){
+  renderHostbar();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  if(!me || !room.players[me.pid]) return gate();
+  const ph = room.phase;
+  if(ph === "lobby") lobby();
+  else if(ph === "starting") { curView="starting"; $("#stage").innerHTML='<div class="fadeup" style="margin-top:12vh"><h1 class="title">Setting up the shadow screen…</h1><p class="sub">Loading characters and questions.</p></div>'; }
+  else if(ph === "question") questionView();
+  else if(ph === "reveal") revealView();
+  else finalView();
+  tickTimer();
+}
+function gate(){
+  if($("#gate")) return; curView="gate";
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Guess the Silhouette</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join quiz</button></form>`;
+  $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
+    try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("sil:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
+}
+
+function lobby(){
+  curView="lobby";
+  const s = room.settings, ps = Object.keys(room.players), mine = P(me.pid), H = !!hostKey;
+  const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"}</h1>
+    <p class="sub">Share code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b>. Works solo or up to 12 friends!</p></div>
+    <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">Tap to change your avatar.</p></div></div></div>
+    <div class="ring">${ps.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div>
+    <div class="panel" style="margin-top:16px"><h2>${H?"Quiz settings":"Settings"}</h2>
+      <div><label>Mode</label><div class="seg3">
+        <button type="button" class="${s.mode==="reveal"?"on":""}" data-mode="reveal" ${H?"":"disabled"}><b>Silhouette Reveal</b><small>Anime portraits clear from shadow, blur, or zoom!</small></button>
+        <button type="button" class="${s.mode==="higher"?"on":""}" data-mode="higher" ${H?"":"disabled"}><b>Higher or Lower</b><small>Which anime character has more AniList favourites?</small></button>
+        <button type="button" class="${s.mode==="trivia"?"on":""}" data-mode="trivia" ${H?"":"disabled"}><b>Speed Trivia</b><small>Fast 4-choice trivia on anime, pop culture, food, or custom AI topic.</small></button>
+      </div></div>
+      ${s.mode==="reveal" ? `<div class="row2">
+        <div><label>Reveal effect</label><div class="chips">${[["mix","Mix"],["silhouette","Shadow"],["blur","Blur"],["zoom","Zoom"]].map(([v,t])=>`<button type="button" class="${s.style===v?"on":""}" data-style="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+        <div><label>Answer style</label><div class="chips">${[["choices","4 Choices"],["type","Type Name"]].map(([v,t])=>`<button type="button" class="${s.input===v?"on":""}" data-input="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+      </div>` : ""}
+      ${s.mode==="trivia" ? `<div><label>Topic</label><div class="chips">${[["anime","Anime"],["pop","Pop culture"],["food","Food"],["mix","Mix"],["custom","Custom (AI)"]].map(([v,t])=>`<button type="button" class="${s.topic===v?"on":""}" data-topic="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+        ${s.topic==="custom" ? `<div><label for="sCust">Custom trivia topic</label><input type="text" id="sCust" maxlength="160" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. One Piece arcs, Marvel movies, Football"></div>` : ""}` : ""}
+      <div class="row2">
+        <div><label for="sRounds">Questions</label>${sel("sRounds",[[5,"5"],[8,"8"],[10,"10"],[12,"12"],[15,"15"]], s.rounds)}</div>
+        <div><label for="sSec">Seconds per question</label>${sel("sSec",[[12,"12s (fast)"],[18,"18s"],[25,"25s"]], s.sec)}</div>
+      </div>
+      ${H ? `<button class="btn primary wide" data-host="start">Start quiz</button>` : '<p class="hint" style="text-align:center">Waiting for host to start.</p>'}
+    </div>${HowTo.button("silhouette")}`;
+  $("#photoBtn").onclick = ()=>Avatars.open(act);
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>send({mode:b.dataset.mode}));
+    document.querySelectorAll("[data-style]").forEach(b=>b.onclick=()=>send({style:b.dataset.style}));
+    document.querySelectorAll("[data-input]").forEach(b=>b.onclick=()=>send({input:b.dataset.input}));
+    document.querySelectorAll("[data-topic]").forEach(b=>b.onclick=()=>send({topic:b.dataset.topic}));
+    $("#sRounds").onchange=e=>send({rounds:+e.target.value}); $("#sSec").onchange=e=>send({sec:+e.target.value});
+    if($("#sCust")) $("#sCust").onchange=e=>send({custom:e.target.value});
+  }
+}
+
+function startClearAnim(q){
+  if(fxRaf) cancelAnimationFrame(fxRaf);
+  const run = ()=>{
+    const img = $("#silImg"); if(!img || room?.phase !== "question") return;
+    const elapsed = Math.max(0, serverNow() - room.startedAt);
+    const p = Math.min(1, elapsed / Math.max(1, room.settings.sec));
+    if(q.style === "silhouette"){
+      // stays pure silhouette for first 45%, then fades brightness up so late guessers can still see!
+      const b = p < .45 ? 0 : (p - .45) / .55;
+      img.style.filter = `brightness(${b.toFixed(2)}) contrast(${(1.35 - .35*b).toFixed(2)})`;
+      img.style.transform = "";
+    } else if(q.style === "blur"){
+      const px = Math.max(0, 26 * (1 - p));
+      img.style.filter = `blur(${px.toFixed(1)}px)`;
+      img.style.transform = `scale(${(1.12 - .12*p).toFixed(3)})`;
+    } else {
+      const sc = 3.6 - 2.6 * p;
+      img.style.filter = "";
+      img.style.transformOrigin = `${q.zx}% ${q.zy}%`;
+      img.style.transform = `scale(${sc.toFixed(3)})`;
+    }
+    fxRaf = requestAnimationFrame(run);
+  };
+  fxRaf = requestAnimationFrame(run);
+}
+
+function questionView(){
+  const q = room.question, qi = room.qIndex, tot = room.totalQuestions, my = room.myAnswer;
+  const viewKey = `q:${qi}`;
+  if(curView !== viewKey){
+    curView = viewKey;
+    const head = `<div class="eyebrow">Question ${qi+1} of ${tot}</div>`;
+    let body = "";
+    if(q.kind === "reveal"){
+      const lbl = {silhouette:"Shadow Silhouette", blur:"Clearing Blur", zoom:"Zoom Out"}[q.style] || "Reveal";
+      body = `<h1 class="title">Who is this character?</h1>
+        <div class="screen"><img id="silImg" src="${esc(q.img)}" alt="" referrerpolicy="no-referrer"><span class="tag">${lbl}</span></div>
+        ${room.settings.input === "type"
+          ? `<form class="typebox" id="typeForm"><input type="text" id="typeIn" maxlength="50" autocomplete="off" placeholder="Type character name…"><button class="btn primary">Lock in</button></form>`
+          : `<div class="opts">${q.options.map((o,i)=>`<button type="button" class="opt" data-ch="${i}"><span class="ltr">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("")}</div>`}`;
+    } else if(q.kind === "higher"){
+      body = `<h1 class="title">Who is more popular?</h1><p class="sub">Pick who has more AniList favourites!</p>
+        <div class="vs-grid">
+          <button type="button" class="vcard" data-ch="0"><img src="${esc(q.left.img)}" alt="" referrerpolicy="no-referrer"><div class="info"><b>${esc(q.left.name)}</b><small>${esc(q.left.show)}</small></div></button>
+          <div class="vs-badge">VS</div>
+          <button type="button" class="vcard" data-ch="1"><img src="${esc(q.right.img)}" alt="" referrerpolicy="no-referrer"><div class="info"><b>${esc(q.right.name)}</b><small>${esc(q.right.show)}</small></div></button>
+        </div>`;
+    } else {
+      body = `<div class="qbox"><h2>${esc(q.q)}</h2></div>
+        <div class="opts">${q.options.map((o,i)=>`<button type="button" class="opt" data-ch="${i}"><span class="ltr">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+    }
+    $("#stage").innerHTML = `<div class="fadeup">${head}${body}<div class="prog" id="qProg"></div></div>`;
+    if(q.kind === "reveal") startClearAnim(q);
+    if($("#typeForm")){
+      $("#typeIn").focus();
+      $("#typeForm").onsubmit = async e=>{ e.preventDefault(); const t=$("#typeIn").value.trim(); if(!t) return;
+        try{ await act("answer",{text:t}); SFX.lock(); buzz(25); }catch(err){ toast(err.message); } };
+    }
+    document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=async ()=>{
+      if(room.myAnswer) return;
+      try{ await act("answer",{choice:+b.dataset.ch}); SFX.lock(); buzz(25); }catch(err){ toast(err.message); }
+    });
+  }
+  // sync locked choice & answered progress without disrupting animations or typing
+  if(my){
+    document.querySelectorAll("[data-ch]").forEach(b=>{ b.disabled = true; b.classList.toggle("sel", +b.dataset.ch === my.choice); });
+    if($("#typeIn")){ $("#typeIn").disabled = true; $("#typeForm button").disabled = true; }
+  }
+  const done = new Set(room.answeredPids || []);
+  const prog = $("#qProg");
+  if(prog) prog.innerHTML = Object.keys(room.players).map(pid=>`<span class="pchip ${done.has(pid)?"ok":""}">${face(pid,"mini")}${esc(P(pid).name)}${done.has(pid)?" ✓":""}</span>`).join("");
+}
+
+function revealView(){
+  if(fxRaf){ cancelAnimationFrame(fxRaf); fxRaf = null; }
+  const q = room.question, ans = room.answers || {}, my = ans[me.pid];
+  const viewKey = `rev:${room.qIndex}`;
+  if(curView === viewKey) return;
+  curView = viewKey;
+  let body = "";
+  if(q.kind === "reveal"){
+    body = `<div class="screen"><img src="${esc(q.img)}" alt="" referrerpolicy="no-referrer"><div class="showtag">${esc(q.answer)}<div style="font-family:var(--body);font-size:13px;opacity:.8">${esc(q.show)}</div></div></div>`;
+  } else if(q.kind === "higher"){
+    body = `<div class="vs-grid">
+      <div class="vcard ${q.correctIdx===0?"win":"lose"}"><img src="${esc(q.left.img)}" alt="" referrerpolicy="no-referrer"><div class="info"><b>${esc(q.left.name)}</b><small>${esc(q.left.show)}</small><span class="favs">★ ${q.left.favs.toLocaleString()}</span></div></div>
+      <div class="vs-badge">VS</div>
+      <div class="vcard ${q.correctIdx===1?"win":"lose"}"><img src="${esc(q.right.img)}" alt="" referrerpolicy="no-referrer"><div class="info"><b>${esc(q.right.name)}</b><small>${esc(q.right.show)}</small><span class="favs">★ ${q.right.favs.toLocaleString()}</span></div></div>
+    </div>`;
+  } else {
+    body = `<div class="qbox"><h2>${esc(q.q)}</h2></div>
+      <div class="opts">${q.options.map((o,i)=>`<div class="opt ${i===q.correctIdx?"ok":my?.choice===i?"bad":""}"><span class="ltr">${"ABCD"[i]}</span><span>${esc(o)}</span></div>`).join("")}</div>`;
+  }
+  const msg = my?.correct ? `Correct! +${my.pts} pts${room.streaks?.[me.pid]>=2?` 🔥 ${room.streaks[me.pid]} streak!`:""}` : my ? `Not quite — it was ${q.answer}` : `Time's up — it was ${q.answer}`;
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Question ${room.qIndex+1} of ${room.totalQuestions}</div>
+    <h1 class="title">${esc(msg)}</h1>${body}${scoreRows(ans)}</div>`;
+}
+
+function scoreRows(ans){
+  const rows = Object.keys(room.players).map(pid=>({pid, s:room.scores?.[pid]||0, p:ans?.[pid]?.pts||0, st:room.streaks?.[pid]||0})).sort((a,b)=>b.s-a.s);
+  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}${x.st>=2?`<span class="streak">🔥 ${x.st}</span>`:""}</span>${x.p?`<span class="plus">+${x.p}</span>`:"<span></span>"}<span class="pts">${x.s}</span></div>`).join("")}</div>`;
+}
+function finalView(){
+  if(curView === "final") return; curView = "final";
+  const top = Object.keys(room.players).sort((a,b)=>(room.scores?.[b]||0)-(room.scores?.[a]||0))[0];
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Final Standings</div>
+    <h1 class="title">${top ? `${esc(P(top).name)} wins!` : "Quiz over"}</h1>${scoreRows(null)}</div>`;
+}
+
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "question") b.push('<button class="btn small" data-host="skip">Reveal now</button>');
+  if(ph === "reveal") b.push('<button class="btn primary" data-host="next">Next question</button>');
+  if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+document.addEventListener("click", async e=>{
+  const h = e.target.closest("[data-host]");
+  if(h){ try{ await act(h.dataset.host); }catch(err){ toast(err.message); } }
+});
+$("#hCode").onclick = async ()=>{ if(!code) return; const l=location.origin+"/silhouette?room="+code; try{ await navigator.clipboard.writeText(l); toast(`Invite link copied · ${code}`); }catch(e){ toast(l); } };
+function tickTimer(){
+  const el = $("#timer"); if(!room || !room.deadline || !["question","reveal"].includes(room.phase)){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.hidden = false; el.textContent = `${left}s`; el.classList.toggle("low", left <= 5 && room.phase === "question");
+}
+setInterval(tickTimer, 200);
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>

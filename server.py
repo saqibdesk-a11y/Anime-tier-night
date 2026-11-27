@@ -16,16 +16,27 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import bluff_game
+import clash_game
 import codenames_game
+import dial_game
 import draw_game
 import forged_game
 import imposter_game
 import lantern_game
+import mask_game
 import media
 import scroll_game
+import silhouette_game
 import werewolf_game
 
-GAMES = {"draw": draw_game, "forged": forged_game, "scroll": scroll_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game, "lantern": lantern_game}  # every game module has the same hooks
+GAMES = {
+    "draw": draw_game, "forged": forged_game, "scroll": scroll_game,
+    "silhouette": silhouette_game, "dial": dial_game, "clash": clash_game,
+    "bluff": bluff_game, "mask": mask_game,
+    "werewolf": werewolf_game, "imposter": imposter_game,
+    "codenames": codenames_game, "lantern": lantern_game,
+}  # every game module has the same hooks
 
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -143,12 +154,17 @@ def safe_int(val, default):
 # ---------- Discord Open Graph previews, presence & host takeover ----------
 
 STALL_META = {
-    "/": ("Anime Game Night", "Party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
-    "/index.html": ("Anime Game Night", "Party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
+    "/": ("Anime Game Night", "13 party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Fox's Bluff, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
+    "/index.html": ("Anime Game Night", "13 party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Fox's Bluff, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
     "/codenames": ("Codenames", "Two teams, one grid of words. Give one-word clues and find all your agents before the other team.", "/img/scenes/stall-codenames.webp"),
     "/lantern": ("Last Lantern", "Match the colour or symbol and empty your hand first. Call your last card before someone catches you.", "/img/scenes/stall-lantern.webp"),
     "/forged": ("Forged Brush", "Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.", "/img/scenes/stall-forged.jpg"),
     "/scroll": ("Broken Scroll", "Write a prompt, draw it, guess the drawing, repeat—then watch every scroll derail in the reveal theater.", "/img/scenes/stall-scroll.jpg"),
+    "/silhouette": ("Guess the Silhouette", "Name the anime character as their shadow, blur, or zoom clears—or battle in Higher or Lower and AI speed trivia.", "/img/scenes/stall-silhouette.jpg"),
+    "/dial": ("Festival Dial", "One Psychic sees the hidden target on a wild spectrum and gives one clue. Everyone else slides the festival fan to match.", "/img/scenes/stall-dial.jpg"),
+    "/clash": ("Caption Clash", "Write the funniest answer to unhinged prompts, battle head-to-head in the vote, and get roasted by AI.", "/img/scenes/stall-clash.jpg"),
+    "/bluff": ("Fox's Bluff", "Place Sakura Blossoms or your Cursed Fox Mask face-down, raise the stakes, and flip—or watch a bluff explode.", "/img/scenes/stall-bluff.jpg"),
+    "/mask": ("Forehead Mask", "Everyone sees the character on your forehead except you. Ask Yes/No questions and guess who you are first.", "/img/scenes/stall-mask.jpg"),
     "/werewolf": ("Werewolf", "Secret roles. Wolves hunt at night, the village votes by day. 13 roles with built-in chat.", "/img/scenes/stall-werewolf.webp"),
     "/imposter": ("Imposter", "Everyone gets the same secret word except one. Give clues, spot the fake, and roast the round.", "/img/scenes/stall-imposter.webp"),
     "/tierlist": ("Tier List Night", "Rank anime, characters or anything else together. Watch the reveal show and get roasted by AI.", "/img/scenes/stall-tierlist.webp"),
@@ -307,6 +323,12 @@ def hurry_offline_turn(room, now):
         rd = forged_game.cur(room)
         t = forged_game.turns(room) if rd else []
         turn_pid = t[rd["turn"]] if rd and rd["turn"] < len(t) else None
+    elif g == "dial" and room.get("phase") == "clue":
+        turn_pid = (room.get("current") or {}).get("psychic")
+    elif g == "bluff" and room.get("phase") in ("turn", "bid", "flip"):
+        bg = room.get("g")
+        if bg:
+            turn_pid = bg.get("bidder") if room.get("phase") == "flip" else bg.get("turn")
     elif g == "scroll" and room.get("phase") == "playing":
         # in Broken Scroll, if all online active players are done and remaining unfinished players are offline 15s+
         act_pids = scroll_game.active_order(room)
@@ -394,8 +416,8 @@ def to_option(a):
 
 
 CHAR_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { characters(sort: [FAVOURITES_DESC]) {
-  name { full } image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } } } } } }"""
-SHOW_QUERY = """query ($id: Int) { Media(id: $id) { characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } image { large } } } } }"""
+  name { full } favourites image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } } } } } }"""
+SHOW_QUERY = """query ($id: Int) { Media(id: $id) { characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } favourites image { large } } } } }"""
 FEATURED_SHOWS = [(235, "Detective Conan"), (813, "Dragon Ball Z")]  # AniList ids, picked by request
 SKIP_CHARACTERS = {"Narrator", "Lum"}
 ALIASES = {"Ai Haibara": "Sherry"}  # Sherry is Ai Haibara's Black Organization codename; AniList has no separate entry
@@ -422,7 +444,7 @@ def avatar_gallery():
                 img = (c.get("image") or {}).get("large") or ""
                 show = ((((c.get("media") or {}).get("nodes") or [{}])[0] or {}).get("title") or {})
                 if img.startswith(AVATAR_HOST) and "default" not in img:
-                    out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img})
+                    out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img, "favs": c.get("favourites") or 0})
         seen = {c["img"] for c in out}
         for media_id, show in FEATURED_SHOWS:
             nodes = ((((anilist_post(SHOW_QUERY, {"id": media_id}) or {}).get("Media") or {}).get("characters") or {}).get("nodes"))
@@ -432,7 +454,7 @@ def avatar_gallery():
             for c in nodes:
                 img, nm = (c.get("image") or {}).get("large") or "", (c.get("name") or {}).get("full") or ""
                 if img.startswith(AVATAR_HOST) and "default" not in img and nm not in SKIP_CHARACTERS and img not in seen:
-                    out.append({"name": nm, "show": show, "img": img})
+                    out.append({"name": nm, "show": show, "img": img, "favs": c.get("favourites") or 0})
                     seen.add(img)
         for c in out:
             if c["name"] in ALIASES:
@@ -1469,7 +1491,15 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/icon-512.png": ("image/png", "public, max-age=86400"),
 }
 IMG_DIRS = {"roles", "scenes"}
-PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/forged": "forged.html", "/scroll": "scroll.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html", "/lantern": "lantern.html"}
+PAGES = {
+    "/": "hub.html", "/index.html": "hub.html",
+    "/tierlist": "tierlist.html", "/draw": "draw.html",
+    "/forged": "forged.html", "/scroll": "scroll.html",
+    "/silhouette": "silhouette.html", "/dial": "dial.html",
+    "/clash": "clash.html", "/bluff": "bluff.html", "/mask": "mask.html",
+    "/werewolf": "werewolf.html", "/imposter": "imposter.html",
+    "/codenames": "codenames.html", "/lantern": "lantern.html",
+}
 
 
 def main():
@@ -1477,6 +1507,8 @@ def main():
     for game in GAMES.values():
         game.setup(rooms, lock, changed, rid)
     codenames_game.gallery = avatar_gallery  # anime characters for the picture cards
+    silhouette_game.gallery = avatar_gallery
+    mask_game.gallery = avatar_gallery
     for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")

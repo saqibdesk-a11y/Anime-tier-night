@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Festival Dial</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+:root{
+  --cloth:#E07A2F; --on-cloth:#1E1A2E;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
+  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --mint:var(--shrine);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+.noren{background:var(--cloth);color:var(--on-cloth)}
+.noren .th-btn,.noren .iconbtn,.noren .rb-btn{border-color:rgba(30,26,46,.35)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.9}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--paper);color:var(--ink);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+
+.stage{width:min(800px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
+.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
+.btn.small{padding:6px 13px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--amber)}
+select option{background:var(--night)}
+.err{color:var(--danger);font-size:14px;min-height:1.3em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px}
+.chips button.on{border-color:var(--amber);background:rgba(217,164,65,.14);color:var(--amber)}
+
+.face{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.face img,.mini img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.mini{width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);flex:none}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:64px;height:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:12px}
+.tok{display:grid;justify-items:center;gap:4px}
+.tok .face{width:62px;height:62px;border:3px solid rgba(255,255,255,.18);font-size:22px}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* the interactive semicircular dial */
+.dial-card{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px 14px 20px;margin:14px auto;max-width:580px;display:grid;gap:14px}
+.clue-banner{background:var(--paper);color:var(--ink);border-radius:14px;padding:12px 16px;text-align:center;box-shadow:0 12px 26px -14px #000}
+.clue-banner small{display:block;font-size:12px;font-weight:800;color:var(--ink-2)}
+.clue-banner b{font-family:var(--display);font-size:clamp(24px,6vw,36px);line-height:1.15;display:block;margin-top:2px}
+.dial-svg{width:100%;max-width:460px;margin:0 auto;display:block;touch-action:none;user-select:none}
+.dial-svg.drag{cursor:grab}
+.dial-svg.drag:active{cursor:grabbing}
+.poles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:-6px}
+.pole{background:var(--paper);color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:900;font-size:clamp(14px,3.6vw,17px);line-height:1.2;text-align:center}
+.pole.l{border-left:5px solid #3F6FD8} .pole.r{border-right:5px solid var(--lantern)}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type=range]{flex:1;accent-color:var(--lantern);height:32px}
+.clue-form{display:flex;gap:8px}
+.scores{display:grid;gap:8px;margin-top:12px}
+.srow{display:grid;grid-template-columns:34px 30px 1fr auto auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800}
+.srow.first{border-color:var(--amber);background:rgba(217,164,65,.14)}
+.srow .rk{text-align:center;color:var(--muted)} .srow.first .rk{color:var(--amber)}
+.srow .plus{color:#4ADE80;font-size:13px} .srow .pts{font-size:18px;font-variant-numeric:tabular-nums}
+.fadeup{animation:fadeup .4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+body.has-hostbar{--chat-lift:66px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <h1>Festival Dial</h1>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
+<script src="/howto.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 72%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, curView="", myVal=50;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+RoomBar.mount({act, game:"dial", onHostChange:(hk, became)=>{ hostKey = hk; curView = ""; if(became) toast("You are now the host!"); if(room) render(); }});
+const P = pid => room.players[pid] || {name:"Someone"};
+const picOf = p => { const s = Avatars.src(p); return s ? `<img src="${esc(s)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
+const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+
+function home(){
+  $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
+  document.body.classList.remove("has-hostbar"); curView="home";
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">The Wavelength Fan Stall</div><h1 class="title">Festival Dial</h1>
+    <p class="sub">The Psychic gives one clue for a hidden spot on a spectrum. Slide the dial to match their mind!</p></div>
+    <div class="row2 fadeup" style="margin-top:20px">
+      <form class="panel" id="createForm"><h2>Host a game</h2>
+        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
+      <form class="panel" id="joinForm"><h2>Join with a code</h2>
+        <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="jErr"></div><button class="btn wide">Join</button></form>
+    </div><div class="fadeup">${HowTo.button("dial")}</div>`;
+  $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n=$("#cName").value.trim(); if(!n) return $("#cErr").textContent="Enter your name.";
+    try{ const r=await api("/api/rooms",{game:"dial",title:"Festival Dial"}); const m=await api(`/api/rooms/${r.code}/join`,{name:n}); store("dl:"+r.code,{me:m,hostKey:r.hostKey}); history.replaceState({},"","/dial?room="+r.code); openRoom(r.code); }catch(err){ $("#cErr").textContent=err.message; } };
+  $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c=$("#jCode").value.trim().toUpperCase(), n=$("#jName").value.trim(); if(!c||!n) return $("#jErr").textContent="Enter code and name.";
+    try{ const m=await api(`/api/rooms/${c}/join`,{name:n}); store("dl:"+c,{me:m,hostKey:null}); history.replaceState({},"","/dial?room="+c); openRoom(c); }catch(err){ $("#jErr").textContent=err.message; } };
+}
+function openRoom(c){
+  code=c; const s=store("dl:"+c)||{}; me=s.me||null; hostKey=s.hostKey||null;
+  $("#hCode").textContent=c; $("#hCode").hidden=false; BackGuard.arm(); poll(++pollGen,-1);
+}
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
+      const next = await api(`/api/rooms/${code}?v=${v}${who}`);
+      if(gen !== pollGen) return;
+      const prev = room; room = next; v = room.version; clockOffset = room.now - Date.now()/1000;
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("dl:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
+      if(!prev || prev.phase !== room.phase || prev.turn !== room.turn){ myVal = 50; }
+      if(!Chat.socialOnly(prev, room)) render();
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
+    }catch(e){ if(e.message.includes("not found")){ toast("Room not found"); return home(); } await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+/* ---------- semicircular dial SVG math ---------- */
+const CX = 180, CY = 188, R = 152;
+const valToRad = v => Math.PI - (v / 100) * Math.PI;
+function arcWedge(v1, v2, color){
+  const a1 = valToRad(Math.max(0, v1)), a2 = valToRad(Math.min(100, v2));
+  const x1 = CX + R * Math.cos(a1), y1 = CY - R * Math.sin(a1);
+  const x2 = CX + R * Math.cos(a2), y2 = CY - R * Math.sin(a2);
+  return `<path d="M ${CX} ${CY} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z" fill="${color}"/>`;
+}
+function dialSVG({target=null, showTarget=false, needle=null, guesses=null, draggable=false}){
+  const wedges = showTarget && target != null ? (
+    arcWedge(target - 18, target + 18, "#E89B4C") +
+    arcWedge(target - 10, target + 10, "#F2603A") +
+    arcWedge(target - 4, target + 4, "#FFD166")
+  ) : "";
+  const ticks = Array.from({length:11}, (_, i)=>{
+    const a = valToRad(i*10), x1 = CX + (R-10)*Math.cos(a), y1 = CY - (R-10)*Math.sin(a);
+    const x2 = CX + R*Math.cos(a), y2 = CY - R*Math.sin(a);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(30,26,46,.22)" stroke-width="${i===5?3:1.5}"/>`;
+  }).join("");
+  let pins = "";
+  if(guesses){
+    for(const [pid, val] of Object.entries(guesses)){
+      const a = valToRad(val), x = CX + (R-24)*Math.cos(a), y = CY - (R-24)*Math.sin(a);
+      const col = hue(P(pid).name);
+      pins += `<line x1="${CX}" y1="${CY}" x2="${(CX+R*Math.cos(a)).toFixed(1)}" y2="${(CY-R*Math.sin(a)).toFixed(1)}" stroke="${col}" stroke-width="2.5" opacity=".75"/>
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="${col}" stroke="#1E1A2E" stroke-width="2"/>
+        <text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="900" fill="#1E1A2E">${esc((P(pid).name||"?")[0].toUpperCase())}</text>`;
+    }
+  }
+  const nd = needle != null ? (()=>{
+    const a = valToRad(needle), x = CX + (R-8)*Math.cos(a), y = CY - (R-8)*Math.sin(a);
+    return `<line id="dialNeedle" x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#D6456B" stroke-width="6" stroke-linecap="round"/>
+      <circle id="dialKnob" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="#D6456B" stroke="#FFFDF8" stroke-width="3"/>`;
+  })() : "";
+  return `<svg class="dial-svg ${draggable?"drag":""}" id="dialSvg" viewBox="0 0 360 205" aria-label="Spectrum dial">
+    <path d="M ${CX-R} ${CY} A ${R} ${R} 0 0 1 ${CX+R} ${CY} Z" fill="${showTarget?"#F3EBDD":"#252A5E"}" stroke="#D9A441" stroke-width="4"/>
+    ${wedges}${ticks}
+    ${!showTarget ? `<text x="${CX}" y="${CY-58}" text-anchor="middle" fill="#B4B0D2" font-size="15" font-weight="700">HIDDEN TARGET</text>` : ""}
+    ${pins}${nd}
+    <circle cx="${CX}" cy="${CY}" r="14" fill="#1E1A2E" stroke="#D9A441" stroke-width="3"/>
+  </svg>`;
+}
+
+function render(){
+  renderHostbar();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  if(!me || !room.players[me.pid]) return gate();
+  const ph = room.phase;
+  if(ph === "lobby") lobby();
+  else if(ph === "starting"){ curView="starting"; $("#stage").innerHTML='<div class="fadeup" style="margin-top:12vh"><h1 class="title">Preparing spectra…</h1></div>'; }
+  else if(ph === "final") finalView();
+  else playView();
+  tickTimer();
+}
+function gate(){
+  if($("#gate")) return; curView="gate";
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Festival Dial</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
+  $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
+    try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("dl:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
+}
+function lobby(){
+  curView="lobby";
+  const s=room.settings, ps=Object.keys(room.players), mine=P(me.pid), H=!!hostKey;
+  const sel=(id,opts,val)=>`<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  $("#stage").innerHTML=`<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"}</h1>
+    <p class="sub">Share code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b>. Need at least 2 players.</p></div>
+    <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">Tap to pick your avatar.</p></div></div></div>
+    <div class="ring">${ps.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div>
+    <div class="panel" style="margin-top:16px"><h2>${H?"Game settings":"Settings"}</h2>
+      <div><label>Spectrum pack</label><div class="chips">${[["mix","Mix"],["anime","Anime"],["everyday","Everyday"],["custom","Custom (AI)"]].map(([v,t])=>`<button type="button" class="${s.pack===v?"on":""}" data-pack="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+      ${s.pack==="custom" ? `<div><label for="sCust">Custom spectrum theme</label><input type="text" id="sCust" maxlength="160" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Video games, School life, Pakistani food"></div>` : ""}
+      <div class="row3">
+        <div><label for="sRounds">Turns</label>${sel("sRounds",[[4,"4"],[6,"6"],[8,"8"],[10,"10"],[12,"12"]], s.rounds)}</div>
+        <div><label for="sClue">Clue timer</label>${sel("sClue",[[30,"30s"],[45,"45s"],[60,"60s"],[90,"90s"]], s.clueSec)}</div>
+        <div><label for="sGuess">Guess timer</label>${sel("sGuess",[[30,"30s"],[40,"40s"],[60,"60s"]], s.guessSec)}</div>
+      </div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<2?"disabled":""}>${ps.length<2?"Need 1 more player":"Open the fan"}</button>` : '<p class="hint" style="text-align:center">Waiting for host to start.</p>'}
+    </div>${HowTo.button("dial")}`;
+  $("#photoBtn").onclick = ()=>Avatars.open(act);
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-pack]").forEach(b=>b.onclick=()=>send({pack:b.dataset.pack}));
+    $("#sRounds").onchange=e=>send({rounds:+e.target.value}); $("#sClue").onchange=e=>send({clueSec:+e.target.value}); $("#sGuess").onchange=e=>send({guessSec:+e.target.value});
+    if($("#sCust")) $("#sCust").onchange=e=>send({custom:e.target.value});
+  }
+}
+
+function playView(){
+  const c = room.current, ph = room.phase, isPsy = c.psychic === me.pid;
+  const viewKey = `${ph}:${c.turn}:${isPsy}`;
+  if(curView !== viewKey){
+    curView = viewKey;
+    const canDrag = ph === "guess" && !isPsy;
+    const lockedVal = c.myGuess != null ? c.myGuess : myVal;
+    if(c.myGuess != null) myVal = c.myGuess;
+    $("#stage").innerHTML = `<div class="fadeup">
+      <div class="eyebrow">Turn ${c.turn+1} of ${room.settings.rounds} · Psychic: ${esc(P(c.psychic).name)}</div>
+      <h1 class="title">${ph==="clue" ? (isPsy ? "Give a clue" : `${esc(P(c.psychic).name)} is thinking…`) : ph==="guess" ? (isPsy ? "Watch them guess!" : "Slide the dial!") : "Target revealed!"}</h1>
+      <div class="dial-card">
+        ${c.clue ? `<div class="clue-banner"><small>${esc(P(c.psychic).name)}'s clue</small><b>"${esc(c.clue)}"</b></div>` : ""}
+        ${dialSVG({target:c.target, showTarget: ph==="reveal" || isPsy, needle: canDrag ? lockedVal : null, guesses: ph==="reveal" ? c.guesses : null, draggable: canDrag})}
+        <div class="poles"><div class="pole l">&larr; ${esc(c.left)}</div><div class="pole r">${esc(c.right)} &rarr;</div></div>
+        ${ph==="clue" && isPsy ? `<form class="clue-form" id="clueForm"><input type="text" id="clueIn" maxlength="60" autocomplete="off" placeholder="One clue pointing at the golden target…"><button class="btn primary">Send</button></form>` : ""}
+        ${canDrag ? `<div class="slider-row"><input type="range" id="dialRange" min="0" max="100" value="${lockedVal}"><button type="button" class="btn primary" id="lockDial">${c.myGuess!=null?"Update":"Lock in"}</button></div>` : ""}
+        <p class="hint" id="dStatus" style="text-align:center"></p>
+      </div>
+      ${ph==="reveal" ? scoreRows(c.points) : ""}
+    </div>`;
+    if($("#clueForm")){
+      $("#clueIn").focus();
+      $("#clueForm").onsubmit = async e=>{ e.preventDefault(); const t=$("#clueIn").value.trim(); if(!t) return;
+        try{ await act("clue",{text:t}); buzz(25); }catch(err){ toast(err.message); } };
+    }
+    if(canDrag) bindDial();
+  }
+  const st = $("#dStatus");
+  if(st){
+    if(ph === "clue") st.textContent = isPsy ? "Aim them at the golden +4 bullseye without naming the sides." : "Waiting for the Psychic's clue…";
+    else if(ph === "guess") st.textContent = `${(c.guessedPids||[]).length} of ${c.guessNeed} locked in` + (c.myGuess!=null ? " · Your guess is locked (you can still adjust)" : "");
+    else st.textContent = `Bullseye was at ${c.target}/100 · Gold = +4, Orange = +3, Bronze = +2`;
+  }
+}
+
+function bindDial(){
+  const svg = $("#dialSvg"), rng = $("#dialRange"), btn = $("#lockDial");
+  const updateNeedle = v => {
+    myVal = Math.max(0, Math.min(100, Math.round(v)));
+    rng.value = myVal;
+    const a = valToRad(myVal), x = CX + (R-8)*Math.cos(a), y = CY - (R-8)*Math.sin(a);
+    const l = $("#dialNeedle"), k = $("#dialKnob");
+    if(l){ l.setAttribute("x2", x.toFixed(1)); l.setAttribute("y2", y.toFixed(1)); }
+    if(k){ k.setAttribute("cx", x.toFixed(1)); k.setAttribute("cy", y.toFixed(1)); }
+  };
+  let dragging = false;
+  const fromEv = e => {
+    const r = svg.getBoundingClientRect();
+    const sx = (e.clientX - r.left) * 360 / r.width, sy = (e.clientY - r.top) * 205 / r.height;
+    const ang = Math.atan2(Math.max(1, CY - sy), sx - CX);
+    updateNeedle((1 - ang / Math.PI) * 100);
+  };
+  svg.addEventListener("pointerdown", e=>{ dragging = true; try{ svg.setPointerCapture(e.pointerId); }catch(err){} fromEv(e); });
+  svg.addEventListener("pointermove", e=>{ if(dragging) fromEv(e); });
+  svg.addEventListener("pointerup", ()=>{ dragging = false; });
+  svg.addEventListener("pointercancel", ()=>{ dragging = false; });
+  rng.oninput = e => updateNeedle(+e.target.value);
+  btn.onclick = async ()=>{ try{ await act("guess",{val:myVal}); btn.textContent="Update"; buzz(30); toast("Dial locked!"); }catch(err){ toast(err.message); } };
+}
+
+function scoreRows(plus){
+  const rows = Object.keys(room.players).map(pid=>({pid, s:room.scores?.[pid]||0, p:plus?.[pid]||0})).sort((a,b)=>b.s-a.s);
+  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}</span>${x.p?`<span class="plus">+${x.p}</span>`:"<span></span>"}<span class="pts">${x.s}</span></div>`).join("")}</div>`;
+}
+function finalView(){
+  if(curView === "final") return; curView = "final";
+  const top = Object.keys(room.players).sort((a,b)=>(room.scores?.[b]||0)-(room.scores?.[a]||0))[0];
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Final Standings</div>
+    <h1 class="title">${top ? `${esc(P(top).name)} reads minds!` : "Game over"}</h1>${scoreRows(null)}</div>`;
+}
+
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "clue") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Skip clue</button>');
+  if(ph === "guess") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn primary" data-host="skip">Reveal dial</button>');
+  if(ph === "reveal") b.push(`<button class="btn primary" data-host="next">${room.turn+1<room.settings.rounds?"Next Psychic":"Final scores"}</button>`);
+  if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+document.addEventListener("click", async e=>{
+  const h = e.target.closest("[data-host]");
+  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); }catch(err){ toast(err.message); } }
+});
+$("#hCode").onclick = async ()=>{ if(!code) return; const l=location.origin+"/dial?room="+code; try{ await navigator.clipboard.writeText(l); toast(`Invite link copied · ${code}`); }catch(e){ toast(l); } };
+function tickTimer(){
+  const el = $("#timer"); if(!room || !room.deadline || !["clue","guess"].includes(room.phase)){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`; el.classList.toggle("low", left <= 8);
+}
+setInterval(tickTimer, 200);
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>

@@ -360,6 +360,158 @@ When all steps finish, everyone watches each scroll unroll panel by panel in the
 <b>Memory Knock-Off:</b> पिछली ड्रॉइंग को सिर्फ़ 7 सेकंड देखें, फिर याददाश्त से दोबारा बनाएँ!`,
   };
 
+  /* ---------- Guess the Silhouette ---------- */
+  T.silhouette = {
+    en:`Race your friends to identify characters and answer speed trivia!
+<b>Character Reveal:</b> an anime character portrait starts heavily disguised as a black silhouette, heavy blur, or extreme zoom and clears up over 15 seconds. Answer faster for up to <b>+1000</b> points!
+Tap one of the 4 choices—or in <b>Type Answer</b> mode, type the character's name before anyone else.
+<b>Higher or Lower:</b> two famous anime characters face off. Pick which one has more AniList favourites!
+<b>AI Speed Trivia:</b> fast 4-choice questions on anime, movies, food, or any custom topic the host enters.
+# Streaks & Bonus
+Chain correct answers in a row to build a <b>Streak Bonus</b> (up to +300 extra points per round!).`,
+    ar:`سابق أصدقاءك في التعرّف على الشخصيات وأسئلة السرعة!
+<b>Character Reveal:</b> تبدأ صورة شخصية الأنمي مخفيّة كظل أسود أو ضبابية أو مقرّبة جدًا وتوضح تدريجيًا خلال 15 ثانية. أجب أسرع لتحصل حتى <b>+1000</b> نقطة!
+اضغط أحد الخيارات الأربعة—أو في وضع <b>Type Answer</b> اكتب اسم الشخصية قبل الجميع.
+<b>Higher or Lower:</b> شخصيتا أنمي شهيرتان وجهًا لوجه. اختر أيهما لديه عدد أكبر من المفضّلين على AniList!
+<b>AI Speed Trivia:</b> أسئلة سريعة من 4 خيارات عن الأنمي أو الأفلام أو الطعام أو أي موضوع يكتبه المضيف.
+# السلسلة والمكافآت
+أجب بشكل صحيح متتالٍ لبناء <b>Streak Bonus</b> (حتى +300 نقطة إضافية في كل جولة!).`,
+    ur:`اپنے دوستوں سے مقابلہ کریں اور تیزی سے کردار پہچانیں!
+<b>Character Reveal:</b> ایک اینیمے کردار کی تصویر کالے سائے، دھندلے پن، یا زوم میں چھپی ہوتی ہے اور 15 سیکنڈ میں صاف ہوتی جاتی ہے۔ جتنی جلدی جواب دیں گے، اتنے زیادہ پوائنٹس (<b>+1000</b> تک)!
+4 آپشنز میں سے ایک چنیں—یا <b>Type Answer</b> موڈ میں کردار کا نام سب سے پہلے ٹائپ کریں۔
+<b>Higher or Lower:</b> دو مشہور اینیمے کردار آمنے سامنے۔ چنیں کہ AniList پر کس کے زیادہ فینز ہیں!
+<b>AI Speed Trivia:</b> اینیمے، فلموں، کھانے، یا ہوسٹ کے کسی بھی موضوع پر تیز ترین 4-آپشن سوالات۔
+# مسلسل درست جوابات
+لگاتار صحیح جوابات دے کر <b>Streak Bonus</b> بنائیں (ہر راؤنڈ میں +300 اضافی پوائنٹس تک!)۔`,
+    hi:`अपने दोस्तों के साथ रेस लगाएँ और तेज़ी से किरदार पहचानें!
+<b>Character Reveal:</b> एक एनीमे किरदार की तस्वीर काले साये, धुंधलेपन, या ज़ूम में छुपी होती है और 15 सेकंड में साफ़ होती जाती है। जितनी जल्दी जवाब देंगे, उतने ज़्यादा पॉइंट्स (<b>+1000</b> तक)!
+4 विकल्पों में से एक चुनें—या <b>Type Answer</b> मोड में किरदार का नाम सबसे पहले टाइप करें।
+<b>Higher or Lower:</b> दो मशहूर एनीमे किरदार आमने-सामने। चुनें कि AniList पर किसके ज़्यादा फ़ैन्स हैं!
+<b>AI Speed Trivia:</b> एनीमे, फ़िल्मों, खाने, या होस्ट के किसी भी विषय पर तेज़ 4-ऑप्शन सवाल।
+# स्ट्रीक बोनस
+लगातार सही जवाब देकर <b>Streak Bonus</b> बनाएँ (हर राउंड में +300 एक्स्ट्रा पॉइंट्स तक!)।`,
+  };
+
+  /* ---------- Festival Dial ---------- */
+  T.dial = {
+    en:`Every turn, one player becomes the <b>Psychic</b> and sees a hidden target spot on a two-sided spectrum (like <b>Overrated ↔ Underrated</b> or <b>Harmless ↔ Pure Menace</b>).
+The Psychic writes <b>one short clue</b> that sits at that exact spot on the spectrum, then taps <b>"Send clue"</b>.
+Everyone else drags the needle on the festival fan dial (or slides the bar) to where they think the target is hiding, then taps <b>"Lock in"</b>.
+When the screen opens, the target wedges appear and everyone argues about the Psychic's clue!
+# Points
+<b>Bullseye</b> (within 4): +4 pts. <b>Close</b> (within 10): +3 pts. <b>Warm</b> (within 18): +2 pts.
+The Psychic also scores points based on the best guess (up to +3 pts), so good clues pay off!`,
+    ar:`في كل دور يصبح أحد اللاعبين <b>العرّاف (Psychic)</b> ويرى هدفًا مخفيًا على مقياس من طرفين (مثل <b>Overrated ↔ Underrated</b> أو <b>Harmless ↔ Pure Menace</b>).
+يكتب العرّاف <b>تلميحًا واحدًا قصيرًا</b> يناسب ذلك الموضع تمامًا، ثم يضغط <b>"Send clue"</b>.
+يحرّك باقي اللاعبين إبرة المروحة (أو الشريط) إلى المكان الذي يظنون أن الهدف يختبئ فيه، ثم يضغطون <b>"Lock in"</b>.
+عند الكشف تظهر مناطق الهدف وتبدأ النقاشات المضحكة حول التلميح!
+# النقاط
+<b>إصابة مباشرة (Bullseye)</b>: ‎+4 نقاط. <b>قريب (Close)</b>: ‎+3 نقاط. <b>دافئ (Warm)</b>: ‎+2 نقطة.
+يكسب العرّاف أيضًا نقاطًا بناءً على أفضل تخمين (حتى +3 نقاط)، لذا التلميحات الذكية مربحة!`,
+    ur:`ہر باری پر ایک کھلاڑی <b>Psychic</b> بنتا ہے اور اسے دو سروں والے پیمانے پر ایک خفیہ نشان نظر آتا ہے (جیسے <b>Overrated ↔ Underrated</b> یا <b>Harmless ↔ Pure Menace</b>)۔
+Psychic اس جگہ کے مطابق <b>ایک چھوٹا سا اشارہ</b> لکھتا ہے اور <b>"Send clue"</b> دباتا ہے۔
+باقی سب کھلاڑی پنکھے کی سوئی کو گھما کر اس جگہ رکھتے ہیں جہاں ان کے خیال میں خفیہ نشان ہے، اور <b>"Lock in"</b> دباتے ہیں۔
+جب پردہ کھلتا ہے تو خفیہ نشان سامنے آتا ہے اور اشارے پر مزیدار بحث شروع ہو جاتی ہے!
+# پوائنٹس
+<b>Bullseye</b> (بالکل نشانے پر): ‎+4 پوائنٹس۔ <b>Close</b> (قریب): ‎+3 پوائنٹس۔ <b>Warm</b> (تھوڑا قریب): ‎+2 پوائنٹس۔
+Psychic کو بھی بہترین اندازے کے مطابق پوائنٹس ملتے ہیں (‎+3 تک)، اس لیے اچھا اشارہ دینا فائدہ مند ہے!`,
+    hi:`हर बारी पर एक खिलाड़ी <b>Psychic</b> बनता है और उसे दो सिरों वाले स्केल पर एक छुपा हुआ टारगेट दिखता है (जैसे <b>Overrated ↔ Underrated</b> या <b>Harmless ↔ Pure Menace</b>)।
+Psychic उस जगह के हिसाब से <b>एक छोटा सा क्लू</b> लिखता है और <b>"Send clue"</b> दबाता है।
+बाक़ी सब खिलाड़ी पंखे की सुई घुमाकर वहाँ रखते हैं जहाँ उन्हें टारगेट लगता है, और <b>"Lock in"</b> दबाते हैं।
+पर्दा खुलने पर टारगेट सामने आता है और क्लू पर मज़ेदार बहस छिड़ जाती है!
+# पॉइंट्स
+<b>Bullseye</b> (बिल्कुल निशाने पर): +4 पॉइंट्स। <b>Close</b> (क़रीब): +3 पॉइंट्स। <b>Warm</b> (थोड़ा क़रीब): +2 पॉइंट्स।
+Psychic को भी सबसे अच्छे अंदाज़े के हिसाब से पॉइंट्स मिलते हैं (+3 तक), इसलिए अच्छा क्लू देना फ़ायदेमंद है!`,
+  };
+
+  /* ---------- Caption Clash ---------- */
+  T.clash = {
+    en:`Each round you get <b>2 funny prompts</b> (anime, party, or custom theme)—and one secret opponent is answering the exact same prompt!
+Write the funniest, most unhinged reply you can think of before time runs out, then tap <b>"Lock answers"</b>.
+Next, every matchup goes <b>head-to-head</b> on the big stage. Everyone who wasn't in that matchup votes for the funnier answer!
+After the votes tally, the <b>AI Judge</b> drops a savage one-liner roasting the losing answer.
+# Points
+Each vote is worth <b>+100 pts</b>. Win every single vote in a matchup for a <b>CLASH SWEEP (+250 bonus!)</b>.
+The final round is worth <b>2× Double Points</b>—anybody can steal the crown at the end!`,
+    ar:`في كل جولة تحصل على <b>سؤالين مضحكين</b>—وهناك منافس سرّي يكتب إجابة لنفس السؤال!
+اكتب أطرف وأجنّ إجابة تخطر ببالك قبل انتهاء الوقت، ثم اضغط <b>"Lock answers"</b>.
+بعدها تُعرض كل مواجهة <b>وجهًا لوجه</b> على المسرح. يصوّت بقية اللاعبين للإجابة الأطرف!
+بعد إعلان الأصوات، يعلّق <b>الذكاء الاصطناعي</b> بسخرية لاذعة على الإجابة الخاسرة.
+# النقاط
+كل صوت يمنح <b>+100 نقطة</b>. اكتسح كل الأصوات لتحصل على <b>CLASH SWEEP (+250 مكافأة!)</b>.
+الجولة الأخيرة تمنح <b>ضعف النقاط (2×)</b>—يمكن لأي لاعب خطف الفوز في النهاية!`,
+    ur:`ہر راؤنڈ میں آپ کو <b>2 مزاحیہ سوال</b> ملتے ہیں—اور ایک خفیہ حریف بالکل اسی سوال کا جواب لکھ رہا ہوتا ہے!
+وقت ختم ہونے سے پہلے سب سے مزاحیہ جواب لکھیں اور <b>"Lock answers"</b> دبائیں۔
+پھر ہر مقابلہ اسٹیج پر <b>آمنے سامنے</b> آتا ہے۔ باقی تمام کھلاڑی زیادہ مزاحیہ جواب کو ووٹ دیتے ہیں!
+ووٹ گنے جانے کے بعد <b>AI Judge</b> ہارنے والے جواب کا زبردست مذاق اڑاتا ہے۔
+# پوائنٹس
+ہر ووٹ کے <b>+100 پوائنٹس</b>۔ سارے ووٹ جیتنے پر <b>CLASH SWEEP (+250 بونس!)</b>۔
+آخری راؤنڈ میں <b>2× ڈبل پوائنٹس</b> ملتے ہیں—کوئی بھی آخر میں بازی پلٹ سکتا ہے!`,
+    hi:`हर राउंड में आपको <b>2 मज़ेदार प्रॉम्प्ट</b> मिलते हैं—और एक गुप्त प्रतिद्वंद्वी भी उसी प्रॉम्प्ट का जवाब लिख रहा होता है!
+समय ख़त्म होने से पहले सबसे मज़ेदार जवाब लिखें और <b>"Lock answers"</b> दबाएँ।
+फिर हर मुक़ाबला स्टेज पर <b>आमने-सामने</b> आता है। बाक़ी सभी खिलाड़ी ज़्यादा मज़ेदार जवाब को वोट देते हैं!
+वोट गिने जाने के बाद <b>AI Judge</b> हारने वाले जवाब की ज़बरदस्त रोस्टिंग करता है।
+# पॉइंट्स
+हर वोट के <b>+100 पॉइंट्स</b>। सारे वोट जीतने पर <b>CLASH SWEEP (+250 बोनस!)</b>।
+आख़िरी राउंड में <b>2× डबल पॉइंट्स</b> मिलते हैं—कोई भी अंत में बाज़ी पलट सकता है!`,
+  };
+
+  /* ---------- Fox's Bluff ---------- */
+  T.bluff = {
+    en:`Every player starts with 4 festival coasters: <b>3 Sakura Blossoms</b> (safe) and <b>1 Cursed Fox Mask</b> (trap).
+<b>1. Secret Place:</b> everyone puts 1 coaster face-down in front of them.
+<b>2. Stack or Bid:</b> on your turn, either stack another coaster face-down onto your pile, OR start the bidding ("I can flip X safe blossoms!").
+<b>3. Bidding War:</b> once bidding starts, everyone must either <b>Raise</b> the number or <b>Pass</b> until one Challenger remains.
+<b>4. The Flip:</b> the Challenger must flip <b>all of their own coasters first</b>, then tap other players' piles one by one.
+Flip enough Sakura Blossoms and you score <b>+1 point</b> (first to the goal wins!).
+Hit a <b>Cursed Fox Mask</b>? BOOM—you lose one coaster permanently for the rest of the match. Lose all 4 coasters and you're eliminated!`,
+    ar:`يبدأ كل لاعب بـ 4 أقراص مهرجان: <b>3 أزهار ساكورا</b> (آمنة) و<b>1 قناع ثعلب ملعون</b> (فخ).
+<b>1. الوضع السرّي:</b> يضع كل لاعب قرصًا واحدًا مقلوبًا أمامه.
+<b>2. تكديس أو مزايدة:</b> في دورك إمّا أن تضيف قرصًا آخر مقلوبًا فوق كومتك، أو تبدأ المزايدة ("أستطيع قلب X أزهار آمنة!").
+<b>3. حرب المزايدة:</b> بمجرد بدء المزايدة، يجب إمّا <b>رفع الرقم (Raise)</b> أو <b>التمرير (Pass)</b> حتى يبقى متحدٍّ واحد.
+<b>4. القلب:</b> يجب على المتحدّي قلب <b>كل أقراصه أولًا</b>، ثم اختيار أقراص الآخرين واحدًا تلو الآخر.
+اقلب العدد المطلوب من أزهار الساكورا لتكسب <b>+1 نقطة</b> (أول من يصل للهدف يفوز!).
+كشفت <b>قناع الثعلب</b>؟ بوم—تخسر قرصًا واحدًا للأبد حتى نهاية المباراة. وإذا فقدت كل أقراصك تخرج من اللعب!`,
+    ur:`ہر کھلاڑی کے پاس 4 تہواری کوسٹرز ہوتے ہیں: <b>3 ساکورا پھول</b> (محفوظ) اور <b>1 منحوس لومڑی کا ماسک</b> (جال)۔
+<b>1. خفیہ چال:</b> سب ایک کوسٹر الٹا کر کے اپنے سامنے رکھتے ہیں۔
+<b>2. ڈھیر یا بولی:</b> اپنی باری پر یا تو اپنے ڈھیر پر ایک اور کوسٹر الٹا رکھیں، یا بولی شروع کریں ("میں X محفوظ پھول پلٹ سکتا ہوں!")۔
+<b>3. بولی کا مقابلہ:</b> بولی شروع ہونے پر سب کو یا تو <b>Raise</b> کرنا ہوتا ہے یا <b>Pass</b>، جب تک صرف ایک چیلنجر باقی نہ رہ جائے۔
+<b>4. پلٹنے کی باری:</b> چیلنجر کو پہلے <b>اپنے سارے کوسٹرز پلٹنے ہوتے ہیں</b>، پھر دوسروں کے ڈھیر پر ٹیپ کر کے پلٹنے ہوتے ہیں۔
+مطلوبہ محفوظ پھول پلٹ لیے تو <b>+1 پوائنٹ</b> (ہدف پورا کرنے والا جیتتا ہے!)۔
+<b>لومڑی کا ماسک</b> نکل آیا؟ دھماکہ—آپ کا ایک کوسٹر پورے میچ کے لیے ضائع ہو جاتا ہے۔ چاروں ختم ہونے پر آپ باہر!`,
+    hi:`हर खिलाड़ी के पास 4 कोस्टर होते हैं: <b>3 साकुरा फूल</b> (सुरक्षित) और <b>1 शापित लोमड़ी मास्क</b> (जाल)।
+<b>1. गुप्त चाल:</b> सब एक कोस्टर उल्टा करके अपने सामने रखते हैं।
+<b>2. स्टैक या बोली:</b> अपनी बारी पर या तो अपने ढेर पर एक और कोस्टर उल्टा रखें, या बोली शुरू करें ("मैं X सुरक्षित फूल पलट सकता हूँ!")।
+<b>3. बोली की जंग:</b> बोली शुरू होने पर सबको या तो <b>Raise</b> करना होता है या <b>Pass</b>, जब तक सिर्फ़ एक चैलेंजर न बचे।
+<b>4. पलटने की बारी:</b> चैलेंजर को पहले <b>अपने सारे कोस्टर पलटने होते हैं</b>, फिर दूसरों के ढेर पर टैप करके पलटने होते हैं।
+उतने सुरक्षित फूल पलट लिए तो <b>+1 पॉइंट</b> (लक्ष्य पूरा करने वाला जीतता है!)।
+<b>लोमड़ी का मास्क</b> निकल आया? धमाका—आपका एक कोस्टर पूरे मैच के लिए चला जाता है। चारों ख़त्म होने पर आप बाहर!`,
+  };
+
+  /* ---------- Forehead Mask ---------- */
+  T.mask = {
+    en:`Every player gets a secret character or object stuck to their forehead. You can see <b>everyone else's</b> card, while your own stays hidden behind a festival mask!
+In <b>Friends Pick</b> mode, everyone secretly chooses the character on the next player's forehead before the round begins.
+On your turn, ask a <b>Yes / No question</b>—either type it in the box or ask out loud on Discord voice chat and tap <b>"Asked on VC"</b>!
+Everyone else taps <b>Yes</b>, <b>No</b>, or <b>Kinda</b>. Every answer saves automatically into your personal <b>Clue Log</b> so you never forget.
+Think you know who you are? Type your answer in the guess box and hit <b>"Guess!"</b>—earlier finishers earn more points!`,
+    ar:`يحصل كل لاعب على شخصية أو شيء سرّي مُلصق على جبينه. ترى بطاقات <b>الجميع</b>، بينما تبقى بطاقتك مخفيّة خلف قناع المهرجان!
+في وضع <b>Friends Pick</b>، يختار كل لاعب سرًّا الشخصية التي ستوضع على جبين اللاعب التالي قبل بدء الجولة.
+في دورك، اسأل سؤال <b>نعم أو لا</b>—إمّا بكتابته أو طرحه صوتيًا على Discord والضغط على <b>"Asked on VC"</b>!
+يرد البقية بـ <b>Yes</b> أو <b>No</b> أو <b>Kinda</b>، وتُحفظ كل الإجابات تلقائيًا في <b>سجل التلميحات (Clue Log)</b> الخاص بك.
+تظن أنك عرفت من أنت؟ اكتب اسمك في خانة التخمين واضغط <b>"Guess!"</b>—من يكتشف هويته أسرع يكسب نقاطًا أكثر!`,
+    ur:`ہر کھلاڑی کے ماتھے پر ایک خفیہ کردار یا چیز چپکی ہوتی ہے۔ آپ <b>باقی سب</b> کے کارڈ دیکھ سکتے ہیں، لیکن آپ کا اپنا کارڈ ماسک کے پیچھے چھپا ہوتا ہے!
+<b>Friends Pick</b> موڈ میں راؤنڈ شروع ہونے سے پہلے ہر کھلاڑی چپکے سے اگلے کھلاڑی کا کردار خود چنتا ہے۔
+اپنی باری پر <b>ہاں / نہیں والا سوال</b> پوچھیں—باکس میں لکھیں یا ڈسکارڈ وائس پر بول کر <b>"Asked on VC"</b> دبائیں!
+باقی سب <b>Yes</b>، <b>No</b> یا <b>Kinda</b> پر ٹیپ کرتے ہیں۔ سارے جوابات آپ کے ذاتی <b>Clue Log</b> میں محفوظ ہوتے رہتے ہیں۔
+لگتا ہے آپ سمجھ گئے کہ آپ کون ہیں؟ گیس باکس میں نام لکھیں اور <b>"Guess!"</b> دبائیں—پہلے بوجھنے والوں کو زیادہ پوائنٹس ملتے ہیں!`,
+    hi:`हर खिलाड़ी के माथे पर एक गुप्त किरदार या चीज़ चिपकी होती है। आप <b>बाक़ी सबके</b> कार्ड देख सकते हैं, लेकिन आपका अपना कार्ड मास्क के पीछे छुपा रहता है!
+<b>Friends Pick</b> मोड में राउंड शुरू होने से पहले हर खिलाड़ी चुपके से अगले खिलाड़ी का किरदार ख़ुद चुनता है।
+अपनी बारी पर <b>हाँ / नहीं वाला सवाल</b> पूछें—बॉक्स में लिखें या डिस्कॉर्ड वॉइस पर बोलकर <b>"Asked on VC"</b> दबाएँ!
+बाक़ी सब <b>Yes</b>, <b>No</b> या <b>Kinda</b> पर टैप करते हैं। सारे जवाब आपके पर्सनल <b>Clue Log</b> में सेव होते रहते हैं।
+लगता है आप समझ गए कि आप कौन हैं? गेस बॉक्स में नाम लिखें और <b>"Guess!"</b> दबाएँ—पहले पहचानने वालों को ज़्यादा पॉइंट्स मिलते हैं!`,
+  };
+
   /* ---------- the sheet ---------- */
   const css = `
 .howto-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;border:1px solid var(--line-2,rgba(255,255,255,.2));background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:13px 16px;font:700 15px var(--body,system-ui);cursor:pointer}

@@ -6,6 +6,7 @@
 (function(){
   const PREFIX = {
     codenames: "cn:", lantern: "ll:", forged: "fb:", scroll: "bs:",
+    silhouette: "sil:", dial: "dl:", clash: "cc:", bluff: "fb2:", mask: "mk:",
     werewolf: "ww:", imposter: "imp:", tierlist: "atn:", draw: "draw:",
   };
   const STALLS = [
@@ -13,6 +14,11 @@
     ["lantern", "Last Lantern", "#3F6FD8"],
     ["forged", "Forged Brush", "#7A4BC7"],
     ["scroll", "Broken Scroll", "#D6456B"],
+    ["silhouette", "Silhouette", "#1E7F9E"],
+    ["dial", "Festival Dial", "#E07A2F"],
+    ["clash", "Caption Clash", "#C93B8E"],
+    ["bluff", "Fox's Bluff", "#B53535"],
+    ["mask", "Forehead Mask", "#2B8C82"],
     ["werewolf", "Werewolf", "#1E1A2E"],
     ["imposter", "Imposter", "#D9A441"],
     ["tierlist", "Tier List", "#C9962B"],
@@ -123,7 +129,7 @@
     if(!p) return false;
     if(r.phase === "lobby" || r.phase === "final" || r.phase === "gallery") return false;
     if(p.sitout || p.spectator) return true;
-    if(r.game === "lantern" && r.table && !r.table.order.includes(pid)) return true;
+    if((r.game === "lantern" || r.game === "bluff" || r.game === "mask") && r.table && Array.isArray(r.table.order) && !r.table.order.includes(pid)) return true;
     return false;
   }
 

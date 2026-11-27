@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Caption Clash</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+:root{
+  --cloth:#C93B8E; --on-cloth:#F3EBDD;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
+  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --mint:var(--shrine);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+.noren{background:var(--cloth);color:var(--on-cloth)}
+.noren .th-btn,.noren .iconbtn,.noren .rb-btn{border-color:rgba(243,235,221,.35)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.9}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--lantern);color:var(--on-lantern);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+
+.stage{width:min(820px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
+.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
+.btn.small{padding:6px 13px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--amber)}
+select option{background:var(--night)}
+.err{color:var(--danger);font-size:14px;min-height:1.3em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px}
+.chips button.on{border-color:var(--amber);background:rgba(217,164,65,.14);color:var(--amber)}
+
+.face{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.face img,.mini img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.mini{width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);flex:none}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:64px;height:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:12px}
+.tok{display:grid;justify-items:center;gap:4px}
+.tok .face{width:62px;height:62px;border:3px solid rgba(255,255,255,.18);font-size:22px}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.prog{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0 14px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:12px;font-weight:700;opacity:.65}
+.pchip.ok{opacity:1;border-color:var(--mint)}
+
+.pcard{background:var(--paper);color:var(--ink);border-radius:16px;padding:18px;display:grid;gap:10px;box-shadow:0 20px 44px -18px #000}
+.pcard h3{font-size:22px;line-height:1.2}
+.pcard input{background:#fff;color:var(--ink);border:2px solid rgba(30,26,46,.22);font-family:var(--display);font-size:20px}
+.pcard input:focus{border-color:var(--cloth)}
+
+.battle-q{background:var(--glass);border:1.5px solid var(--amber);border-radius:16px;padding:16px 18px;text-align:center;margin:12px auto;max-width:660px}
+.battle-q h2{font-size:clamp(22px,5.5vw,32px);line-height:1.2}
+.mult{display:inline-block;background:var(--amber);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:900;margin-bottom:6px}
+.duel{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;margin:14px auto;max-width:720px}
+@media (max-width:600px){.duel{grid-template-columns:1fr}}
+.vs{width:46px;height:46px;border-radius:50%;background:var(--cloth);color:#fff;font-family:var(--display);font-size:20px;display:grid;place-items:center;align-self:center;margin:0 auto;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.jcard{position:relative;border:3px solid transparent;background:var(--paper);color:var(--ink);border-radius:16px;padding:22px 18px;display:grid;align-content:center;gap:12px;text-align:center;min-height:165px;box-shadow:0 22px 48px -20px #000;transition:transform .15s,border-color .2s}
+.jcard:hover:not(:disabled){transform:translateY(-4px);border-color:var(--amber)}
+.jcard.sel{border-color:var(--cloth);box-shadow:0 0 0 4px color-mix(in srgb,var(--cloth) 35%,transparent)}
+.jcard.win{border-color:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.4)}
+.jcard .ans{font-family:var(--display);font-size:clamp(22px,5vw,30px);line-height:1.2;overflow-wrap:anywhere}
+.jcard .who{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:14px;color:var(--ink-2)}
+.jcard .bar{height:8px;border-radius:999px;background:rgba(30,26,46,.12);overflow:hidden}
+.jcard .bar i{display:block;height:100%;background:var(--cloth);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.jcard.win .bar i{background:#22C55E}
+.sweep{position:absolute;top:-12px;right:12px;background:var(--amber);color:var(--ink);font-weight:900;font-size:12px;padding:3px 10px;border-radius:999px;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+
+.roast{display:flex;gap:10px;align-items:start;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:12px 14px;max-width:660px;margin:14px auto 0}
+.roast .bot{width:32px;height:32px;border-radius:50%;background:var(--amber);color:var(--ink);display:grid;place-items:center;font-weight:900;font-size:12px;flex:none}
+.scores{display:grid;gap:8px;margin-top:14px;max-width:640px;margin-inline:auto}
+.srow{display:grid;grid-template-columns:34px 30px 1fr auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800}
+.srow.first{border-color:var(--amber);background:rgba(217,164,65,.14)}
+.srow .rk{text-align:center;color:var(--muted)} .srow.first .rk{color:var(--amber)}
+.srow .pts{font-size:18px;font-variant-numeric:tabular-nums}
+.fadeup{animation:fadeup .4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+body.has-hostbar{--chat-lift:66px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <h1>Caption Clash</h1>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
+<script src="/howto.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 72%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, curView="", autoSent=-1;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+RoomBar.mount({act, game:"clash", onHostChange:(hk, became)=>{ hostKey = hk; curView = ""; if(became) toast("You are now the host!"); if(room) render(); }});
+const P = pid => room.players[pid] || {name:"Someone"};
+const picOf = p => { const s = Avatars.src(p); return s ? `<img src="${esc(s)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
+const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+
+function home(){
+  $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
+  document.body.classList.remove("has-hostbar"); curView="home";
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">The Comedy Battle Stage</div><h1 class="title">Caption Clash</h1>
+    <p class="sub">Write the funniest answer to unhinged prompts, go head-to-head for the room's votes, and let the AI roast the losers!</p></div>
+    <div class="row2 fadeup" style="margin-top:20px">
+      <form class="panel" id="createForm"><h2>Host a clash</h2>
+        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
+      <form class="panel" id="joinForm"><h2>Join with a code</h2>
+        <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="jErr"></div><button class="btn wide">Join</button></form>
+    </div><div class="fadeup">${HowTo.button("clash")}</div>`;
+  $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n=$("#cName").value.trim(); if(!n) return $("#cErr").textContent="Enter your name.";
+    try{ const r=await api("/api/rooms",{game:"clash",title:"Caption Clash"}); const m=await api(`/api/rooms/${r.code}/join`,{name:n}); store("cc:"+r.code,{me:m,hostKey:r.hostKey}); history.replaceState({},"","/clash?room="+r.code); openRoom(r.code); }catch(err){ $("#cErr").textContent=err.message; } };
+  $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c=$("#jCode").value.trim().toUpperCase(), n=$("#jName").value.trim(); if(!c||!n) return $("#jErr").textContent="Enter code and name.";
+    try{ const m=await api(`/api/rooms/${c}/join`,{name:n}); store("cc:"+c,{me:m,hostKey:null}); history.replaceState({},"","/clash?room="+c); openRoom(c); }catch(err){ $("#jErr").textContent=err.message; } };
+}
+function openRoom(c){
+  code=c; const s=store("cc:"+c)||{}; me=s.me||null; hostKey=s.hostKey||null;
+  $("#hCode").textContent=c; $("#hCode").hidden=false; BackGuard.arm(); poll(++pollGen,-1);
+}
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
+      const next = await api(`/api/rooms/${code}?v=${v}${who}`);
+      if(gen !== pollGen) return;
+      const prev = room; room = next; v = room.version; clockOffset = room.now - Date.now()/1000;
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("cc:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
+      if(!prev || prev.round !== room.round || prev.phase !== room.phase) autoSent = -1;
+      if(!Chat.socialOnly(prev, room)) render();
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
+    }catch(e){ if(e.message.includes("not found")){ toast("Room not found"); return home(); } await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+function render(){
+  renderHostbar();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  if(!me || !room.players[me.pid]) return gate();
+  const ph = room.phase;
+  if(ph === "lobby") lobby();
+  else if(ph === "starting"){ curView="starting"; $("#stage").innerHTML='<div class="fadeup" style="margin-top:12vh"><h1 class="title">Warming up the mic…</h1></div>'; }
+  else if(ph === "write") writeView();
+  else if(ph === "vote" || ph === "reveal") battleView();
+  else finalView();
+  tickTimer();
+}
+function gate(){
+  if($("#gate")) return; curView="gate";
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Caption Clash</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Take the stage</button></form>`;
+  $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
+    try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("cc:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
+}
+function lobby(){
+  curView="lobby";
+  const s=room.settings, ps=Object.keys(room.players), mine=P(me.pid), H=!!hostKey;
+  const sel=(id,opts,val)=>`<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  $("#stage").innerHTML=`<div class="fadeup"><h1 class="title">${ps.length} comedian${ps.length===1?"":"s"}</h1>
+    <p class="sub">Share code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b>. Best with 3+ players!</p></div>
+    <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">Tap to change your avatar.</p></div></div></div>
+    <div class="ring">${ps.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div>
+    <div class="panel" style="margin-top:16px"><h2>${H?"Show settings":"Settings"}</h2>
+      <div><label>Prompt pack</label><div class="chips">${[["mix","Mix"],["anime","Anime"],["party","Discord & Party"],["custom","Custom (AI)"]].map(([v,t])=>`<button type="button" class="${s.pack===v?"on":""}" data-pack="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+      ${s.pack==="custom" ? `<div><label for="sCust">Custom prompt theme</label><input type="text" id="sCust" maxlength="160" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Inside jokes about our server, Dragon Ball, School"></div>` : ""}
+      <div class="row3">
+        <div><label for="sRounds">Rounds</label>${sel("sRounds",[[1,"1"],[2,"2"],[3,"3 (classic)"],[4,"4"],[5,"5"]], s.rounds)}</div>
+        <div><label for="sWrite">Write time</label>${sel("sWrite",[[45,"45s"],[60,"1 min"],[90,"90s"]], s.writeSec)}</div>
+        <div><label for="sSpice">AI Roast</label>${sel("sSpice",[["wholesome","Wholesome"],["spicy","Spicy"],["unhinged","Unhinged"]], s.spice)}</div>
+      </div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<2?"disabled":""}>${ps.length<2?"Need 1 more player":"Start the show"}</button>` : '<p class="hint" style="text-align:center">Waiting for host to start.</p>'}
+    </div>${HowTo.button("clash")}`;
+  $("#photoBtn").onclick = ()=>Avatars.open(act);
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-pack]").forEach(b=>b.onclick=()=>send({pack:b.dataset.pack}));
+    $("#sRounds").onchange=e=>send({rounds:+e.target.value}); $("#sWrite").onchange=e=>send({writeSec:+e.target.value}); $("#sSpice").onchange=e=>send({spice:e.target.value});
+    if($("#sCust")) $("#sCust").onchange=e=>send({custom:e.target.value});
+  }
+}
+
+function writeView(){
+  const list = room.myPrompts || [], viewKey = `write:${room.round}`;
+  if(curView !== viewKey){
+    curView = viewKey;
+    const isFinal = room.settings.rounds > 1 && room.round === room.settings.rounds - 1;
+    $("#stage").innerHTML = `<div class="fadeup">
+      <div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds}${isFinal?" · 2× DOUBLE POINTS":""}</div>
+      <h1 class="title">${list.length ? "Write your funniest answers" : "Watching this round"}</h1>
+      <div class="prog" id="wProg"></div>
+      <div style="display:grid;gap:14px;max-width:620px;margin:0 auto">
+        ${list.map((p,i)=>`<form class="pcard" data-pf="${esc(p.id)}">
+          <small style="font-weight:800;color:var(--ink-2)">PROMPT ${i+1} OF ${list.length}</small>
+          <h3>${esc(p.prompt)}</h3>
+          <input type="text" maxlength="90" autocomplete="off" placeholder="Type your punchline…" value="${esc(p.mine||"")}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="hint" style="color:var(--ink-2)" data-st="${esc(p.id)}">${p.mine?"Saved! You can still tweak it.":""}</span><button class="btn primary small">Save</button></div>
+        </form>`).join("")}
+      </div></div>`;
+    document.querySelectorAll("[data-pf]").forEach(f=>{
+      f.onsubmit = async e=>{
+        e.preventDefault(); const inp=f.querySelector("input"), t=inp.value.trim(); if(!t) return toast("Type a joke first!");
+        try{ await act("answer",{id:f.dataset.pf, text:t}); const st=f.querySelector("[data-st]"); if(st) st.textContent="Saved! ✓"; buzz(25); }catch(err){ toast(err.message); }
+      };
+    });
+    const first = $("#stage input"); if(first) first.focus();
+  }
+  const done = new Set(room.donePids || []);
+  const prog = $("#wProg");
+  if(prog) prog.innerHTML = (room.activePids||[]).map(pid=>`<span class="pchip ${done.has(pid)?"ok":""}">${face(pid,"mini")}${esc(P(pid).name)}${done.has(pid)?" ✓":""}</span>`).join("");
+}
+
+function battleView(){
+  const m = room.match, ph = room.phase;
+  const viewKey = `${ph}:${room.round}:${room.matchIdx}:${m.myVote}:${m.voteCount}:${m.ai||""}`;
+  if(curView === viewKey) return;
+  curView = viewKey;
+  const votes = m.votes || {};
+  const va = Object.values(votes).filter(v=>v===0).length, vb = Object.values(votes).filter(v=>v===1).length, tot = Math.max(1, va + vb);
+  const pct = [Math.round(va/tot*100), Math.round(vb/tot*100)];
+  const winSide = ph === "reveal" ? (va > vb ? 0 : vb > va ? 1 : -1) : -1;
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Round ${room.round+1} · Battle ${room.matchIdx+1} of ${room.totalMatchups}</div>
+    <div class="battle-q">${m.mult>1?'<span class="mult">2× DOUBLE POINTS</span>':""}<h2>${esc(m.prompt)}</h2></div>
+    <div class="duel">
+      ${[0,1].map(side=>{
+        const author = m.authors?.[side], isWin = winSide === side, isSweep = m.sweep && m.sweep === author;
+        const pts = author ? (m.points?.[author] || 0) : 0;
+        const tag = ph === "vote" && m.canVote ? "button" : "div";
+        return `<${tag} ${tag==="button"?`type="button" data-side="${side}"`:""} class="jcard ${m.myVote===side?"sel":""} ${isWin?"win":""}">
+          ${isSweep ? '<span class="sweep">UNANIMOUS SWEEP!</span>' : ""}
+          <div class="ans">"${esc(m.choices[side])}"</div>
+          ${ph==="reveal" && author ? `<div class="who">${face(author,"mini")}<span>${esc(P(author).name)}</span><b style="color:var(--cloth)">+${pts}</b></div>
+            <div class="bar"><i style="width:${pct[side]}%"></i></div><small style="font-weight:800;color:var(--ink-2)">${side===0?va:vb} vote${(side===0?va:vb)===1?"":"s"} (${pct[side]}%)</small>` : ""}
+        </${tag}>${side===0?'<div class="vs">VS</div>':""}`;
+      }).join("")}
+    </div>
+    <p class="sub">${ph==="vote" ? (m.canVote ? `Tap the funnier answer! ${m.voteCount}/${m.voteNeed} voted.` : `You're in this battle! ${m.voteCount}/${m.voteNeed} voted.`) : ""}</p>
+    ${ph==="reveal" && m.ai ? `<div class="roast"><span class="bot">AI</span><span>${esc(m.ai)}</span></div>` : ""}
+    ${ph==="reveal" ? scoreRows() : ""}
+  </div>`;
+  document.querySelectorAll("[data-side]").forEach(b=>b.onclick=async ()=>{
+    try{ await act("vote",{side:+b.dataset.side}); buzz(30); }catch(err){ toast(err.message); }
+  });
+}
+
+function scoreRows(){
+  const rows = Object.keys(room.players).map(pid=>({pid, s:room.scores?.[pid]||0})).sort((a,b)=>b.s-a.s);
+  return `<div class="scores">${rows.map((x,i)=>`<div class="srow ${i===0&&x.s>0?"first":""}"><span class="rk">${i+1}</span>${face(x.pid)}<span>${esc(P(x.pid).name)}</span><span class="pts">${x.s}</span></div>`).join("")}</div>`;
+}
+function finalView(){
+  if(curView === "final") return; curView = "final";
+  const top = Object.keys(room.players).sort((a,b)=>(room.scores?.[b]||0)-(room.scores?.[a]||0))[0];
+  $("#stage").innerHTML = `<div class="fadeup"><div class="eyebrow">Final Standings</div>
+    <h1 class="title">${top ? `${esc(P(top).name)} takes the mic!` : "Show's over"}</h1>${scoreRows()}</div>`;
+}
+
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "write") b.push('<button class="btn small" data-host="addtime">+30s</button><button class="btn small" data-host="skip">Start voting</button>');
+  if(ph === "vote") b.push('<button class="btn small" data-host="skip">Reveal votes</button>');
+  if(ph === "reveal") b.push(`<button class="btn primary" data-host="next">${room.matchIdx+1<room.totalMatchups?"Next battle":room.round+1<room.settings.rounds?"Next round":"Final standings"}</button>`);
+  if(ph === "final") b.push('<button class="btn primary" data-host="playagain">Play again</button>');
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+document.addEventListener("click", async e=>{
+  const h = e.target.closest("[data-host]");
+  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); }catch(err){ toast(err.message); } }
+});
+$("#hCode").onclick = async ()=>{ if(!code) return; const l=location.origin+"/clash?room="+code; try{ await navigator.clipboard.writeText(l); toast(`Invite link copied · ${code}`); }catch(e){ toast(l); } };
+function tickTimer(){
+  const el = $("#timer"); if(!room || !room.deadline || !["write","vote"].includes(room.phase)){ el.hidden = true; return; }
+  const rem = room.deadline - serverNow(), left = Math.max(0, Math.ceil(rem));
+  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`; el.classList.toggle("low", left <= 8);
+  if(room.phase === "write" && rem <= 1.5 && autoSent !== room.round){
+    autoSent = room.round;
+    document.querySelectorAll("[data-pf]").forEach(f=>{ const t=f.querySelector("input")?.value.trim(); if(t) act("answer",{id:f.dataset.pf,text:t}).catch(()=>{}); });
+  }
+}
+setInterval(tickTimer, 200);
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>
