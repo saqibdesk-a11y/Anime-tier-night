@@ -1,7 +1,7 @@
 {
   "name": "Anime Game Night",
   "short_name": "Game Night",
-  "description": "Party games for friends: Codenames, Last Lantern, Forged Brush, Werewolf, Imposter, Tier List and Draw It.",
+  "description": "Party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Werewolf, Imposter, Tier List and Draw It.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

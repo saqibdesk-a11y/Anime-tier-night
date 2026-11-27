@@ -324,6 +324,42 @@ Spot the Forger: +2. Forger escapes: +3, or +4 if an innocent artist was framed.
 नक़लची को पकड़ना: +2। नक़लची बच जाए: +3, और अगर कोई बेक़सूर फँस जाए तो +4। पकड़ा गया नक़लची चीज़ बूझ ले: +3। बेक़सूर को वोट देना: -1।`,
   };
 
+  /* ---------- Broken Scroll ---------- */
+  T.scroll = {
+    en:`Every player starts their own scroll by writing a funny prompt (or tap <b>"Inspire me"</b> for a random idea).
+Then the scrolls pass around the table! On each step you either <b>draw</b> what the last person wrote, or <b>guess</b> what the last person drew.
+Tools: brush, eraser, fill bucket, colour swatches, brush sizes, undo and redo. Tap <b>"I'm done!"</b> when finished (your work also auto-saves when the timer ends).
+When all steps finish, everyone watches each scroll unroll panel by panel in the <b>Reveal Theater</b>, reacting live with emojis—and you can save any scroll as a <b>Comic Strip PNG</b>!
+# Modes
+<b>Classic Telephone:</b> alternates between writing and drawing until the prompt mutates completely.
+<b>Speed Chaos:</b> frantic 45s drawing and 20s guessing timers.
+<b>Memory Knock-Off:</b> study the previous drawing for only 7 seconds, then redraw it from memory!`,
+    ar:`يبدأ كل لاعب لفّافته بكتابة فكرة مضحكة (أو اضغط <b>"Inspire me"</b> لفكرة عشوائية).
+ثم تمرّ اللفافات حول الطاولة! في كل خطوة إمّا أن <b>ترسم</b> ما كتبه اللاعب السابق، أو <b>تخمّن</b> ما رسمه.
+الأدوات: فرشاة، ممحاة، دلو تعبئة، ألوان، أحجام، تراجع وإعادة. اضغط <b>"I'm done!"</b> عند الانتهاء (ويُحفظ عملك تلقائيًا عند انتهاء الوقت).
+عند انتهاء كل الخطوات، يشاهد الجميع كل لفّافة تُفتح خطوة بخطوة في <b>مسرح الكشف</b> مع تفاعلات مباشرة—ويمكنك حفظ أي لفّافة كصورة شريط قصصي <b>Comic Strip PNG</b>!
+# الأوضاع
+<b>Classic Telephone:</b> يتناوب بين الكتابة والرسم حتى تتحوّل الفكرة تمامًا.
+<b>Speed Chaos:</b> مؤقّتات سريعة ومجنونة (45 ثانية للرسم و20 ثانية للتخمين).
+<b>Memory Knock-Off:</b> شاهد الرسمة السابقة لـ 7 ثوانٍ فقط، ثم أعد رسمها من الذاكرة!`,
+    ur:`ہر کھلاڑی ایک مزاحیہ خیال لکھ کر اپنا اسکرول شروع کرتا ہے (یا رینڈم آئیڈیا کے لیے <b>"Inspire me"</b> دبائیں)۔
+پھر اسکرولز سب کے درمیان گھومتے ہیں! ہر مرحلے میں آپ یا تو پچھلے کھلاڑی کی لکھی ہوئی چیز <b>بناتے</b> ہیں، یا اس کی بنائی ہوئی ڈرائنگ کا <b>اندازہ</b> لگاتے ہیں۔
+ٹولز: برش، ربڑ، رنگ بھرنے والی بالٹی، رنگ، سائز، Undo اور Redo۔ مکمل ہونے پر <b>"I'm done!"</b> دبائیں (وقت ختم ہونے پر آپ کا کام خود بخود محفوظ ہو جاتا ہے)۔
+سارے مراحل کے بعد سب مل کر <b>Reveal Theater</b> میں ہر اسکرول کو ایک ایک کر کے کھلتے دیکھتے ہیں، ایموجیز سے ردعمل دیتے ہیں—اور کسی بھی اسکرول کو <b>Comic Strip PNG</b> کے طور پر محفوظ کر سکتے ہیں!
+# موڈز
+<b>Classic Telephone:</b> باری باری لکھنا اور بنانا، جب تک اصل خیال بالکل بدل نہ جائے۔
+<b>Speed Chaos:</b> تیز ترین ٹائمر (45 سیکنڈ ڈرائنگ اور 20 سیکنڈ اندازہ)۔
+<b>Memory Knock-Off:</b> پچھلی ڈرائنگ کو صرف 7 سیکنڈ دیکھیں، پھر یادداشت سے دوبارہ بنائیں!`,
+    hi:`हर खिलाड़ी एक मज़ेदार आइडिया लिखकर अपना स्क्रॉल शुरू करता है (या रैंडम आइडिया के लिए <b>"Inspire me"</b> दबाएँ)।
+फिर स्क्रॉल सबके बीच घूमते हैं! हर स्टेप में आप या तो पिछले खिलाड़ी की लिखी बात <b>ड्रॉ</b> करते हैं, या उसकी ड्रॉइंग का <b>अंदाज़ा</b> लगाते हैं।
+टूल्स: ब्रश, रबड़, फ़िल बकेट, रंग, साइज़, Undo और Redo। पूरा होने पर <b>"I'm done!"</b> दबाएँ (टाइमर ख़त्म होने पर आपका काम अपने-आप सेव हो जाता है)।
+सारे स्टेप पूरे होने पर सब मिलकर <b>Reveal Theater</b> में हर स्क्रॉल को एक-एक करके खुलते देखते हैं, इमोजी से रिएक्ट करते हैं—और किसी भी स्क्रॉल को <b>Comic Strip PNG</b> के रूप में सेव कर सकते हैं!
+# मोड्स
+<b>Classic Telephone:</b> बारी-बारी से लिखना और बनाना, जब तक असली आइडिया पूरी तरह बदल न जाए।
+<b>Speed Chaos:</b> तेज़-तर्रार टाइमर (45 सेकंड ड्रॉइंग और 20 सेकंड अंदाज़ा)।
+<b>Memory Knock-Off:</b> पिछली ड्रॉइंग को सिर्फ़ 7 सेकंड देखें, फिर याददाश्त से दोबारा बनाएँ!`,
+  };
+
   /* ---------- the sheet ---------- */
   const css = `
 .howto-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;border:1px solid var(--line-2,rgba(255,255,255,.2));background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:13px 16px;font:700 15px var(--body,system-ui);cursor:pointer}

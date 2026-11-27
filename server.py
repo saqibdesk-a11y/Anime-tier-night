@@ -22,9 +22,10 @@ import forged_game
 import imposter_game
 import lantern_game
 import media
+import scroll_game
 import werewolf_game
 
-GAMES = {"draw": draw_game, "forged": forged_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game, "lantern": lantern_game}  # every game module has the same hooks
+GAMES = {"draw": draw_game, "forged": forged_game, "scroll": scroll_game, "werewolf": werewolf_game, "imposter": imposter_game, "codenames": codenames_game, "lantern": lantern_game}  # every game module has the same hooks
 
 PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -111,6 +112,10 @@ def live_image_ids():
                 keep.add(p["photo"])
         for rd in room.get("roundData", []):
             for e in (rd.get("entries") or {}).values():
+                if e.get("img"):
+                    keep.add(e["img"])
+        for ch in room.get("chains", []):
+            for e in ch.get("entries", []):
                 if e.get("img"):
                     keep.add(e["img"])
     return keep
@@ -1159,7 +1164,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/icon-512.png": ("image/png", "public, max-age=86400"),
 }
 IMG_DIRS = {"roles", "scenes"}
-PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/forged": "forged.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html", "/lantern": "lantern.html"}
+PAGES = {"/": "hub.html", "/index.html": "hub.html", "/tierlist": "tierlist.html", "/draw": "draw.html", "/forged": "forged.html", "/scroll": "scroll.html", "/werewolf": "werewolf.html", "/imposter": "imposter.html", "/codenames": "codenames.html", "/lantern": "lantern.html"}
 
 
 def main():

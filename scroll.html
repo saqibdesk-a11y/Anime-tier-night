@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Broken Scroll</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+/* Layout: the scroll relay stall. Everyone writes a prompt, draws the last one, guesses the drawing,
+   and then watches every scroll unroll panel by panel. Colors come from festival.css. */
+:root{
+  --cloth:#D6456B; --on-cloth:#F3EBDD;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
+  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --mint:var(--shrine);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+
+.noren{background:var(--cloth);color:var(--on-cloth)}
+.noren .th-btn,.noren .iconbtn{border-color:rgba(243,235,221,.35)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.9}
+.iconbtn{border:1px solid rgba(243,235,221,.35);background:none;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;padding:0;color:inherit}
+.iconbtn svg{width:18px;height:18px}
+.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.timer.low{background:var(--lantern);color:var(--on-lantern);animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+
+.stage{width:min(920px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(125px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
+.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:56ch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
+.panel h2{font-size:24px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s,background .2s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern);box-shadow:0 8px 24px -10px color-mix(in srgb,var(--lantern) 70%,transparent)}
+.btn.paper{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--ink)}
+.btn.small{padding:6px 13px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--amber)}
+select option{background:var(--night)}
+.err{color:var(--danger);font-size:14px;min-height:1.3em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:600px){.row2,.row3{grid-template-columns:1fr}}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:640px){.seg3{grid-template-columns:1fr}}
+.seg3 button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:11px;text-align:left;display:grid;gap:3px;align-content:start}
+.seg3 button small{color:var(--muted);font-weight:500;line-height:1.35;font-size:12px}
+.seg3 button.on{border-color:var(--amber);background:rgba(217,164,65,.14)}
+
+/* home scroll hero */
+.hero-scroll{display:flex;align-items:center;justify-content:center;gap:10px;margin:2vh auto 12px}
+.hero-scroll .tile{width:76px;height:76px;border-radius:14px;background:var(--paper);color:var(--ink);display:grid;place-items:center;font-size:32px;box-shadow:0 16px 32px -14px #000;animation:hop 3.6s ease-in-out infinite}
+.hero-scroll .tile:nth-child(3){animation-delay:.4s}
+.hero-scroll .tile:nth-child(5){animation-delay:.8s}
+.hero-scroll .arr{font-weight:900;color:var(--amber);font-size:20px;opacity:.8}
+@keyframes hop{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+
+/* avatars & status strip */
+.face{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+.face img,.mini img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.mini{width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);vertical-align:middle;flex:none}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:64px;height:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px;margin-top:14px}
+.tok{position:relative;display:grid;justify-items:center;gap:5px;padding:6px 2px}
+.tok .face{width:66px;height:66px;border:3px solid rgba(255,255,255,.2);font-size:24px;box-shadow:0 10px 24px -10px rgba(0,0,0,.9)}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.prog{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0 14px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 4px;border-radius:999px;background:var(--glass);border:1.5px solid var(--line);font-size:13px;font-weight:700;opacity:.65;transition:opacity .2s,border-color .2s}
+.pchip.done{opacity:1;border-color:var(--mint);background:color-mix(in srgb,var(--mint) 16%,var(--night-2))}
+.pchip .ck{color:var(--mint);font-weight:900}
+
+/* write / guess card */
+.prompt-card{background:var(--paper);color:var(--ink);border-radius:16px;padding:20px;display:grid;gap:14px;max-width:600px;margin:0 auto;box-shadow:0 24px 54px -20px #000}
+.prompt-card h2{font-size:26px;line-height:1.15}
+.prompt-card input[type=text]{background:#fff;color:var(--ink);border:2px solid rgba(30,26,46,.22);font-family:var(--display);font-size:22px;padding:12px 14px}
+.prompt-card input[type=text]:focus{border-color:var(--cloth)}
+.ref-art{background:#fff;border-radius:12px;overflow:hidden;border:2px solid rgba(30,26,46,.12);box-shadow:0 10px 26px -14px rgba(0,0,0,.4)}
+.ref-art img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain}
+.done-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-radius:14px;background:color-mix(in srgb,var(--mint) 18%,var(--night-2));border:1.5px solid var(--mint);margin-top:12px}
+
+/* drawing studio */
+.draw-prompt{background:var(--paper);color:var(--ink);border-radius:14px;padding:12px 18px;text-align:center;margin:0 auto 12px;max-width:680px;box-shadow:0 14px 32px -18px #000}
+.draw-prompt small{display:block;font-size:12px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.08em}
+.draw-prompt b{font-family:var(--display);font-size:clamp(22px,5vw,32px);line-height:1.15;display:block;margin-top:2px}
+.studio{display:grid;grid-template-columns:minmax(0,1fr) 224px;gap:14px;align-items:start}
+@media (max-width:820px){.studio{grid-template-columns:1fr}}
+.sheet{position:relative;background:#FFFDF8;border-radius:16px;overflow:hidden;box-shadow:0 26px 60px -24px rgba(0,0,0,.95),0 0 0 2px rgba(243,235,221,.16);width:min(100%,calc((100dvh - 210px) * 4 / 3));margin:0 auto}
+.sheet canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;touch-action:none;cursor:crosshair}
+.sheet.locked canvas{cursor:not-allowed;opacity:.82}
+.brushring{position:absolute;z-index:4;pointer-events:none;border-radius:50%;border:1.5px solid rgba(0,0,0,.75);box-shadow:0 0 0 1px rgba(255,255,255,.85);transform:translate(-50%,-50%)}
+.peek-cover{position:absolute;inset:0;z-index:6;background:var(--night-2);display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:12px;align-items:center;justify-items:center}
+.peek-cover img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;background:#fff;box-shadow:0 12px 30px -12px #000}
+.peek-bar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.16);overflow:hidden}
+.peek-bar i{display:block;height:100%;background:var(--amber);transition:width .15s linear}
+.dock{display:grid;gap:12px;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:14px}
+@media (max-width:820px){.dock{grid-template-columns:1fr 1fr;gap:10px}}
+@media (max-width:480px){.dock{grid-template-columns:1fr}}
+.toolrow{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.toolrow button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:8px 4px;display:grid;justify-items:center;gap:3px;font-size:12px;font-weight:700}
+.toolrow button svg{width:20px;height:20px}
+.toolrow button.on{border-color:var(--amber);background:color-mix(in srgb,var(--cloth) 28%,transparent);color:#fff}
+.swatches{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.sw{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0}
+.sw.on{outline:3px solid var(--amber);outline-offset:2px}
+.cpick{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.cpick input{width:28px;height:28px;border:0;padding:0;border-radius:50%;background:none;cursor:pointer}
+.sizes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sz{height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25);display:grid;place-items:center}
+.sz i{display:block;border-radius:50%;background:var(--fg)}
+.sz.on{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.actions2{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+
+/* reveal theater */
+.scroll-tabs{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none;justify-content:safe center}
+.scroll-tabs button{flex:none;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--glass);border-radius:999px;padding:5px 13px 5px 5px;font-size:13px;font-weight:700}
+.scroll-tabs button.on{border-color:var(--amber);background:color-mix(in srgb,var(--cloth) 26%,var(--night-2));color:#fff}
+.scroll-tabs button:disabled{opacity:.65;cursor:default}
+
+.theater{position:relative;max-width:640px;margin:0 auto;padding:18px 0}
+/* wooden scroll rollers top & bottom */
+.roller{height:22px;border-radius:999px;background:linear-gradient(180deg,#C58F52,#7D4E24 65%,#543215);box-shadow:0 8px 20px rgba(0,0,0,.6),inset 0 2px 2px rgba(255,240,210,.45);position:relative;z-index:2}
+.roller::before,.roller::after{content:"";position:absolute;top:3px;bottom:3px;width:16px;border-radius:4px;background:linear-gradient(180deg,var(--gold),#9A6D1F)}
+.roller::before{left:-6px} .roller::after{right:-6px}
+.parchment{margin:-4px 12px;background:linear-gradient(180deg,#F7EFE0,#EFE3CB);color:var(--ink);padding:20px 16px;display:grid;gap:16px;box-shadow:0 24px 60px -20px #000}
+.entry{display:grid;gap:8px;animation:unroll .45s cubic-bezier(.2,.9,.3,1) backwards}
+@keyframes unroll{from{opacity:0;transform:translateY(-14px) scale(.97)}}
+.entry .by{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--ink-2)}
+.entry .by .tag{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(30,26,46,.08)}
+.entry .quote{background:#fff;border-radius:14px;padding:14px 16px;font-family:var(--display);font-size:clamp(22px,5.5vw,32px);line-height:1.2;border-left:5px solid var(--cloth);box-shadow:0 6px 18px -12px rgba(0,0,0,.35);overflow-wrap:anywhere}
+.entry .quote.late{opacity:.55;font-size:18px}
+.entry .pic{background:#fff;border-radius:14px;overflow:hidden;border:2px solid rgba(30,26,46,.12);box-shadow:0 12px 28px -16px rgba(0,0,0,.45)}
+.entry .pic img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain}
+.entry .missing{padding:36px 16px;text-align:center;color:var(--ink-2);font-weight:700;background:rgba(30,26,46,.05);border-radius:12px}
+
+.mutate{background:var(--night-2);color:var(--fg);border-radius:14px;padding:14px 16px;display:grid;gap:10px;border:1.5px solid var(--gold);animation:unroll .5s backwards}
+.mutate .cols{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+@media (max-width:480px){.mutate .cols{grid-template-columns:1fr}.mutate .cols .ar{transform:rotate(90deg)}}
+.mutate small{display:block;font-size:11px;color:var(--amber);font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.mutate b{font-family:var(--display);font-size:20px;line-height:1.2}
+.mutate .ai-line{display:flex;gap:10px;align-items:start;background:rgba(243,235,221,.08);padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.45}
+.mutate .ai-line .bot{width:28px;height:28px;border-radius:50%;background:var(--amber);color:var(--ink);display:grid;place-items:center;font-weight:900;font-size:11px;flex:none}
+
+/* live reactions */
+.reacts{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.reacts button{border:1px solid var(--line2);background:var(--glass);border-radius:999px;padding:7px 14px;font-size:18px;display:inline-flex;align-items:center;gap:6px;transition:transform .12s,border-color .15s}
+.reacts button:active{transform:scale(1.18)}
+.reacts button b{font-size:13px;color:var(--amber);font-variant-numeric:tabular-nums}
+.float-emoji{position:fixed;z-index:75;pointer-events:none;font-size:34px;line-height:1;animation:floatup 1.5s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,0) scale(.5)}18%{opacity:1;transform:translate(-50%,-24px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-150px) scale(.9)}}
+
+/* final gallery */
+.award-box{background:linear-gradient(135deg,color-mix(in srgb,var(--cloth) 24%,var(--night-2)),var(--night-2));border:1.5px solid var(--gold);border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;margin:14px auto;max-width:680px}
+.award-box .medal{font-size:32px;flex:none}
+.gal-grid{display:grid;gap:18px;margin-top:16px}
+.gal-card{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
+.gal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gal-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:10px}
+.gal-step{background:var(--paper);color:var(--ink);border-radius:10px;padding:8px;display:grid;gap:6px;align-content:start}
+.gal-step .who{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink-2)}
+.gal-step img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-radius:6px}
+.gal-step .qt{font-family:var(--display);font-size:17px;line-height:1.2;padding:6px 4px;overflow-wrap:anywhere}
+
+.fadeup{animation:fadeup .4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding:11px max(14px,env(safe-area-inset-right,0px)) calc(11px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+.hostbar .count{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;color:var(--muted);min-width:64px;text-align:center}
+body.has-hostbar{--chat-lift:66px}
+body.has-hostbar .stage{padding-bottom:calc(168px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <h1>Broken Scroll</h1>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+  <button type="button" class="iconbtn" id="soundBtn" aria-label="Sound" title="Sound"></button>
+</header>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script src="/howto.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 70% 72%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+/* ---------- sound effects (Web Audio) ---------- */
+let soundOn = (()=>{ try{ return localStorage.getItem("bs:sound") !== "off"; }catch(e){ return true; } })();
+let actx = null;
+function audio(){
+  if(!soundOn) return null;
+  if(!actx){ try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(actx.state === "suspended") actx.resume().catch(()=>{});
+  return actx;
+}
+function paintSoundBtn(){
+  $("#soundBtn").innerHTML = soundOn
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>';
+}
+$("#soundBtn").onclick = ()=>{ soundOn = !soundOn; try{ localStorage.setItem("bs:sound", soundOn?"on":"off"); }catch(e){} paintSoundBtn(); };
+paintSoundBtn();
+const SFX = {
+  tone(freq, dur, vol=.11, type="triangle", delay=0){
+    const c = audio(); if(!c) return;
+    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + delay;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(vol, t + .015);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .02);
+  },
+  unroll(){ SFX.tone(392, .11, .09, "triangle", 0); SFX.tone(523, .16, .11, "triangle", .07); },
+  step(){ SFX.tone(440, .12, .1, "sine", 0); SFX.tone(587, .16, .11, "sine", .08); },
+  pop(){ SFX.tone(680, .09, .08, "sine", 0); SFX.tone(880, .1, .07, "sine", .04); },
+  fanfare(){ [523,659,784,1046].forEach((f,i)=>SFX.tone(f, .22, .09, "triangle", i*.08)); },
+};
+
+/* ---------- state ---------- */
+const CW = 800, CH = 600;
+const PALETTE = ["#1E1A2E","#FFFFFF","#E63946","#F2603A","#F59E0B","#FACC15","#22C55E","#0D9488","#3B82F6","#4F46E5","#9333EA","#EC4899","#9A3412","#94A3B8"];
+const REACTIONS = ["😂","💀","🔥","🎨","❓"];
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
+let curView="", autoSubmittedStep=-1, seenReacts=new Set(), autoPlayTimer=null, peekTimer=null;
+
+// drawing studio state
+let strokes=[], redoStack=[], clearedForUndo=null, curStroke=null;
+let tool="pen", color="#1E1A2E", size=9, clearArmed=false, dirtyDraw=false;
+const inkCv = document.createElement("canvas"); inkCv.width = CW; inkCv.height = CH;
+const inkCtx = inkCv.getContext("2d", {willReadFrequently:true});
+
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+const P = pid => room.players[pid] || {name:"Someone who left"};
+const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
+const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+
+/* ---------- home & room connection ---------- */
+function home(){
+  stopAutoPlay();
+  $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
+  document.body.classList.remove("has-hostbar");
+  curView = "home";
+  $("#stage").innerHTML = `
+    <div class="hero-scroll fadeup" aria-hidden="true">
+      <div class="tile">📝</div><span class="arr">&rarr;</span>
+      <div class="tile">🎨</div><span class="arr">&rarr;</span>
+      <div class="tile">😂</div>
+    </div>
+    <div class="fadeup"><div class="eyebrow">The Scroll Relay Stall</div><h1 class="title">Broken Scroll</h1>
+      <p class="sub">Write a prompt, pass the scroll, draw what you read, guess what you see—then watch every scroll derail in the reveal theater.</p></div>
+    <div class="row2 fadeup" style="margin-top:20px">
+      <form class="panel" id="createForm"><h2>Host a game</h2>
+        <div><label for="cName">Your name</label><input type="text" id="cName" placeholder="e.g. Saqib" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="cErr"></div>
+        <button class="btn primary wide">Create room</button></form>
+      <form class="panel" id="joinForm"><h2>Join with a code</h2>
+        <div><label for="jCode">Room code</label><input type="text" id="jCode" placeholder="e.g. K7QX" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div class="err" id="jErr"></div>
+        <button class="btn wide">Join</button></form>
+    </div>
+    <div class="fadeup">${HowTo.button("scroll")}</div>`;
+  $("#createForm").onsubmit = async e=>{
+    e.preventDefault(); $("#cErr").textContent = "";
+    const n = $("#cName").value.trim(); if(!n) return $("#cErr").textContent = "Enter your name.";
+    try{
+      const r = await api("/api/rooms", {game:"scroll", title:"Broken Scroll"});
+      const m = await api(`/api/rooms/${r.code}/join`, {name:n});
+      store("bs:"+r.code, {me:m, hostKey:r.hostKey});
+      history.replaceState({}, "", "/scroll?room="+r.code);
+      openRoom(r.code);
+    }catch(err){ $("#cErr").textContent = err.message; }
+  };
+  $("#joinForm").onsubmit = async e=>{
+    e.preventDefault(); $("#jErr").textContent = "";
+    const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
+    if(!c || !n) return $("#jErr").textContent = "Enter both the code and your name.";
+    try{
+      const m = await api(`/api/rooms/${c}/join`, {name:n});
+      store("bs:"+c, {me:m, hostKey:null});
+      history.replaceState({}, "", "/scroll?room="+c);
+      openRoom(c);
+    }catch(err){ $("#jErr").textContent = err.message; }
+  };
+}
+
+function openRoom(c){
+  code = c; const saved = store("bs:"+c) || {}; me = saved.me || null; hostKey = saved.hostKey || null;
+  $("#hCode").textContent = c; $("#hCode").hidden = false;
+  BackGuard.arm();
+  poll(++pollGen, -1);
+}
+
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const q = me ? `&pid=${me.pid}&key=${me.key}` : "";
+      const next = await api(`/api/rooms/${code}?v=${v}${q}`);
+      if(gen !== pollGen) return;
+      const prev = room; room = next; v = room.version;
+      clockOffset = room.now - Date.now()/1000;
+      if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
+      if(room.game && room.game !== "scroll"){ location.href = `/${room.game}?room=${code}`; return; }
+      playReactBursts(room.reactBurst || [], !prev);
+      const changedStep = !prev || prev.phase !== room.phase || prev.step !== room.step;
+      if(changedStep){
+        if(room.phase !== "show") stopAutoPlay();
+        if(peekTimer){ clearInterval(peekTimer); peekTimer = null; }
+        if(room.phase === "playing"){ SFX.step(); buzz(40); autoSubmittedStep = -1; }
+        if(room.phase === "show" && prev?.phase !== "show"){ SFX.fanfare(); }
+      } else if(room.phase === "show" && prev?.show && (prev.show.chain !== room.show.chain || prev.show.panel !== room.show.panel)){
+        SFX.unroll();
+      }
+      if(!Chat.socialOnly(prev, room)) render();
+      Chat.update(room, me); Pranks.update(room, me);
+    }catch(e){
+      if(e.message.includes("not found")){ toast("Room not found"); return home(); }
+      await new Promise(r=>setTimeout(r, 2000));
+    }
+  }
+}
+
+function playReactBursts(list, initial){
+  if(initial){ list.forEach(x=>seenReacts.add(x.id)); return; }
+  for(const x of list){
+    if(seenReacts.has(x.id)) continue;
+    seenReacts.add(x.id);
+    if(room.phase !== "show") continue;
+    SFX.pop();
+    const el = document.createElement("span");
+    el.className = "float-emoji";
+    el.textContent = x.emoji;
+    el.style.left = (22 + Math.random() * 56) + "vw";
+    el.style.bottom = (110 + Math.random() * 60) + "px";
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 1600);
+  }
+}
+
+/* ---------- render dispatcher ---------- */
+function render(){
+  renderHostbar();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  if(!me || !room.players[me.pid]) return gate();
+  const ph = room.phase;
+  if(ph === "lobby") lobby();
+  else if(ph === "playing") playing();
+  else if(ph === "show") showView();
+  else galleryView();
+  tickTimer();
+}
+
+function gate(){
+  if($("#gate")) return;
+  curView = "gate";
+  $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">Unroll a scroll</div><h2 style="text-align:center">Join Broken Scroll</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join the table</button></form>`;
+  $("#gate").onsubmit = async e=>{
+    e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
+    try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("bs:"+code, {me, hostKey}); curView=""; poll(++pollGen, -1); }
+    catch(err){ $("#gErr").textContent = err.message; }
+  };
+}
+
+/* ---------- lobby ---------- */
+function lobby(){
+  curView = "lobby";
+  const s = room.settings, ps = Object.keys(room.players), mine = P(me.pid), H = !!hostKey;
+  const sel = (id, opts, val, dis=false) => `<select id="${id}" ${H&&!dis?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  const spd = s.mode === "speed";
+  $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"}</h1>
+    <p class="sub">Share the code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b> (or tap it in the header). Best with 4+ friends!</p></div>
+    <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button" aria-label="Choose your avatar">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">${Avatars.src(mine) ? "Tap to change your picture." : "Pick an anime character or upload a photo."}</p></div></div></div>
+    <div class="ring">${ps.map(pid=>`<div class="tok fadeup">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span>${H&&pid!==me.pid?`<button class="btn small" data-kick="${pid}" style="padding:2px 10px;font-size:11px">Kick</button>`:""}</div>`).join("")}</div>
+    <div class="panel" style="margin-top:16px"><h2>${H ? "Set up the relay" : "Game settings"}</h2>
+      <div><label>Mode</label><div class="seg3">
+        <button type="button" class="${s.mode==="classic"?"on":""}" data-mode="classic" ${H?"":"disabled"}><b>Classic Telephone</b><small>Write &rarr; Draw &rarr; Guess &rarr; Draw. Watch prompts mutate wildly.</small></button>
+        <button type="button" class="${s.mode==="speed"?"on":""}" data-mode="speed" ${H?"":"disabled"}><b>Speed Chaos</b><small>45s to draw, 20s to guess. Pure frantic panic.</small></button>
+        <button type="button" class="${s.mode==="knockoff"?"on":""}" data-mode="knockoff" ${H?"":"disabled"}><b>Memory Knock-Off</b><small>Stare at the last drawing for 7 seconds, then redraw it from memory!</small></button>
+      </div></div>
+      <div class="row3">
+        <div><label for="sSteps">Scroll length</label>${sel("sSteps", [[0,"Auto (everyone)"],[4,"4 steps (quick)"],[6,"6 steps"],[8,"8 steps (long)"]], s.steps)}</div>
+        <div><label for="sDraw">Draw time</label>${sel("sDraw", [[45,"45 sec"],[60,"1 min"],[75,"75 sec"],[90,"90 sec"],[120,"2 min"]], spd?45:s.drawSec, spd)}</div>
+        <div><label for="sWrite">Write / Guess time</label>${sel("sWrite", [[20,"20 sec"],[35,"35 sec"],[45,"45 sec"],[60,"1 min"]], spd?20:s.writeSec, spd)}</div>
+      </div>
+      <div><label for="sSpice">AI Scroll Critic</label>${sel("sSpice", [["wholesome","Wholesome"],["spicy","Spicy"],["unhinged","Unhinged"]], s.spice)}</div>
+      ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<2?"disabled":""}>${ps.length<2?"Waiting for at least 1 more friend":"Start the scrolls"}</button>` : '<p class="hint" style="text-align:center">The host starts when everyone is here.</p>'}</div>
+    ${HowTo.button("scroll")}`;
+  $("#photoBtn").onclick = ()=>Avatars.open(act);
+  if(H){
+    const send = x => act("settings", x).catch(err=>toast(err.message));
+    document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>send({mode:b.dataset.mode}));
+    $("#sSteps").onchange=e=>send({steps:+e.target.value});
+    $("#sDraw").onchange=e=>send({drawSec:+e.target.value});
+    $("#sWrite").onchange=e=>send({writeSec:+e.target.value});
+    $("#sSpice").onchange=e=>send({spice:e.target.value});
+  }
+}
+
+/* ---------- playing: write & draw ---------- */
+function renderProgress(){
+  const box = $("#progStrip"); if(!box) return;
+  const done = new Set(room.donePids || []), act_ = room.activePids || [];
+  box.innerHTML = act_.map(pid=>`<span class="pchip ${done.has(pid)?"done":""}">${face(pid,"mini")}${esc(P(pid).name)}${done.has(pid)?'<span class="ck">✓</span>':""}</span>`).join("");
+}
+
+function playing(){
+  const task = room.myTask, step = room.step, total = room.totalSteps, kind = room.stepKind;
+  if(!task){
+    curView = "spec:" + step;
+    $("#stage").innerHTML = `<div class="fadeup" style="margin-top:8vh"><div class="eyebrow">Step ${step+1} of ${total}</div><h1 class="title">Scrolls in motion</h1>
+      <p class="sub">You joined mid-game—sit tight and watch the reveal show when they finish!</p><div class="prog" id="progStrip"></div></div>`;
+    renderProgress();
+    return;
+  }
+  const done = !!(task.mine && task.mine.done);
+  const viewKey = `play:${step}:${kind}`;
+  if(curView !== viewKey){
+    curView = viewKey;
+    if(kind === "write") mountWrite(task, step, total);
+    else mountDraw(task, step, total);
+  }
+  renderProgress();
+  if(kind === "write") syncWriteDone(task, done);
+  else syncDrawDone(done);
+}
+
+/* ---------- write / guess studio ---------- */
+function mountWrite(task, step, total){
+  const first = step === 0, prev = task.prev;
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Step ${step+1} of ${total} · ${first ? "Start your scroll" : "Describe this drawing"}</div>
+    <h1 class="title">${first ? "Write a funny prompt" : "What did they draw?"}</h1>
+    <div class="prog" id="progStrip"></div>
+    <form class="prompt-card" id="writeForm">
+      ${!first && prev && prev.img ? `<div class="ref-art"><img src="/api/img/${prev.img}" alt="Previous drawing"></div>`
+        : (!first ? `<p class="hint" style="color:var(--ink-2)">The previous artist ran out of time! Make up a wild caption anyway.</p>` : "")}
+      <h2>${first ? "Something hilarious for the next person to draw:" : "Describe this masterpiece in one line:"}</h2>
+      <input type="text" id="writeIn" maxlength="90" autocomplete="off" placeholder="${first ? "e.g. Goku paying his electricity bill" : "e.g. An angry pineapple holding a sword"}" value="${esc(task.mine?.text||"")}">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${first ? '<button type="button" class="btn small" id="inspireBtn" style="color:var(--ink);border-color:rgba(30,26,46,.25)">✨ Inspire me</button>' : ""}
+        <button type="submit" class="btn primary" id="writeSubmit" style="flex:1">Done</button>
+      </div>
+    </form>
+    <div class="done-banner" id="writeDoneBar" hidden><span><b>Submitted!</b> Waiting for everyone else to finish…</span><button type="button" class="btn small" id="writeEditBtn">Edit</button></div>
+  </div>`;
+  const inp = $("#writeIn");
+  if(inp && !task.mine?.done) inp.focus();
+  if($("#inspireBtn")){
+    let lastPick = "";
+    $("#inspireBtn").onclick = ()=>{
+      const list = room.starters || [];
+      let pick = list[Math.floor(Math.random() * list.length)] || "A cat riding a skateboard";
+      if(pick === lastPick && list.length > 1) pick = list[(list.indexOf(pick) + 1) % list.length];
+      lastPick = pick; inp.value = pick; inp.focus();
+    };
+  }
+  $("#writeForm").onsubmit = async e=>{
+    e.preventDefault();
+    const text = inp.value.trim(); if(!text) return toast("Type something first!");
+    try{ await act("submit", {text}); buzz(25); }catch(err){ toast(err.message); }
+  };
+  $("#writeEditBtn").onclick = async ()=>{
+    try{ await act("unsubmit"); inp.focus(); }catch(err){ toast(err.message); }
+  };
+}
+function syncWriteDone(task, done){
+  const form = $("#writeForm"), bar = $("#writeDoneBar"), inp = $("#writeIn"), btn = $("#writeSubmit");
+  if(!form) return;
+  if(inp) inp.disabled = done;
+  if(btn) btn.disabled = done;
+  if($("#inspireBtn")) $("#inspireBtn").disabled = done;
+  if(bar) bar.hidden = !done;
+}
+
+/* ---------- full drawing studio ---------- */
+function clearInk(){
+  inkCtx.clearRect(0, 0, CW, CH);
+}
+function drawOp(ctx, op){
+  if(op.t === "fill"){ floodFill(ctx, op.x, op.y, op.c); return; }
+  const pts = op.p; if(!pts || !pts.length) return;
+  ctx.save();
+  ctx.globalCompositeOperation = op.t === "erase" ? "destination-out" : "source-over";
+  ctx.strokeStyle = op.c; ctx.lineWidth = op.w;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  if(pts.length === 1) ctx.lineTo(pts[0][0] + .1, pts[0][1]);
+  else {
+    for(let i=1; i<pts.length-1; i++){
+      const mx = (pts[i][0]+pts[i+1][0])/2, my = (pts[i][1]+pts[i+1][1])/2;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    ctx.lineTo(pts[pts.length-1][0], pts[pts.length-1][1]);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+function hexRgb(h){ return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]; }
+function floodFill(ctx, sx, sy, hex){
+  const img = ctx.getImageData(0, 0, CW, CH), d = img.data;
+  // composite onto white conceptually so transparent pixels match white background
+  const idx0 = (sy * CW + sx) * 4;
+  const sa = d[idx0+3], sr = sa ? d[idx0] : 255, sg = sa ? d[idx0+1] : 255, sb = sa ? d[idx0+2] : 255;
+  const [tr, tg, tb] = hexRgb(hex);
+  if(sa > 240 && Math.abs(sr-tr) < 12 && Math.abs(sg-tg) < 12 && Math.abs(sb-tb) < 12) return;
+  const match = i => {
+    const a = d[i+3], r = a ? d[i] : 255, g = a ? d[i+1] : 255, b = a ? d[i+2] : 255;
+    return Math.abs(r-sr) + Math.abs(g-sg) + Math.abs(b-sb) + Math.abs(a-sa) < 64;
+  };
+  const seen = new Uint8Array(CW * CH), stack = [[sx, sy]];
+  while(stack.length){
+    const [x, y] = stack.pop();
+    let lx = x;
+    while(lx >= 0 && !seen[y*CW+lx] && match((y*CW+lx)*4)) lx--;
+    lx++;
+    let up = false, dn = false;
+    for(let cx = lx; cx < CW; cx++){
+      const p = y * CW + cx, i = p * 4;
+      if(seen[p] || !match(i)) break;
+      seen[p] = 1; d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
+      if(y > 0){ const m = !seen[p-CW] && match(i-CW*4); if(m && !up){ stack.push([cx, y-1]); up = true; } else if(!m) up = false; }
+      if(y < CH-1){ const m = !seen[p+CW] && match(i+CW*4); if(m && !dn){ stack.push([cx, y+1]); dn = true; } else if(!m) dn = false; }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function bake(){
+  clearInk();
+  for(const op of strokes) drawOp(inkCtx, op);
+}
+function redrawCanvas(){
+  const cv = $("#cv"); if(!cv) return;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#FFFDF8"; ctx.fillRect(0, 0, CW, CH);
+  ctx.drawImage(inkCv, 0, 0);
+  if(curStroke) drawOp(ctx, curStroke);
+}
+
+function mountDraw(task, step, total){
+  strokes = []; redoStack = []; clearedForUndo = null; curStroke = null; dirtyDraw = false; clearArmed = false;
+  clearInk();
+  const prev = task.prev, isKnock = task.peekSec > 0 && prev && prev.img;
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Step ${step+1} of ${total} · ${isKnock ? "Memory Knock-Off" : "Drawing time"}</div>
+    <div class="prog" id="progStrip"></div>
+    <div class="draw-prompt">
+      <small>${isKnock ? "Redraw from memory!" : "Draw this prompt"}</small>
+      <b>${isKnock ? "Study the picture, then recreate it!" : esc(prev?.text || "Draw something hilarious!")}</b>
+    </div>
+    <div class="studio">
+      <div class="sheet" id="sheet">
+        <canvas id="cv" width="${CW}" height="${CH}"></canvas>
+        <div class="brushring" id="brushRing" hidden></div>
+        ${isKnock ? `<div class="peek-cover" id="peekCover">
+          <div style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px"><b id="peekTxt">Memorize this! ${task.peekSec}s</b><button type="button" class="btn small primary" id="peekSkip">Start drawing</button></div>
+          <img src="/api/img/${prev.img}" alt="Reference drawing">
+          <div class="peek-bar"><i id="peekBar" style="width:100%"></i></div>
+        </div>` : ""}
+      </div>
+      <div class="dock" id="dock">
+        <div class="toolrow">
+          <button type="button" data-tool="pen" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Brush</button>
+          <button type="button" data-tool="erase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 20H7L3 16l9-9 8 8-4 5z"/><path d="M9 10l6 6"/></svg>Eraser</button>
+          <button type="button" data-tool="fill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 11l-8-8-8.5 8.5a2.1 2.1 0 0 0 0 3l5.5 5.5a2.1 2.1 0 0 0 3 0L19 11z"/><path d="M20 14s2 2.5 2 4a2 2 0 1 1-4 0c0-1.5 2-4 2-4z"/></svg>Fill</button>
+        </div>
+        <div>
+          <label>Colour</label>
+          <div class="swatches" id="swatches">${PALETTE.map(c=>`<button type="button" class="sw ${c===color?"on":""}" data-col="${c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div>
+          <label class="cpick"><input type="color" id="customCol" value="${color}">Any colour</label>
+        </div>
+        <div>
+          <label>Brush size</label>
+          <div class="sizes" id="sizes">${[[4,6],[9,11],[18,17],[32,23]].map(([w,px])=>`<button type="button" class="sz ${w===size?"on":""}" data-sz="${w}"><i style="width:${px}px;height:${px}px"></i></button>`).join("")}</div>
+        </div>
+        <div class="actions2">
+          <button type="button" class="btn small" id="undoBtn" disabled>Undo</button>
+          <button type="button" class="btn small" id="redoBtn" disabled>Redo</button>
+          <button type="button" class="btn small" id="clearBtn">Clear</button>
+        </div>
+        <button type="button" class="btn primary wide" id="drawDoneBtn" style="grid-column:1/-1">I'm done!</button>
+      </div>
+    </div>
+    <div class="done-banner" id="drawDoneBar" hidden><span><b>Drawing submitted!</b> Waiting for everyone else…</span><button type="button" class="btn small" id="drawEditBtn">Keep editing</button></div>
+  </div>`;
+
+  // knock-off 7s memory study overlay
+  if(isKnock){
+    const start = Date.now(), dur = task.peekSec * 1000;
+    const closePeek = ()=>{ if(peekTimer){ clearInterval(peekTimer); peekTimer = null; } $("#peekCover")?.remove(); };
+    $("#peekSkip").onclick = closePeek;
+    peekTimer = setInterval(()=>{
+      const left = Math.max(0, dur - (Date.now() - start));
+      const bar = $("#peekBar"), txt = $("#peekTxt");
+      if(bar) bar.style.width = (left / dur * 100).toFixed(1) + "%";
+      if(txt) txt.textContent = `Memorize this! ${Math.ceil(left/1000)}s`;
+      if(left <= 0) closePeek();
+    }, 100);
+  }
+
+  bindStudio();
+  redrawCanvas();
+  paintDock();
+}
+
+function syncDrawDone(done){
+  const sheet = $("#sheet"), bar = $("#drawDoneBar"), btn = $("#drawDoneBtn");
+  if(!sheet) return;
+  sheet.classList.toggle("locked", done);
+  if(btn) btn.disabled = done;
+  if(bar) bar.hidden = !done;
+}
+
+function paintDock(){
+  if(!$("#dock")) return;
+  document.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on", b.dataset.tool===tool));
+  document.querySelectorAll("[data-col]").forEach(b=>b.classList.toggle("on", b.dataset.col.toLowerCase()===color.toLowerCase()));
+  document.querySelectorAll("[data-sz]").forEach(b=>b.classList.toggle("on", +b.dataset.sz===size));
+  if($("#customCol")) $("#customCol").value = color;
+  if($("#undoBtn")) $("#undoBtn").disabled = !(strokes.length || clearedForUndo);
+  if($("#redoBtn")) $("#redoBtn").disabled = !redoStack.length;
+}
+
+function studioCanDraw(){
+  return !!(room && room.phase === "playing" && room.stepKind === "draw" && !room.myTask?.mine?.done && !$("#peekCover"));
+}
+
+function bindStudio(){
+  const cv = $("#cv"), ring = $("#brushRing");
+  const pos = e => {
+    const r = cv.getBoundingClientRect();
+    return [Math.max(0, Math.min(CW-1, Math.round((e.clientX - r.left) * CW / r.width))),
+            Math.max(0, Math.min(CH-1, Math.round((e.clientY - r.top) * CH / r.height)))];
+  };
+  cv.addEventListener("pointerdown", e=>{
+    if(!studioCanDraw() || e.button > 0) return;
+    e.preventDefault();
+    const pt = pos(e);
+    if(tool === "fill"){
+      const op = {t:"fill", c:color, x:pt[0], y:pt[1]};
+      strokes.push(op); redoStack = []; clearedForUndo = null; dirtyDraw = true;
+      drawOp(inkCtx, op); redrawCanvas(); paintDock(); return;
+    }
+    try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+    curStroke = {t: tool==="erase" ? "erase" : "pen", c:color, w:size, p:[pt]};
+    redrawCanvas();
+  });
+  cv.addEventListener("pointermove", e=>{
+    if(e.pointerType === "mouse" && tool !== "fill" && studioCanDraw()){
+      const r = cv.getBoundingClientRect(), s = Math.max(4, size * r.width / CW);
+      ring.hidden = false; ring.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX-r.left}px;top:${e.clientY-r.top}px`;
+    } else ring.hidden = true;
+    if(!curStroke) return;
+    const co = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for(const pe of (co.length ? co : [e])){
+      const pt = pos(pe), last = curStroke.p[curStroke.p.length-1];
+      if(Math.abs(pt[0]-last[0]) + Math.abs(pt[1]-last[1]) < 2) continue;
+      if(curStroke.p.length < 3000) curStroke.p.push(pt);
+    }
+    redrawCanvas();
+  });
+  const end = ()=>{
+    if(!curStroke) return;
+    const op = curStroke; curStroke = null;
+    strokes.push(op); redoStack = []; clearedForUndo = null; dirtyDraw = true;
+    drawOp(inkCtx, op); redrawCanvas(); paintDock();
+  };
+  cv.addEventListener("pointerup", end);
+  cv.addEventListener("pointercancel", end);
+  cv.addEventListener("pointerleave", ()=>{ ring.hidden = true; });
+
+  document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{ tool = b.dataset.tool; paintDock(); });
+  document.querySelectorAll("[data-col]").forEach(b=>b.onclick=()=>{ color = b.dataset.col; if(tool==="erase") tool="pen"; paintDock(); });
+  $("#customCol").oninput = e=>{ color = e.target.value; if(tool==="erase") tool="pen"; paintDock(); };
+  document.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{ size = +b.dataset.sz; paintDock(); });
+  $("#undoBtn").onclick = doUndo;
+  $("#redoBtn").onclick = doRedo;
+  $("#clearBtn").onclick = ()=>{
+    if(!studioCanDraw()) return;
+    if(!clearArmed){ clearArmed = true; $("#clearBtn").textContent = "Sure?"; $("#clearBtn").classList.add("danger"); setTimeout(()=>{ clearArmed = false; if($("#clearBtn")){ $("#clearBtn").textContent = "Clear"; $("#clearBtn").classList.remove("danger"); } }, 2800); return; }
+    clearArmed = false; $("#clearBtn").textContent = "Clear"; $("#clearBtn").classList.remove("danger");
+    clearedForUndo = strokes; strokes = []; redoStack = []; bake(); redrawCanvas(); paintDock();
+  };
+  $("#drawDoneBtn").onclick = ()=>submitDrawing(false);
+  $("#drawEditBtn").onclick = ()=>act("unsubmit").catch(err=>toast(err.message));
+}
+
+function doUndo(){
+  if(!studioCanDraw()) return;
+  if(!strokes.length && clearedForUndo){ strokes = clearedForUndo; clearedForUndo = null; }
+  else if(strokes.length) redoStack.push(strokes.pop());
+  else return;
+  bake(); redrawCanvas(); paintDock();
+}
+function doRedo(){
+  if(!studioCanDraw() || !redoStack.length) return;
+  strokes.push(redoStack.pop()); bake(); redrawCanvas(); paintDock();
+}
+
+async function submitDrawing(auto){
+  if(!room || room.phase !== "playing" || room.stepKind !== "draw") return;
+  if(curStroke){ strokes.push(curStroke); drawOp(inkCtx, curStroke); curStroke = null; }
+  if(auto && !dirtyDraw && !strokes.length) return;
+  const out = document.createElement("canvas"); out.width = CW; out.height = CH;
+  const ctx = out.getContext("2d"); ctx.fillStyle = "#FFFDF8"; ctx.fillRect(0, 0, CW, CH); ctx.drawImage(inkCv, 0, 0);
+  try{
+    await act("submit", {img: out.toDataURL("image/jpeg", 0.84)});
+    if(!auto){ buzz(25); toast("Drawing submitted!"); }
+  }catch(err){ if(!auto) toast(err.message); }
+}
+
+/* ---------- reveal theater ---------- */
+let showSig = "", lastShowPos = "";
+function showView(){
+  const chains = room.chains || [], sh = room.show || {chain:0, panel:0};
+  const ci = Math.min(sh.chain || 0, Math.max(0, chains.length - 1));
+  const ch = chains[ci]; if(!ch) return;
+  const pi = Math.min(sh.panel || 0, Math.max(0, ch.entries.length - 1));
+  const full = pi >= ch.entries.length - 1;
+  const aiLine = room.ai?.lines?.[String(ci)] || "";
+  const reacts = (room.reacts || {})[String(ci)] || {};
+  const sig = JSON.stringify([ci, pi, aiLine, room.ai?.failed, reacts, !!hostKey]);
+  if(curView === "show" && sig === showSig) return;
+  const posKey = `${ci}:${pi}`;
+  const moved = posKey !== lastShowPos;
+  lastShowPos = posKey;
+  curView = "show"; showSig = sig;
+
+  const shown = ch.entries.slice(0, pi + 1);
+  const firstTxt = ch.entries[0]?.text || "";
+  const lastTxt = [...ch.entries].reverse().find(e=>e.kind==="write" && e.text)?.text || "";
+  const isKnock = room.settings.mode === "knockoff";
+
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Reveal Theater · Scroll ${ci+1} of ${chains.length}</div>
+    <h1 class="title">${esc(P(ch.owner).name)}'s Scroll</h1>
+    <div class="scroll-tabs">${chains.map((c,i)=>`<button type="button" class="${i===ci?"on":""}" data-pick-chain="${i}" ${hostKey?"":"disabled"}>${face(c.owner,"mini")}${esc(P(c.owner).name)}</button>`).join("")}</div>
+    <div class="theater">
+      <div class="roller"></div>
+      <div class="parchment">
+        ${shown.map((e,k)=>`<div class="entry">
+          <div class="by">${face(e.pid,"mini")}<span>${esc(P(e.pid).name)}</span>
+            <span class="tag">${e.step===0 ? "Original prompt" : e.kind==="draw" ? (isKnock&&e.step>=2?"Redrawn from memory":"Drew it") : "Guessed it"}</span></div>
+          ${e.kind==="write"
+            ? `<div class="quote ${e.late?"late":""}">${esc(e.text)}${e.auto?' <small style="font-family:var(--body);font-size:12px;color:var(--ink-2)">(auto)</small>':""}</div>`
+            : (e.img ? `<div class="pic"><img src="/api/img/${e.img}" alt="Drawing by ${esc(P(e.pid).name)}"></div>` : '<div class="missing">Ran out of time to draw!</div>')}
+        </div>`).join("")}
+        ${full ? `<div class="mutate">
+          ${!isKnock && lastTxt && lastTxt !== firstTxt ? `<div class="cols"><div><small>Started as</small><b>"${esc(firstTxt)}"</b></div><span class="ar" style="color:var(--amber);font-weight:900">&rarr;</span><div><small>Ended as</small><b>"${esc(lastTxt)}"</b></div></div>`
+            : `<div style="text-align:center"><small>Original prompt</small><b>"${esc(firstTxt)}"</b></div>`}
+          ${aiLine ? `<div class="ai-line"><span class="bot">AI</span><span>${esc(aiLine)}</span></div>` : ""}
+          <div style="display:flex;justify-content:center"><button type="button" class="btn small paper" data-export="${ci}">Save Comic Strip PNG</button></div>
+        </div>` : ""}
+      </div>
+      <div class="roller"></div>
+    </div>
+    <div class="reacts">${REACTIONS.map(em=>`<button type="button" data-react="${em}">${em}${reacts[em]?`<b>${reacts[em]}</b>`:""}</button>`).join("")}</div>
+  </div>`;
+  const entries = document.querySelectorAll(".parchment .entry");
+  const lastEl = entries[entries.length - 1];
+  if(moved && lastEl && pi > 0) lastEl.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* ---------- final gallery ---------- */
+function galleryView(){
+  const chains = room.chains || [];
+  const sig = JSON.stringify([chains.length, room.ai, room.reacts]);
+  if(curView === "gallery" && showSig === sig) return;
+  curView = "gallery"; showSig = sig;
+  const award = room.ai?.award || "";
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">All scrolls unrolled</div>
+    <h1 class="title">Gallery of Broken Scrolls</h1>
+    ${award ? `<div class="award-box"><span class="medal">🏆</span><div><b style="color:var(--amber)">AI Scroll Critic's Pick</b><div style="margin-top:2px">${esc(award)}</div></div></div>` : ""}
+    <div class="gal-grid">${chains.map((ch,ci)=>{
+      const line = room.ai?.lines?.[String(ci)] || "";
+      return `<div class="gal-card">
+        <div class="gal-head"><div style="display:flex;align-items:center;gap:10px">${face(ch.owner,"face")}<div><b>${esc(P(ch.owner).name)}'s Scroll</b><div class="hint">"${esc(ch.entries[0]?.text||"")}"</div></div></div>
+          <div style="display:flex;gap:8px">${hostKey?`<button type="button" class="btn small" data-pick-chain="${ci}">Replay in theater</button>`:""}<button type="button" class="btn small paper" data-export="${ci}">Save Strip PNG</button></div></div>
+        ${line ? `<p class="hint" style="color:var(--fg)"><b>AI:</b> ${esc(line)}</p>` : ""}
+        <div class="gal-strip">${ch.entries.map(e=>`<div class="gal-step">
+          <div class="who">${face(e.pid,"mini")}${esc(P(e.pid).name)}</div>
+          ${e.kind==="write" ? `<div class="qt">"${esc(e.text)}"</div>` : (e.img ? `<img src="/api/img/${e.img}" alt="">` : '<div class="hint" style="padding:18px 0;text-align:center">No drawing</div>')}
+        </div>`).join("")}</div></div>`;
+    }).join("")}</div></div>`;
+}
+
+/* ---------- comic strip PNG exporter ---------- */
+function loadImage(src){
+  return new Promise(res=>{ const i = new Image(); i.crossOrigin = "anonymous"; i.onload = ()=>res(i); i.onerror = ()=>res(null); i.src = src; });
+}
+function wrapLines(ctx, text, maxW){
+  const words = String(text||"").split(" "), lines = []; let cur = "";
+  for(const w of words){
+    const test = cur ? cur + " " + w : w;
+    if(ctx.measureText(test).width > maxW && cur){ lines.push(cur); cur = w; } else cur = test;
+  }
+  if(cur) lines.push(cur);
+  return lines.length ? lines : [""];
+}
+async function exportStrip(ci){
+  const ch = (room.chains || [])[ci]; if(!ch) return;
+  toast("Building comic strip PNG…");
+  const W = 820, PAD = 32, IW = W - PAD*2, IH = Math.round(IW * 3 / 4);
+  const imgs = {};
+  for(const e of ch.entries){ if(e.kind === "draw" && e.img) imgs[e.step] = await loadImage("/api/img/" + e.img); }
+  const tmp = document.createElement("canvas").getContext("2d");
+  tmp.font = "700 30px Georgia, serif";
+  let H = 110;
+  const blocks = ch.entries.map(e=>{
+    if(e.kind === "write"){
+      const lines = wrapLines(tmp, `"${e.text}"`, IW - 40);
+      const bh = 54 + lines.length * 38;
+      H += bh + 20;
+      return {e, bh, lines};
+    }
+    const bh = 46 + (imgs[e.step] ? IH : 90);
+    H += bh + 20;
+    return {e, bh};
+  });
+  H += 36;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#1B1F4B"; ctx.fillRect(0, 0, W, H);
+  // header
+  ctx.fillStyle = "#D6456B"; ctx.fillRect(0, 0, W, 84);
+  ctx.fillStyle = "#F3EBDD"; ctx.font = "700 32px Georgia, serif";
+  ctx.fillText(`BROKEN SCROLL · ${P(ch.owner).name}'s Chain`, PAD, 54);
+  let y = 108;
+  for(const b of blocks){
+    const e = b.e;
+    ctx.fillStyle = "#F3EBDD";
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(PAD, y, IW, b.bh, 14); else ctx.rect(PAD, y, IW, b.bh);
+    ctx.fill();
+    ctx.fillStyle = "#5B5670"; ctx.font = "700 18px system-ui, sans-serif";
+    ctx.fillText(`${P(e.pid).name}  ·  ${e.step===0?"Original prompt":e.kind==="draw"?"Drew it":"Guessed it"}`, PAD + 18, y + 30);
+    if(e.kind === "write"){
+      ctx.fillStyle = "#1E1A2E"; ctx.font = "700 28px Georgia, serif";
+      b.lines.forEach((ln, k)=>ctx.fillText(ln, PAD + 20, y + 68 + k * 38));
+    } else if(imgs[e.step]){
+      ctx.drawImage(imgs[e.step], PAD + 12, y + 40, IW - 24, IH - 10);
+    } else {
+      ctx.fillStyle = "#5B5670"; ctx.font = "700 22px system-ui, sans-serif";
+      ctx.fillText("(ran out of time)", PAD + 20, y + 86);
+    }
+    y += b.bh + 20;
+  }
+  const a = document.createElement("a");
+  a.href = cv.toDataURL("image/png");
+  a.download = `broken-scroll-${P(ch.owner).name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}.png`;
+  a.click();
+}
+
+/* ---------- host controls, autoplay, shortcuts, timer ---------- */
+function stepShow(dir){
+  if(!hostKey || !room || room.phase !== "show") return;
+  const chains = room.chains || [], sh = room.show || {chain:0, panel:0};
+  let ci = sh.chain, pi = sh.panel;
+  if(dir > 0){
+    if(pi + 1 < chains[ci].entries.length) pi++;
+    else if(ci + 1 < chains.length){ ci++; pi = 0; }
+    else { stopAutoPlay(); act("reveal", {gallery:true}).catch(err=>toast(err.message)); return; }
+  } else {
+    if(pi > 0) pi--;
+    else if(ci > 0){ ci--; pi = chains[ci].entries.length - 1; }
+  }
+  act("reveal", {chain:ci, panel:pi}).catch(err=>toast(err.message));
+}
+function stopAutoPlay(){ if(autoPlayTimer){ clearInterval(autoPlayTimer); autoPlayTimer = null; } renderHostbar(); }
+function toggleAutoPlay(){
+  if(autoPlayTimer){ stopAutoPlay(); return; }
+  autoPlayTimer = setInterval(()=>stepShow(1), 3600);
+  renderHostbar();
+}
+
+function renderHostbar(){
+  const bar = $("#hostbar"), ph = room?.phase;
+  if(!hostKey || !room || !me || !room.players[me.pid]){ bar.hidden = true; return; }
+  const b = [];
+  if(ph === "playing"){
+    b.push('<button type="button" class="btn small" data-host="addtime">+30s</button><button type="button" class="btn small" data-host="skip">End step now</button>');
+  } else if(ph === "show"){
+    const chains = room.chains || [], sh = room.show || {chain:0, panel:0};
+    const ch = chains[sh.chain] || {entries:[]};
+    const atStart = sh.chain === 0 && sh.panel === 0;
+    const atEndChain = sh.panel >= ch.entries.length - 1;
+    const atVeryEnd = sh.chain >= chains.length - 1 && atEndChain;
+    b.push(`<button type="button" class="btn small" data-step="-1" ${atStart?"disabled":""}>Back</button>`);
+    b.push(`<button type="button" class="btn small ${autoPlayTimer?"paper":""}" data-auto="1">${autoPlayTimer?"Pause auto":"Auto-play"}</button>`);
+    b.push(`<span class="count">${sh.panel+1} / ${ch.entries.length}</span>`);
+    b.push(`<button type="button" class="btn primary" data-step="1">${atVeryEnd?"Full gallery":atEndChain?"Next scroll":"Next"}</button>`);
+  } else if(ph === "gallery"){
+    b.push('<button type="button" class="btn primary" data-host="playagain">Play again</button>');
+  }
+  bar.hidden = !b.length; bar.innerHTML = b.join("");
+}
+
+document.addEventListener("click", async e=>{
+  const st = e.target.closest("[data-step]");
+  if(st){ stepShow(+st.dataset.step); return; }
+  if(e.target.closest("[data-auto]")){ toggleAutoPlay(); return; }
+  const pc = e.target.closest("[data-pick-chain]");
+  if(pc && hostKey){ stopAutoPlay(); act("reveal", {chain:+pc.dataset.pickChain, panel:0}).catch(err=>toast(err.message)); return; }
+  const ex = e.target.closest("[data-export]");
+  if(ex){ exportStrip(+ex.dataset.export); return; }
+  const re = e.target.closest("[data-react]");
+  if(re){ act("react", {emoji:re.dataset.react, chain:room.show?.chain||0}).catch(()=>{}); return; }
+  const h = e.target.closest("[data-host]");
+  if(h){ try{ await act(h.dataset.host, h.dataset.host==="addtime"?{sec:30}:{}); }catch(err){ toast(err.message); } return; }
+  const k = e.target.closest("[data-kick]");
+  if(k){ if(k.dataset.sure !== "1"){ k.dataset.sure = "1"; k.textContent = "Sure?"; return; } act("kick", {pid:k.dataset.kick}).catch(err=>toast(err.message)); }
+});
+
+document.addEventListener("keydown", e=>{
+  if(e.target.closest("input, textarea, select")) return;
+  if(room?.phase === "show" && hostKey){
+    if(e.key === "ArrowRight" || e.key === " "){ e.preventDefault(); stepShow(1); }
+    if(e.key === "ArrowLeft"){ e.preventDefault(); stepShow(-1); }
+    return;
+  }
+  if(!studioCanDraw()) return;
+  const k = e.key.toLowerCase();
+  if((e.ctrlKey || e.metaKey) && k === "z"){ e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
+  if((e.ctrlKey || e.metaKey) && k === "y"){ e.preventDefault(); doRedo(); return; }
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(k === "b"){ tool = "pen"; paintDock(); }
+  else if(k === "e"){ tool = "erase"; paintDock(); }
+  else if(k === "g"){ tool = "fill"; paintDock(); }
+});
+
+$("#hCode").onclick = async ()=>{
+  if(!code) return;
+  const link = location.origin + "/scroll?room=" + code;
+  try{ await navigator.clipboard.writeText(link); toast(`Invite link copied · ${code}`); }
+  catch(e){ toast(link); }
+};
+
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !room.deadline || room.phase !== "playing"){ el.hidden = true; return; }
+  const rem = room.deadline - serverNow();
+  const left = Math.max(0, Math.ceil(rem));
+  el.hidden = false; el.textContent = `${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
+  el.classList.toggle("low", left <= 10);
+  // auto-submit work right before the timer hits 0 so nobody loses their prompt or drawing
+  if(rem <= 1.4 && room.myTask && !room.myTask.mine?.done && autoSubmittedStep !== room.step){
+    autoSubmittedStep = room.step;
+    if(room.stepKind === "draw") submitDrawing(true);
+    else { const t = $("#writeIn")?.value.trim(); if(t) act("submit", {text:t}).catch(()=>{}); }
+  }
+}
+setInterval(tickTimer, 200);
+
+const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
+if(c0) openRoom(c0); else home();
+</script>
+</body>
+</html>
