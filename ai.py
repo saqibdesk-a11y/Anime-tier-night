@@ -18,6 +18,7 @@ BUILTIN_ORDER = [p for p in ("gemini", "mistral", "cerebras") if BUILTIN_KEYS[p]
 _builtin_calls = []
 _calls_lock = threading.Lock()
 _default_models = {}
+_models_lock = threading.Lock()
 
 
 def builtin_allowed(per_hour=40):
@@ -34,25 +35,28 @@ def builtin_allowed(per_hour=40):
 def builtin_models(provider, key, vision=False):
     """Up to 3 models to try in order, so one overloaded model doesn't sink the request."""
     cache = (provider, vision)
-    if cache not in _default_models:
-        models = list_models(provider, key)
-        prefs = {"gemini": ["flash-lite", "flash-latest", "flash"],
-                 "mistral": (["mistral-medium-latest", "mistral-small-latest", "pixtral-large-latest"] if vision
-                             else ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"]),
-                 "cerebras": ["gpt-oss", "llama-3.3", "qwen", "llama"]}[provider]
-        picks = []
-        # newest versions sort last, so search from the end
-        for want in prefs:
-            for m in reversed(models):
-                if want in m and "preview" not in m and m not in picks and (want == "flash-lite" or "lite" not in m):  # lite: fastest, most quota
-                    picks.append(m)
-                    break
-        picks = picks[:3] or models[:1]
-        if not picks:
-            raise AIError("no usable models were found for this key.")
+    with _models_lock:
+        if cache in _default_models:
+            return _default_models[cache]
+    models = list_models(provider, key)
+    prefs = {"gemini": ["flash-lite", "flash-latest", "flash"],
+             "mistral": (["mistral-medium-latest", "mistral-small-latest", "pixtral-large-latest"] if vision
+                         else ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"]),
+             "cerebras": ["gpt-oss", "llama-3.3", "qwen", "llama"]}[provider]
+    picks = []
+    # newest versions sort last, so search from the end
+    for want in prefs:
+        for m in reversed(models):
+            if want in m and "preview" not in m and m not in picks and (want == "flash-lite" or "lite" not in m):  # lite: fastest, most quota
+                picks.append(m)
+                break
+    picks = picks[:3] or models[:1]
+    if not picks:
+        raise AIError("no usable models were found for this key.")
+    with _models_lock:
         _default_models[cache] = picks
-        time.sleep(1.2)  # free tiers allow about one call per second
-    return _default_models[cache]
+    time.sleep(1.2)  # free tiers allow about one call per second
+    return picks
 
 
 def ask_builtin(system, prompt, images=None, timeout=60, text_first=False):

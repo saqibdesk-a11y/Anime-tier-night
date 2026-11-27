@@ -419,7 +419,7 @@ def chat_rules(room, pid):
         return {"read": ["all"], "write": [], "why": QUIET[room["phase"]]}
     block = []
     if rd and room["phase"] not in ("results", "final") and pid in rd["order"]:
-        mine = rd["decoy"] if pid in rd["imposters"] else rd["word"]
+        mine = (None if room["settings"]["mode"] == "clueless" else rd["decoy"]) if pid in rd["imposters"] else rd["word"]
         block = [mine] if mine else []
     return {"read": ["all"], "write": ["all"], "block": block}
 
@@ -490,7 +490,7 @@ def player_action(room, action, b, pid):
         text = " ".join(str(b.get("text") or "").split())[:40]
         if not text:
             raise Refuse("Type a clue first.")
-        mine = rd["decoy"] if pid in rd["imposters"] else rd["word"]
+        mine = (None if room["settings"]["mode"] == "clueless" else rd["decoy"]) if pid in rd["imposters"] else rd["word"]
         if mine and norm(mine) and norm(mine) in norm(text):
             raise Refuse("You can't say your word. Be sneakier.")
         rd["clues"].append({"pid": pid, "text": text, "turn": rd["turn"]})
@@ -584,9 +584,20 @@ def host_action(room, action, b):
             raise Refuse("No timer is running.")
         room["deadline"] += int(b.get("sec") or 30)
     elif action == "kick":
-        room["players"].pop(b.get("pid"), None)
-        if ph == "clues":
+        pid = b.get("pid")
+        was_turn = False
+        if ph == "clues" and cur(room):
+            rd, t = cur(room), turns(room)
+            was_turn = rd["turn"] < len(t) and t[rd["turn"]] == pid
+        room["players"].pop(pid, None)
+        if ph == "clues" and cur(room):
+            rd = cur(room)
             skip_gone(room)
+            if rd["turn"] >= len(turns(room)):
+                room["phase"] = "discuss"
+                set_timer(room, room["settings"]["discussSec"])
+            elif was_turn:
+                set_timer(room, room["settings"]["clueSec"])
     elif action == "playagain":
         for p in room["players"].values():
             p.update({"ready": False, "sitout": False})

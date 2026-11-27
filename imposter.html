@@ -193,7 +193,7 @@ details summary{cursor:pointer;font-weight:800}
 <header class="top noren">
   <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
   <h1>Imposter</h1>
-  <span class="code" id="hCode" hidden></span>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
   <span class="timer" id="timer" hidden></span>
 </header>
@@ -513,8 +513,14 @@ function final(){
     ${top ? `<div class="filewrap" style="position:relative"><div class="file open"><div class="paper"><span class="pin" style="background:${hue(P(top.pid).name)}">${picOf(P(top.pid))}</span><div class="lbl">Best mask of the night</div><div class="word">${esc(P(top.pid).name)}</div><div class="note">${top.s} points</div></div></div><span class="stamp crew" style="color:var(--amber)">Winner</span></div>` : ""}</div>
     ${scoreRows(null)}
     <h2 style="margin-top:22px;font-size:22px">Every round</h2>
-    <div class="scores">${room.roundData.map((r,i)=>`<div class="srow" style="grid-template-columns:auto 1fr auto"><span class="rk">${i+1}</span><span>${esc(r.word)} <span class="muted">vs</span> ${esc(r.decoy||"")}</span><span class="muted" style="font-size:13px">${r.imposters?.map(pid=>esc(P(pid).name)).join(", ")}</span></div>`).join("")}</div>`;
+    <div class="scores">${room.roundData.map((r,i)=>`<div class="srow" style="grid-template-columns:auto 1fr auto"><span class="rk">${i+1}</span><span>${esc(r.word)}${room.settings.mode==="undercover" ? ` <span class="muted">vs</span> ${esc(r.decoy||"")}` : ' <span class="muted">· clueless</span>'}</span><span class="muted" style="font-size:13px">${r.imposters?.map(pid=>esc(P(pid).name)).join(", ")}</span></div>`).join("")}</div>`;
 }
+$("#hCode").onclick = async ()=>{
+  if(!code) return;
+  const link = location.origin + "/imposter?room=" + code;
+  try{ await navigator.clipboard.writeText(link); toast(`Invite link copied · ${code}`); }
+  catch(e){ toast(link); }
+};
 
 /* ---------- host controls, timer ---------- */
 function renderHostbar(){

@@ -59,6 +59,9 @@ h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:0;text-wrap:b
 .noren .noren-back{white-space:nowrap}
 .noren h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(19px,5.4vw,24px)}
 .noren .spacer{flex:1 1 0;min-width:0}
+.noren button.code{background:none;color:inherit;cursor:pointer;transition:opacity .15s,transform .12s}
+.noren button.code:hover{opacity:1}
+.noren button.code:active{transform:scale(.95)}
 @media (max-width:480px){
   .noren{gap:8px}
   .noren .noren-back{font-size:0;width:28px}

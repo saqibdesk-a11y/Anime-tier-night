@@ -224,7 +224,7 @@ details summary{cursor:pointer;font-weight:800}
   <svg class="trees" viewBox="0 0 1200 200" preserveAspectRatio="none"><path fill="#04050c" d="M0 200 L0 140 L30 90 L45 130 L70 60 L95 130 L110 100 L130 140 L160 70 L190 140 L220 110 L240 150 L270 80 L300 150 L340 120 L360 150 L400 90 L430 150 L470 130 L500 160 L540 100 L570 160 L620 140 L650 170 L700 110 L730 160 L770 130 L800 165 L840 90 L870 160 L900 120 L930 160 L970 70 L1000 150 L1030 120 L1060 160 L1100 80 L1130 150 L1160 110 L1200 140 L1200 200 Z"/></svg>
 </div>
 <div class="app">
-  <header class="top noren"><a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a><h1>Werewolf</h1><span class="code" id="hCode" hidden></span><span class="spacer"></span></header>
+  <header class="top noren"><a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a><h1>Werewolf</h1><button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button><span class="spacer"></span></header>
   <main class="stage" id="stage"></main>
 </div>
 <div class="hostbar" id="hostbar" hidden></div>
@@ -359,6 +359,7 @@ function render(){
   else if(ph === "roles") rolesView();
   else if(ph === "final") final();
   else tableView();
+  syncVision();
 }
 function gate(){
   if($("#gate")) return;  // already showing: rebuilding it would wipe the name being typed
@@ -512,16 +513,29 @@ $("#stage").addEventListener("click", async e=>{
   }catch(err){ toast(err.message); }
 });
 function seerVision(pid){
-  setTimeout(()=>{
-    const v = (room.seerLog||[]).slice(-1)[0], wolf = v && v.pid === pid ? v.evil : null;
-    $("#overlay").dataset.cid = "";
-    $("#overlay").innerHTML = `<div class="vision" id="vision"><div style="text-align:center;max-width:420px"><div class="orb"></div><div class="eyebrow">Your vision</div>
-      <h2 style="font-size:clamp(26px,7vw,40px);margin-top:8px">${esc(P(pid).name)}</h2><div class="drum" style="color:${wolf?"var(--blood)":"var(--mint)"};margin-top:10px">${wolf===null?"…":wolf?"IS EVIL":"is Good"}</div>
-      <p class="sub">Keep a straight face.</p><button class="btn primary" id="closeVision" style="margin-top:14px">Close</button></div></div>`;
-    buzz(wolf ? [200,80,200] : 80);
-    $("#closeVision").onclick = ()=>$("#overlay").innerHTML = "";
-  }, 700);
+  $("#overlay").dataset.cid = "";
+  $("#overlay").innerHTML = `<div class="vision" id="vision" data-wait="${esc(pid)}"><div style="text-align:center;max-width:420px"><div class="orb"></div><div class="eyebrow">Your vision</div>
+    <h2 style="font-size:clamp(26px,7vw,40px);margin-top:8px">${esc(P(pid).name)}</h2><div class="drum" id="visionRes" style="color:var(--mint);margin-top:10px">…</div>
+    <p class="sub">Keep a straight face.</p><button class="btn primary" id="closeVision" style="margin-top:14px">Close</button></div></div>`;
+  $("#closeVision").onclick = ()=>$("#overlay").innerHTML = "";
+  syncVision();
 }
+function syncVision(){
+  const box = $("#vision"); if(!box || box.dataset.shown === "1") return;
+  const pid = box.dataset.wait;
+  const v = (room?.seerLog || []).slice().reverse().find(x => x.pid === pid && x.night === room.day);
+  if(!v) return;
+  box.dataset.shown = "1";
+  const res = $("#visionRes");
+  if(res){ res.style.color = v.evil ? "var(--blood)" : "var(--mint)"; res.textContent = v.evil ? "IS EVIL" : "is Good"; }
+  buzz(v.evil ? [200,80,200] : 80);
+}
+$("#hCode").onclick = async ()=>{
+  if(!code) return;
+  const link = location.origin + "/werewolf?room=" + code;
+  try{ await navigator.clipboard.writeText(link); toast(`Invite link copied · ${code}`); }
+  catch(e){ toast(link); }
+};
 
 /* ---------- lobby ---------- */
 function lobby(){

@@ -258,7 +258,7 @@ body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0
 <header class="top noren">
   <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
   <h1>Last Lantern</h1>
-  <span class="code" id="hCode" hidden></span>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
   <span class="timer" id="timer" hidden></span>
 </header>
@@ -475,7 +475,7 @@ function table(){
     else status = `${face(t.turn)}${esc(P(t.turn).name)}'s turn`;
   }
   const hand = inRound ? mine.hand.slice().sort((a,b)=>sortKey(a).localeCompare(sortKey(b))) : [];
-  const canCall = inRound && !over && ((myTurn && hand.length === 2 && !t.called.includes(me.pid)) || t.exposed === me.pid);
+  const canCall = inRound && !over && (((myTurn || jumps.length) && hand.length === 2 && !t.called.includes(me.pid)) || t.exposed === me.pid);
   const fresh = c => prevHand && !prevHand.has(c);
   const deckName = DECKS.find(d=>d[0] === deck)[1];
   $("#stage").innerHTML = `
@@ -688,7 +688,7 @@ function pickColor(card){
 }
 BackGuard.onBack(()=>{ const s = document.querySelector(".scrim"); if(s){ s.remove(); picking = null; return true; } return false; });
 document.addEventListener("click", async e=>{
-  const c = e.target.closest("#hand [data-card]"), d = e.target.closest("[data-do]"), deck = e.target.closest("#deck"), k = e.target.closest("[data-catch]");
+  const c = e.target.closest("#hand [data-card]"), d = e.target.closest("[data-do]"), deckEl = e.target.closest("#deck"), k = e.target.closest("[data-catch]");
   const h = e.target.closest("[data-host]"), kick = e.target.closest("[data-kick]");
   const dk = e.target.closest("[data-deck]"), dn = e.target.closest("[data-deck-next]");
   if(dk){ setDeck(dk.dataset.deck); return; }
@@ -698,12 +698,18 @@ document.addEventListener("click", async e=>{
     const card = c.dataset.card;
     kind(card).startsWith("W") ? pickColor(card) : play(card);
   }
-  if(deck && !deck.disabled){ act("draw").catch(err=>toast(err.message)); }
+  if(deckEl && !deckEl.disabled){ act("draw").catch(err=>toast(err.message)); }
   if(d){ act(d.dataset.do).catch(err=>toast(err.message)); }
   if(k){ act("catch").catch(err=>toast(err.message)); }
   if(h){ try{ await act(h.dataset.host); }catch(err){ toast(err.message); } }
   if(kick){ if(kick.dataset.sure !== "1"){ kick.dataset.sure = "1"; kick.textContent = "Sure?"; return; } act("kick", {pid:kick.dataset.kick}).catch(err=>toast(err.message)); }
 });
+$("#hCode").onclick = async ()=>{
+  if(!code) return;
+  const link = location.origin + "/lantern?room=" + code;
+  try{ await navigator.clipboard.writeText(link); toast(`Invite link copied · ${code}`); }
+  catch(e){ toast(link); }
+};
 
 /* ---------- host controls, timer ---------- */
 function renderHostbar(){

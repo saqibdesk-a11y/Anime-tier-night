@@ -491,6 +491,10 @@ def host_action(room, action, b):
         room["deadline"] += int(b.get("sec") or 30)
     elif action == "kick":
         room["players"].pop(b.get("pid"), None)
+        if ph not in ("lobby", "final"):
+            w = winner(room)
+            if w:
+                room.update({"phase": "final", "winner": w, "deadline": None})
     elif action == "playagain":
         for p in room["players"].values():
             p.update({"role": None, "alive": True, "ready": False, "spectator": False})

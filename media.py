@@ -139,14 +139,17 @@ def prank_view(game, room, viewer):
             "prankStats": PRANK_STATS.get(room["code"], {"sent": {}, "got": {}, "kinds": {}})}
 
 
-def forget_gone(codes):
-    """Drops chat and prank memory for rooms that no longer exist, so a long-running server doesn't grow forever."""
+def forget_gone(codes, keep_images=None):
+    """Drops chat, prank and image memory for rooms that no longer exist, so a long-running server doesn't grow forever."""
     for d in (CHAT, PRANKS, PRANK_STATS):
         for code in [c for c in d if c not in codes]:
             d.pop(code, None)
     for d in (LAST_CHAT, LAST_PRANK, RECENT_THROWS):
         for key in [k for k in d if k[0] not in codes]:
             d.pop(key, None)
+    if keep_images is not None:
+        for img_id in [k for k in IMAGES if k not in keep_images]:
+            IMAGES.pop(img_id, None)
 
 
 def prank_reset(room):

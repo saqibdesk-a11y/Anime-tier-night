@@ -29,6 +29,7 @@ PORT = int(os.environ.get("PORT", "8000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(HERE, "rooms.json")
 TIERS = ["S", "A", "B", "C", "D", "F"]
+ROOM_TTL_SEC = max(1, int(os.environ.get("ROOM_TTL_DAYS", "14"))) * 86400
 
 lock = threading.Condition()
 rooms = {}
@@ -91,11 +92,46 @@ def saver():
             time.sleep(5)
 
 
-def changed(room):
-    """Call with lock held after mutating a room."""
+def changed(room, persist=True):
+    """Call with lock held after mutating a room. Pass persist=False for in-memory-only updates (chat, pranks)."""
     room["version"] += 1
+    room["lastActive"] = time.time()
     lock.notify_all()
-    _save_pending.set()
+    if persist:
+        _save_pending.set()
+
+
+def live_image_ids():
+    """Every image id still referenced by an existing room (player photos and Draw It entries)."""
+    keep = set()
+    for room in rooms.values():
+        for p in room.get("players", {}).values():
+            if p.get("photo"):
+                keep.add(p["photo"])
+        for rd in room.get("roundData", []):
+            for e in (rd.get("entries") or {}).values():
+                if e.get("img"):
+                    keep.add(e["img"])
+    return keep
+
+
+def prune_rooms():
+    """Call with lock held. Drops rooms inactive past ROOM_TTL_SEC and frees their in-memory media."""
+    now = time.time()
+    gone = [c for c, r in rooms.items() if now - r.get("lastActive", r.get("created", 0)) > ROOM_TTL_SEC]
+    for code in gone:
+        rooms.pop(code, None)
+        draw_game.cleanup(code)
+    media.forget_gone(set(rooms), live_image_ids())
+    if gone:
+        _save_pending.set()
+
+
+def safe_int(val, default):
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
 
 
 # ---------- AniList poster lookup ----------
@@ -667,7 +703,7 @@ def ticker():
         beat += 1
         if beat % 60 == 0:
             with lock:
-                media.forget_gone(set(rooms))
+                prune_rooms()
         with lock:
             for room in rooms.values():
                 if room.get("game") in GAMES:
@@ -753,7 +789,8 @@ class Handler(BaseHTTPRequestHandler):
                 p = room and room["players"].get(q("pid"))
                 if not room or not p or p["key"] != q("key"):
                     return self.err("You're not in this room.", 403)
-                rnd, team, since, gen = room["round"], p.get("team"), int(q("since", "0")), int(q("gen", "0"))
+                rnd, team = room["round"], p.get("team")
+                since, gen = safe_int(q("since", "0"), 0), safe_int(q("gen", "0"), 0)
                 while time.time() < deadline:
                     out = draw_game.strokes_since(code, rnd, team, since, gen)
                     if out["reset"] or out["strokes"] or rooms.get(code, {}).get("round") != rnd:
@@ -809,6 +846,7 @@ class Handler(BaseHTTPRequestHandler):
                 viewer = pid if p and p["key"] == key else None
                 game = GAMES.get(room.get("game"))
                 out = game.public(room, viewer) if game else public(room, viewer)
+                out.pop("lastActive", None)
                 out.update(media.chat_view(game, room, viewer))
                 out.update(media.prank_view(game, room, viewer))
                 return self.send_json(out)
@@ -845,10 +883,10 @@ class Handler(BaseHTTPRequestHandler):
                 room = {"code": code, "hostKey": rid(16), "title": (b.get("title") or "Tier List Night")[:80],
                         "titleAuto": not b.get("title"), "category": category,
                         "catLabel": str(b.get("catLabel") or "").strip()[:40] if category == "custom" else "",
-                        "aiTheme": str(b.get("aiTheme") or "").strip()[:120], "aiCount": max(5, min(40, int(b.get("aiCount") or 15))),
+                        "aiTheme": str(b.get("aiTheme") or "").strip()[:120], "aiCount": max(5, min(40, safe_int(b.get("aiCount"), 15))),
                         "aiState": None, "mode": mode, "phase": "submit" if mode == "picks" else "lobby", "autoStart": None,
-                        "picksPer": max(1, min(10, int(b.get("picksPer") or 5))),
-                        "timerSec": max(30, min(1800, int(b.get("timerSec") or (120 if mode == "picks" else 180)))), "deadline": None,
+                        "picksPer": max(1, min(10, safe_int(b.get("picksPer"), 5))),
+                        "timerSec": max(30, min(1800, safe_int(b.get("timerSec"), 120 if mode == "picks" else 180))), "deadline": None,
                         "spice": b.get("spice") if b.get("spice") in SPICE else "spicy", "show": None, "roastState": None,
                         "anime": [], "players": {}, "revealed": False, "tiers": TIERS, "roasts": [],
                         "created": time.time(), "version": 0}
@@ -904,7 +942,7 @@ class Handler(BaseHTTPRequestHandler):
                     media.chat_post(GAMES.get(room.get("game")), room, b.get("pid"), b)
                 except media.Refuse as e:
                     return self.err(str(e), e.status)
-                changed(room)
+                changed(room, persist=False)
                 return self.send_json({"ok": True})
 
             if action == "prank":  # throwables for fun; they never change the game
@@ -914,7 +952,7 @@ class Handler(BaseHTTPRequestHandler):
                     media.prank_post(GAMES.get(room.get("game")), room, b.get("pid"), b)
                 except media.Refuse as e:
                     return self.err(str(e), e.status)
-                changed(room)
+                changed(room, persist=False)
                 return self.send_json({"ok": True})
 
             if action in ("photo", "avatar"):
@@ -930,7 +968,10 @@ class Handler(BaseHTTPRequestHandler):
                     img = str(b.get("img") or "")
                     if not img.startswith("data:image/jpeg;base64,"):
                         return self.err("That picture didn't upload. Try another one.")
-                    raw = base64.b64decode(img.split(",", 1)[1])
+                    try:
+                        raw = base64.b64decode(img.split(",", 1)[1])
+                    except (ValueError, TypeError):
+                        return self.err("That picture didn't upload. Try another one.")
                     if len(raw) > 400_000:
                         return self.err("That picture is too big.")
                     media.IMAGES.pop(player.get("photo"), None)

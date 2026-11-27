@@ -859,8 +859,9 @@ function renderRate(){
 }
 const localScores = {};
 async function saveRating(card){
-  const eid = card.dataset.eid, s = localScores[eid];
+  const eid = card.dataset.eid, s = localScores[eid] ?? myRating(eid).s;
   if(!s) return toast("Pick a score first");
+  localScores[eid] = s;
   try{ await act("rate", {eid, s, c: card.querySelector("[data-c]").value.trim()}); }catch(err){ toast(err.message); }
 }
 $("#rateGrid").addEventListener("click", e=>{
@@ -872,8 +873,9 @@ $("#rateGrid").addEventListener("click", e=>{
 let commentTimers = {};
 $("#rateGrid").addEventListener("input", e=>{
   const card = e.target.closest(".rcard"); if(!card || !e.target.matches("[data-c]")) return;
-  clearTimeout(commentTimers[card.dataset.eid]);
-  commentTimers[card.dataset.eid] = setTimeout(()=>{ if(localScores[card.dataset.eid]) saveRating(card); }, 700);
+  const eid = card.dataset.eid;
+  clearTimeout(commentTimers[eid]);
+  commentTimers[eid] = setTimeout(()=>{ if(localScores[eid] ?? myRating(eid).s) saveRating(card); }, 700);
 });
 
 /* ---------- AI judging (AI-scored games) ---------- */
@@ -946,7 +948,7 @@ function renderFinal(){
   $("#vFinal").innerHTML = `<div class="slide"><div class="eyebrow">Game over</div><h1 class="slide-title">${st[0] ? `${esc(st[0].name)} wins` : "Game over"}</h1>
     <div class="board">${st.map((s,k)=>`<div class="brow ${k===0?"first":""}" style="animation-delay:${k*.15}s"><span class="rk">${k+1}</span><span>${esc(s.name)}</span><span class="pts">${s.points} pts</span></div>`).join("")}</div>
     <h2 style="font-size:20px;margin-top:30px">Every drawing</h2>
-    <div class="gallery">${all.map(e=>`<figure><img src="/api/img/${e.img}" alt="" style="width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;display:block"><figcaption>${esc(e.name)}${e.score!=null?` · ${e.score}/10`:""}<span>${esc(e.prompt)}</span></figcaption></figure>`).join("")}</div>
+    <div class="gallery">${all.map(e=>`<figure><img src="/api/img/${e.img}" alt="" style="width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;display:block"><figcaption style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div>${esc(e.name)}${e.score!=null?` · ${e.score}/10`:""}<span>${esc(e.prompt)}</span></div><a class="btn small" href="/api/img/${e.img}" download="${esc((e.name+"-"+e.prompt).replace(/[^a-z0-9]+/gi,"-").slice(0,48))}.jpg" style="flex:none;text-decoration:none">Save</a></figcaption></figure>`).join("")}</div>
     ${hostKey ? '<div style="margin-top:20px"><button class="btn primary" data-h="playagain">Play again</button></div>' : ""}</div>`;
 }
 

@@ -78,7 +78,13 @@ def create(room, b):
     })
 
 
-TEAM_NAMES = ["Team Red", "Team Blue", "Team Green", "Team Gold"]
+TEAM_NAMES = ["Lantern team", "Shrine team", "Bamboo team", "Gold team"]
+
+
+def cleanup(code):
+    """Drops in-memory stroke history when a room is expired."""
+    for k in [k for k in STROKES if k[0] == code]:
+        del STROKES[k]
 
 
 def owners(room):
@@ -442,7 +448,10 @@ def player_action(room, action, b, pid):
         img = str(b.get("img") or "")
         if not img.startswith("data:image/jpeg;base64,"):
             raise Refuse("The drawing didn't upload. Try again.")
-        raw = base64.b64decode(img.split(",", 1)[1])
+        try:
+            raw = base64.b64decode(img.split(",", 1)[1])
+        except (ValueError, TypeError):
+            raise Refuse("The drawing didn't upload. Try again.")
         if len(raw) > MAX_IMG:
             raise Refuse("That drawing is too big to upload.")
         owner = owner_of(room, pid)

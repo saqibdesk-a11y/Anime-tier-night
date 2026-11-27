@@ -302,7 +302,7 @@ body.quake .stage{animation:quake .6s}
 <header class="top noren">
   <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
   <h1>Codenames</h1>
-  <span class="code" id="hCode" hidden></span>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
   <span class="timer" id="timer" hidden></span>
   <button class="iconbtn" id="soundBtn" aria-label="Sound" title="Sound"></button>
@@ -804,6 +804,12 @@ function tickTimer(){
 }
 setInterval(tickTimer, 250);
 
+$("#hCode").onclick = async ()=>{
+  if(!code) return;
+  const link = location.origin + "/codenames?room=" + code;
+  try{ await navigator.clipboard.writeText(link); toast(`Invite link copied · ${code}`); }
+  catch(e){ toast(link); }
+};
 const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
 if(c0) openRoom(c0); else home();
 </script>

@@ -310,9 +310,10 @@ def player_action(room, action, b, pid):
     turn = current(room)
     if action == "call":
         n = len(g["hands"][pid])
+        can_jump_any = any(can_jump(room, pid, c) for c in g["hands"][pid])
         if n == 1 and g["exposed"] == pid:
             g["exposed"] = None  # called just in time
-        elif not (n == 2 and turn == pid):
+        elif not (n == 2 and (turn == pid or can_jump_any)):
             raise Refuse("Call it when you're about to play your second-last card.", 409)
         if pid not in g["called"]:
             g["called"].append(pid)
