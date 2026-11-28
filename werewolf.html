@@ -323,10 +323,10 @@ function home(){
   $("#stage").innerHTML = `<div class="fadeup" style="margin-top:18vh"><h1 class="title" style="font-size:clamp(52px,13vw,96px)">Werewolf</h1>
     <p class="sub" style="max-width:46ch;margin:10px auto 0">Take a seat at the table. Someone here is a wolf. Find them before they find you.</p></div>
     <div style="display:grid;gap:16px;margin-top:26px">
-    <form class="panel" id="createForm"><h2 style="font-size:22px">Host a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+    <form class="panel" id="createForm"><h2 style="font-size:22px">Host a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="16" autocomplete="nickname"></div>
       <div class="err" id="cErr"></div><button class="btn primary wide">Set the table</button></form>
     <form class="panel" id="joinForm"><h2 style="font-size:22px">Join a game</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
-      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div><div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div></div><div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
   $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
     try{ const r = await api("/api/rooms", {game:"werewolf", title:"Werewolf"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("ww:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
   $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
@@ -384,7 +384,7 @@ function render(){
 function gate(){
   if($("#gate")) return;  // already showing: rebuilding it would wipe the name being typed
   $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">There's a free seat</div><h2 style="font-size:26px;text-align:center">Join this table</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit down</button></form>`;
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit down</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("ww:"+code, {me, hostKey}); lastSig=""; poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
 }

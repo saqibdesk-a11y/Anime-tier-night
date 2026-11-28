@@ -282,7 +282,7 @@ body.focus .dock .closetools{display:block}
       <form class="panel" id="joinForm">
         <h2>Join a game</h2>
         <div><label for="jCode">Room code</label><input type="text" id="jCode" placeholder="e.g. K7QX" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
-        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="jErr"></div>
         <button class="btn primary">Join</button>
       </form>
@@ -305,7 +305,7 @@ body.focus .dock .closetools{display:block}
 
     <form class="panel" id="gate" hidden style="max-width:420px;margin-top:14px">
       <h2>Pick your name</h2>
-      <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname">
+      <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname">
       <div class="err" id="gErr"></div>
       <button class="btn primary">Join game</button>
     </form>

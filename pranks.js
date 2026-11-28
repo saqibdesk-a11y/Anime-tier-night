@@ -17,7 +17,7 @@
     kiss:        {e:"💋", name:"Kiss",          verb:"kissed"},
     fahhh:       {e:"😩", name:"Fahhh",         verb:"went FAHHH at"},
     booing:      {e:"👎", name:"Boo them",      verb:"got the crowd to boo"},
-    hearts:      {e:"💗", name:"Lantern hearts",verb:"sent hearts to"},
+    hearts:      {e:"💗", name:"Floating hearts",verb:"sent hearts to"},
     crown:       {e:"👑", name:"Flower crown",  verb:"crowned"},
     boo:         {e:"👻", name:"Boo",           verb:"haunted"},
     chill:       {e:"❄️", name:"Chill",         verb:"froze"},

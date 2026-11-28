@@ -185,15 +185,15 @@ const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" s
 function home(){
   $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
   document.body.classList.remove("has-hostbar"); curView = "home";
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">Shadow-Puppet Quiz Stall</div><h1 class="title">Guess the Silhouette</h1>
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">Anime Speed Quiz</div><h1 class="title">Guess the Silhouette</h1>
     <p class="sub">Race to spot clearing anime silhouettes, play Higher or Lower on AniList popularity, or battle in AI speed trivia!</p></div>
     <div class="row2 fadeup" style="margin-top:20px">
       <form class="panel" id="createForm"><h2>Host a quiz</h2>
-        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
       <form class="panel" id="joinForm"><h2>Join with a code</h2>
         <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
-        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="jErr"></div><button class="btn wide">Join</button></form>
     </div>
     <div class="fadeup">${HowTo.button("silhouette")}</div>`;
@@ -240,7 +240,7 @@ function render(){
 function gate(){
   if($("#gate")) return; curView="gate";
   $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Guess the Silhouette</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join quiz</button></form>`;
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join quiz</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
     try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("sil:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
 }

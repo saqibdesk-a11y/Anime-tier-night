@@ -7,15 +7,11 @@
 (function(){
   const LANGS = [
     {id:"en", name:"English", dir:"ltr"},
-    {id:"ar", name:"العربية", dir:"rtl", font:"Noto+Naskh+Arabic:wght@400;700", family:"'Noto Naskh Arabic'"},
-    {id:"ur", name:"اردو", dir:"rtl", font:"Noto+Nastaliq+Urdu:wght@400;700", family:"'Noto Nastaliq Urdu'"},
-    {id:"hi", name:"हिन्दी", dir:"ltr", font:"Noto+Sans+Devanagari:wght@400;700", family:"'Noto Sans Devanagari'"},
+    {id:"ar", name:"العربية", dir:"rtl", family:"'Cairo'"},
   ];
   const UI = {
     en:{title:"How to play", close:"Close"},
     ar:{title:"طريقة اللعب", close:"إغلاق"},
-    ur:{title:"کھیلنے کا طریقہ", close:"بند کریں"},
-    hi:{title:"कैसे खेलें", close:"बंद करें"},
   };
 
   const T = {};
@@ -396,7 +392,7 @@ Chain correct answers in a row to build a <b>Streak Bonus</b> (up to +300 extra 
   T.dial = {
     en:`Every turn, one player becomes the <b>Psychic</b> and sees a hidden target spot on a two-sided spectrum (like <b>Overrated ↔ Underrated</b> or <b>Harmless ↔ Pure Menace</b>).
 The Psychic writes <b>one short clue</b> that sits at that exact spot on the spectrum, then taps <b>"Send clue"</b>.
-Everyone else drags the needle on the festival fan dial (or slides the bar) to where they think the target is hiding, then taps <b>"Lock in"</b>.
+Everyone else drags the needle on the spectrum dial (or slides the bar) to where they think the target is hiding, then taps <b>"Lock in"</b>.
 When the screen opens, the target wedges appear and everyone argues about the Psychic's clue!
 # Points
 <b>Bullseye</b> (within 4): +4 pts. <b>Close</b> (within 10): +3 pts. <b>Warm</b> (within 18): +2 pts.
@@ -458,7 +454,7 @@ The final round is worth <b>2× Double Points</b>—anybody can steal the crown 
 
   /* ---------- Fox's Bluff ---------- */
   T.bluff = {
-    en:`Every player starts with 4 festival coasters: <b>3 Sakura Blossoms</b> (safe) and <b>1 Cursed Fox Mask</b> (trap).
+    en:`Every player starts with 4 coasters: <b>3 Sakura Blossoms</b> (safe) and <b>1 Cursed Fox Mask</b> (trap).
 <b>1. Secret Place:</b> everyone puts 1 coaster face-down in front of them.
 <b>2. Stack or Bid:</b> on your turn, either stack another coaster face-down onto your pile, OR start the bidding ("I can flip X safe blossoms!").
 <b>3. Bidding War:</b> once bidding starts, everyone must either <b>Raise</b> the number or <b>Pass</b> until one Challenger remains.
@@ -546,45 +542,50 @@ Faster correct answers earn up to <b>+1000</b> points. Chain correct tracks in a
 .howto-btn:hover{background:rgba(255,255,255,.1);border-color:color-mix(in srgb,var(--lantern,#FF3E78) 55%,var(--line-2))}
 .howto-btn svg{width:18px;height:18px}
 .howto-btn small{font-weight:600;opacity:.65;font-size:12px}
-.howto-scrim{position:fixed;inset:0;z-index:90;background:rgba(4,6,14,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;animation:howtoFade .2s}
+.howto-scrim{position:fixed;inset:0;z-index:90;direction:ltr;background:rgba(4,6,14,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;animation:howtoFade .18s ease-out}
 @media (min-width:700px){.howto-scrim{align-items:center;padding:24px}}
-.howto{background:var(--night-2,#12172B);color:var(--fg,#F4F6FF);border:1px solid var(--line-2,rgba(255,255,255,.18));width:min(640px,100%);max-height:88vh;max-height:88svh;border-radius:22px 22px 0 0;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,.78);animation:howtoUp .32s cubic-bezier(.2,.9,.3,1)}
+.howto{background:var(--night-2,#12172B);color:var(--fg,#F4F6FF);border:1px solid var(--line-2,rgba(255,255,255,.18));width:min(640px,100%);max-height:86vh;max-height:86svh;border-radius:22px 22px 0 0;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,.78);animation:howtoUp .26s cubic-bezier(.22,1,.36,1)}
 @media (min-width:700px){.howto{border-radius:22px}}
 .howto header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 10px}
-.howto header h2{font-size:24px;margin:0}
-.howto .x{border:1px solid var(--line,rgba(255,255,255,.12));background:rgba(255,255,255,.07);color:inherit;width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;flex:none}
-.howto .langs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 18px 12px}
-.howto .langs button{border:1.5px solid var(--line,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:inherit;border-radius:12px;padding:9px 4px;font:700 15px/1.2 var(--body,system-ui);cursor:pointer;transition:background .14s,border-color .14s}
-.howto .langs button.on{background:var(--paper,#F5F7FF);color:var(--ink,#0D1122);border-color:var(--paper,#F5F7FF)}
-.howto .body{overflow-y:auto;padding:2px 20px 18px;overscroll-behavior:contain}
-.howto .body h3{font-size:17px;font-weight:800;letter-spacing:0;margin:18px 0 8px;font-family:inherit;color:var(--gold,#FFC83D)}
-.howto .body ol{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:s}
-.howto .body li{position:relative;padding-inline-start:36px;font-size:15.5px;line-height:1.55;color:rgba(244,246,255,.92)}
-.howto .body ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;inset-inline-start:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--lantern,#FF3E78);color:var(--on-lantern,#fff);font:800 13px/26px var(--body,system-ui);text-align:center}
-.howto .body ol.bullets li::before{content:"";position:absolute;inset-inline-start:9px;top:.62em;width:8px;height:8px;border-radius:50%;background:var(--gold,#FFC83D)}
-.howto .body[dir=rtl] li{font-size:17px}
-.howto .body.ur li{line-height:2.25;font-size:17px}
-.howto .body.ur h3{line-height:2}
+.howto header h2{font-size:24px;margin:0;line-height:1.2}
+.howto .x{border:1px solid var(--line,rgba(255,255,255,.12));background:rgba(255,255,255,.07);color:inherit;width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;flex:none;transition:background .15s}
+.howto .x:hover{background:rgba(255,255,255,.14)}
+.howto .langs{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;margin:4px 18px 12px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line,rgba(255,255,255,.12))}
+.howto .langs .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:10px;background:var(--paper,#F5F7FF);box-shadow:0 4px 14px rgba(0,0,0,.3);transition:transform .24s cubic-bezier(.22,1,.36,1);pointer-events:none}
+.howto .langs[data-active="ar"] .pill{transform:translateX(100%)}
+.howto .langs button{position:relative;z-index:1;border:0;background:none;color:var(--muted,#97A3C6);border-radius:10px;padding:9px 8px;font:700 15px/1.2 var(--body,system-ui);cursor:pointer;transition:color .2s ease}
+.howto .langs button.on{color:var(--ink,#0D1122)}
+.howto .body-scroll{overflow-y:auto;overscroll-behavior:contain;padding:2px 20px 18px;scrollbar-gutter:stable}
+.howto .panes{display:grid;align-items:start}
+.howto .pane{grid-area:1/1;transition:opacity .2s cubic-bezier(.22,1,.36,1),transform .22s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
+.howto .pane[aria-hidden="true"]{opacity:0;transform:translateY(5px);pointer-events:none;visibility:hidden}
+.howto .pane[aria-hidden="false"]{opacity:1;transform:none;visibility:visible}
+.howto .pane h3{font-size:17px;font-weight:800;letter-spacing:0;margin:18px 0 8px;font-family:inherit;color:var(--gold,#FFC83D)}
+.howto .pane ol{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:s}
+.howto .pane li{position:relative;padding-inline-start:36px;font-size:15.5px;line-height:1.6;color:rgba(244,246,255,.92)}
+.howto .pane ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;inset-inline-start:0;top:2px;width:26px;height:26px;border-radius:50%;background:var(--lantern,#FF3E78);color:var(--on-lantern,#fff);font:800 13px/26px var(--body,system-ui);text-align:center}
+.howto .pane ol.bullets li::before{content:"";position:absolute;inset-inline-start:9px;top:.62em;width:8px;height:8px;border-radius:50%;background:var(--gold,#FFC83D)}
+.howto .pane.ar{font-family:"Cairo","Plus Jakarta Sans",system-ui,sans-serif}
+.howto .pane.ar li{font-size:16px;line-height:1.7}
 .howto footer{padding:10px 18px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(255,255,255,.1))}
-.howto footer button{width:100%;border:0;border-radius:999px;padding:13px;background:var(--lantern,#FF3E78);color:var(--on-lantern,#fff);font:800 16px var(--body,system-ui);cursor:pointer}
-@keyframes howtoUp{from{transform:translateY(40px);opacity:0}}
+.howto footer button{width:100%;border:0;border-radius:999px;padding:13px;background:var(--lantern,#FF3E78);color:var(--on-lantern,#fff);font:800 16px var(--body,system-ui);cursor:pointer;transition:filter .15s,transform .12s}
+.howto footer button:active{transform:scale(.98)}
+@keyframes howtoUp{from{transform:translateY(22px);opacity:0}}
 @keyframes howtoFade{from{opacity:0}}
-@media (prefers-reduced-motion:reduce){.howto,.howto-scrim{animation:none}}`;
+@media (prefers-reduced-motion:reduce){.howto,.howto-scrim,.howto .langs .pill,.howto .pane{animation:none;transition:none}}`;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5"/><path d="M12 17.5h.01"/></svg>';
-  const get = () => { try{ return localStorage.getItem("howtoLang") || "en"; }catch(e){ return "en"; } };
-  const set = l => { try{ localStorage.setItem("howtoLang", l); }catch(e){} };
-  const loaded = {};
-  function font(L){
-    if(!L.font || loaded[L.id]) return;
-    loaded[L.id] = true;
-    const l = document.createElement("link"); l.rel = "stylesheet";
-    l.href = `https://fonts.googleapis.com/css2?family=${L.font}&display=swap`;
-    document.head.appendChild(l);
-  }
-  function body(game, lang){
-    const L = LANGS.find(x=>x.id===lang) || LANGS[0];
+  const get = () => {
+    if(window.I18n) return I18n.get();
+    try{ return localStorage.getItem("agn:lang") === "ar" || localStorage.getItem("howtoLang") === "ar" ? "ar" : "en"; }catch(e){ return "en"; }
+  };
+  const set = l => {
+    const clean = l === "ar" ? "ar" : "en";
+    if(window.I18n) I18n.set(clean);
+    else{ try{ localStorage.setItem("agn:lang", clean); localStorage.setItem("howtoLang", clean); }catch(e){} }
+  };
+  function bodyHTML(game, lang){
     const lines = (T[game]?.[lang] || T[game]?.en || "").split("\n").map(s=>s.trim()).filter(Boolean);
     let html = "", list = [], first = true;
     const flush = () => { if(list.length) html += `<ol class="${first ? "steps" : "bullets"}">${list.map(x=>`<li>${x}</li>`).join("")}</ol>`; list = []; };
@@ -593,38 +594,65 @@ Faster correct answers earn up to <b>+1000</b> points. Chain correct tracks in a
       else list.push(ln);
     }
     flush();
-    return `<div class="body ${L.id}" dir="${L.dir}" lang="${L.id}" style="${L.family ? `font-family:${L.family},system-ui,sans-serif` : ""}">${html}</div>`;
+    return html;
   }
   function open(game){
     close();
     let lang = get();
     const box = document.createElement("div"); box.className = "howto-scrim"; box.id = "howto";
-    const draw = () => {
-      const L = LANGS.find(x=>x.id===lang) || LANGS[0]; font(L);
+    box.setAttribute("data-no-i18n", "1");
+    box.innerHTML = `<div class="howto" role="dialog" aria-modal="true">
+      <header><h2></h2><button class="x" type="button">×</button></header>
+      <div class="langs" role="tablist" data-active="${lang}"><span class="pill" aria-hidden="true"></span>${LANGS.map(x=>`<button type="button" role="tab" data-lang="${x.id}" lang="${x.id}">${x.name}</button>`).join("")}</div>
+      <div class="body-scroll"><div class="panes">${LANGS.map(L=>`<div class="pane ${L.id}" data-pane="${L.id}" dir="${L.dir}" lang="${L.id}" aria-hidden="${L.id!==lang}">${bodyHTML(game, L.id)}</div>`).join("")}</div></div>
+      <footer><button type="button" class="done"></button></footer></div>`;
+    const dlg = box.querySelector(".howto");
+    const h2 = box.querySelector("header h2");
+    const xBtn = box.querySelector(".x");
+    const tabsEl = box.querySelector(".langs");
+    const scrollEl = box.querySelector(".body-scroll");
+    const doneBtn = box.querySelector(".done");
+
+    const paint = (resetScroll) => {
       const ui = UI[lang] || UI.en;
-      box.innerHTML = `<div class="howto" role="dialog" aria-modal="true" aria-label="${ui.title}">
-        <header dir="${L.dir}" style="${L.family ? `font-family:${L.family},system-ui` : ""}"><h2>${ui.title}</h2><button class="x" type="button" aria-label="${ui.close}">×</button></header>
-        <div class="langs" role="tablist">${LANGS.map(x=>`<button type="button" role="tab" aria-selected="${x.id===lang}" data-lang="${x.id}" class="${x.id===lang ? "on" : ""}" lang="${x.id}">${x.name}</button>`).join("")}</div>
-        ${body(game, lang)}
-        <footer><button type="button" class="done" style="${L.family ? `font-family:${L.family},system-ui` : ""}">${ui.close}</button></footer></div>`;
+      dlg.setAttribute("aria-label", ui.title);
+      h2.textContent = ui.title;
+      h2.style.fontFamily = lang === "ar" ? '"Cairo","Plus Jakarta Sans",system-ui,sans-serif' : "";
+      xBtn.setAttribute("aria-label", ui.close);
+      doneBtn.textContent = ui.close;
+      tabsEl.dataset.active = lang;
+      box.querySelectorAll("[data-lang]").forEach(btn => {
+        const on = btn.dataset.lang === lang;
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-selected", String(on));
+      });
+      box.querySelectorAll("[data-pane]").forEach(p => {
+        p.setAttribute("aria-hidden", String(p.dataset.pane !== lang));
+      });
+      if(resetScroll) scrollEl.scrollTop = 0;
     };
-    draw();
+    paint(false);
     box.onclick = e => {
       const b = e.target.closest("[data-lang]");
-      if(b){ lang = b.dataset.lang; set(lang); draw(); return; }
+      if(b){
+        if(b.dataset.lang === lang) return;
+        lang = b.dataset.lang;
+        paint(true);
+        set(lang);
+        return;
+      }
       if(e.target === box || e.target.closest(".x") || e.target.closest(".done")) close();
     };
     document.body.appendChild(box);
-    document.documentElement.style.overflow = "hidden";
   }
   function close(){
     const b = document.getElementById("howto");
     if(!b) return false;
-    b.remove(); document.documentElement.style.overflow = "";
+    b.remove();
     return true;
   }
   function button(game, extraStyle=""){
-    return `<button type="button" class="howto-btn" data-howto="${game}" style="${extraStyle}">${ICON}How to play <small>English · العربية · اردو · हिन्दी</small></button>`;
+    return `<button type="button" class="howto-btn" data-howto="${game}" style="${extraStyle}">${ICON}<span>How to play</span> <small data-no-i18n="1">English · العربية</small></button>`;
   }
   document.addEventListener("click", e => { const b = e.target.closest("[data-howto]"); if(b) open(b.dataset.howto); });
   document.addEventListener("keydown", e => { if(e.key === "Escape") close(); });

@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Game Night">
-<title>Last Lantern</title>
+<title>Last Card</title>
 <link rel="stylesheet" href="/festival.css">
 <style>
 /* Layout: a card stall at the festival. The other players sit along the top, the draw pile and the
@@ -272,7 +272,7 @@ body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0
 <body>
 <header class="top noren">
   <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
-  <h1>Last Lantern</h1>
+  <h1>Last Card</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
   <span class="timer" id="timer" hidden></span>
@@ -352,17 +352,17 @@ const tilt = c => ((parseInt(c.split("#")[1], 10) || 0) * 47 % 23) - 11;
 
 /* ---------- home ---------- */
 function home(){
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:5vh"><h1 class="title" style="font-size:clamp(44px,12vw,80px)">Last Lantern</h1>
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:5vh"><h1 class="title" style="font-size:clamp(44px,12vw,80px)">Last Card</h1>
     <p class="sub">Match the colour or the symbol, hit the next player with action cards, and empty your hand first. Down to one card? Call it before someone catches you.</p></div>
     <div style="display:grid;gap:14px;margin-top:26px;max-width:520px;margin-left:auto;margin-right:auto">
-    <form class="panel" id="createForm"><h2>Start a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+    <form class="panel" id="createForm"><h2>Start a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="16" autocomplete="nickname"></div>
       <div class="err" id="cErr"></div><button class="btn primary wide">Create game</button><p class="hint">House rules and the turn timer are set in the lobby.</p></form>
     ${HowTo.button("lantern","margin-top:0")}
     <form class="panel" id="joinForm"><h2>Join a game</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
-      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div>
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div></div>
       <div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div>`;
   $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
-    try{ const r = await api("/api/rooms", {game:"lantern", title:"Last Lantern"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("ll:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
+    try{ const r = await api("/api/rooms", {game:"lantern", title:"Last Card"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("ll:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
   $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c = $("#jCode").value.trim().toUpperCase(), n = $("#jName").value.trim();
     if(!c || !n){ $("#jErr").textContent = "Enter the room code and your name."; return; }
     try{ const m = await api(`/api/rooms/${c}/join`, {name:n}); store("ll:"+c, {...(store("ll:"+c)||{}), me:m}); openRoom(c); }catch(err){ $("#jErr").textContent = err.message; } };
@@ -431,7 +431,7 @@ function render(){
 function gate(){
   if($("#gate")) return;
   $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join this game</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("ll:"+code, {me, hostKey}); poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
 }

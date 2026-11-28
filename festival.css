@@ -1,8 +1,11 @@
 /* Neon Tokyo Arcade: the modern design system every page shares.
-   Deep obsidian glass, crisp floating navigation, electric neon accents, and clean geometric
-   typography. All legacy CSS variable names (--night, --lantern, --gold, --shrine, --paper, --ink)
-   are preserved so every game and theme recolor updates seamlessly. */
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+   Deep obsidian glass, crisp floating navigation, electric neon accents, smooth cross-document
+   View Transitions, and full English / Arabic (RTL) typography. */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:agnFadeOut .16s cubic-bezier(.4,0,1,1) both}
+::view-transition-new(root){animation:agnFadeIn .22s cubic-bezier(0,0,.2,1) both}
+@keyframes agnFadeOut{to{opacity:0;transform:scale(.992)}}
+@keyframes agnFadeIn{from{opacity:0;transform:translateY(4px)}}
 
 :root{
   --night:#0A0D18; --night-2:#12172B; --night-3:#1B2340;
@@ -10,12 +13,17 @@
   --lantern:#FF3E78; --on-lantern:#FFFFFF; --gold:#FFC83D; --shrine:#00D4AA; --on-shrine:#07131A;
   --fg:#F4F6FF; --muted:#97A3C6; --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.22);
   --danger:#FF6B7B;
-  --display:"Space Grotesk","Plus Jakarta Sans",system-ui,sans-serif;
-  --body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --display:"Space Grotesk","Plus Jakarta Sans","Cairo",system-ui,sans-serif;
+  --body:"Plus Jakarta Sans","Cairo",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
   --r-tag:12px; --r-panel:20px;
   color-scheme:dark;
 }
+html[lang="ar"]{
+  --display:"Cairo","Plus Jakarta Sans",system-ui,sans-serif;
+  --body:"Cairo","Plus Jakarta Sans",system-ui,sans-serif;
+}
+html{scrollbar-gutter:stable}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{
@@ -75,6 +83,20 @@ h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.025em;text-
 }
 .noren .noren-back:hover{background:rgba(255,255,255,.12);border-color:var(--line-2);transform:translateX(-2px)}
 .noren .spacer{flex:1 1 0;min-width:0}
+.iconbtn{
+  width:38px;height:38px;border-radius:50%;padding:0;flex:none;cursor:pointer;
+  border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);
+  display:inline-grid;place-items:center;
+  transition:background .16s,border-color .16s,transform .14s,box-shadow .16s;
+}
+.iconbtn svg{width:19px;height:19px;display:block}
+.iconbtn:hover{
+  background:rgba(255,255,255,.13);
+  border-color:color-mix(in srgb,var(--lantern) 65%,var(--line-2));
+  box-shadow:0 0 18px -4px color-mix(in srgb,var(--lantern) 55%,transparent);
+  transform:translateY(-1px);
+}
+.iconbtn[aria-pressed="true"]{color:var(--muted);opacity:.78}
 .noren .th-btn,.noren .iconbtn,.noren .rb-btn{
   border-color:var(--line)!important;
   background:rgba(255,255,255,.055)!important;
@@ -142,12 +164,59 @@ h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.025em;text-
 }
 .mini,.face{flex:none;aspect-ratio:1/1}
 
+/* Global Long-Name & Text Overflow Protection across seats, chips, cards, and scoreboards */
+.tok,.pod,.seat,.srow,.pchip,.mcard .head,.photo-pick > div{min-width:0}
+.tok .nm,.pod .nm,.seat .nm,.pname,.rb-row .nm{
+  max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.pchip{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow > div,.srow > span:nth-child(3){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opt > span:last-child{min-width:0;overflow-wrap:anywhere}
+
+/* Global EN / عربي Language Toggle Pill */
+.lang-btn{
+  height:36px;padding:0 12px;border-radius:999px;flex:none;cursor:pointer;
+  border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);
+  font:700 13px/1 var(--body);display:inline-flex;align-items:center;justify-content:center;
+  transition:background .16s,border-color .16s,transform .14s,box-shadow .16s;
+}
+.lang-btn:hover{
+  background:rgba(255,255,255,.13);
+  border-color:color-mix(in srgb,var(--gold) 65%,var(--line-2));
+  box-shadow:0 0 18px -4px color-mix(in srgb,var(--gold) 55%,transparent);
+  transform:translateY(-1px);
+}
+.lang-btn:active{transform:scale(.95)}
+
+/* Clean Arabic RTL Typography & Layout Guards */
+html[lang="ar"] h1,html[lang="ar"] h2,html[lang="ar"] h3,html[lang="ar"] .eyebrow,html[lang="ar"] label{
+  letter-spacing:0!important;
+}
+html[dir="rtl"] .noren .noren-back:hover{transform:translateX(2px)}
+html[dir="rtl"] .seg button,
+html[dir="rtl"] .seg3 button,
+html[dir="rtl"] .pack,
+html[dir="rtl"] .opt,
+html[dir="rtl"] .rb-stall,
+html[dir="rtl"] .th-tile,
+html[dir="rtl"] .mcard,
+html[dir="rtl"] .mode-btn{text-align:right}
+html[dir="rtl"] .code,
+html[dir="rtl"] .timer,
+html[dir="rtl"] canvas,
+html[dir="rtl"] .aud-prog,
+html[dir="rtl"] input[type=range],
+html[dir="rtl"] .toggle button,
+html[dir="rtl"] .rb-sw{direction:ltr}
+
 @media (max-width:480px){
-  .noren{gap:7px;padding-left:10px;padding-right:10px}
+  .noren{gap:6px;padding-left:10px;padding-right:10px}
   .noren .noren-back{font-size:0;width:34px;height:34px;padding:0;justify-content:center}
   .noren .noren-back::before{content:"\2190";font-size:19px;line-height:1}
-  .noren h1{font-size:17px}
+  html[dir="rtl"] .noren .noren-back::before{content:"\2192"}
+  .noren h1{font-size:16px}
   .noren .code{letter-spacing:.08em!important;padding:3px 8px!important;font-size:12px!important}
   .noren .th-btn,.noren .iconbtn,.noren .rb-btn{width:34px!important;height:34px!important}
+  .lang-btn{height:34px;padding:0 9px;font-size:12px}
   .noren .timer{padding:3px 9px!important;font-size:14px!important}
 }

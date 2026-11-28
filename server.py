@@ -3,6 +3,8 @@
 Run:  python server.py  (then open http://localhost:8000)
 """
 import base64
+import gzip
+import hashlib
 import json
 import os
 import queue
@@ -155,15 +157,15 @@ def safe_int(val, default):
 # ---------- Discord Open Graph previews, presence & host takeover ----------
 
 STALL_META = {
-    "/": ("Anime Game Night", "14 neon multiplayer party games for friends: Guess the OP & Songs, Last Lantern, Fox's Bluff, Codenames, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/arcade-hero.jpg"),
-    "/index.html": ("Anime Game Night", "14 neon multiplayer party games for friends: Guess the OP & Songs, Last Lantern, Fox's Bluff, Codenames, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/arcade-hero.jpg"),
+    "/": ("Anime Game Night", "14 neon multiplayer party games for friends: Guess the OP & Songs, Last Card, Fox's Bluff, Codenames, Forged Brush, Broken Scroll, Guess the Silhouette, Spectrum Dial, Caption Clash, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/arcade-hero.jpg"),
+    "/index.html": ("Anime Game Night", "14 neon multiplayer party games for friends: Guess the OP & Songs, Last Card, Fox's Bluff, Codenames, Forged Brush, Broken Scroll, Guess the Silhouette, Spectrum Dial, Caption Clash, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/arcade-hero.jpg"),
     "/op": ("Guess the OP & Songs", "Blast 30-second live music previews of iconic Anime Openings—or switch to Pop, Hip-Hop, K-Pop, Rock, Bollywood, or any custom artist!", "/img/scenes/arcade-op.jpg"),
     "/codenames": ("Codenames", "Two teams, one grid of words. Give one-word clues and find all your agents before the other team.", "/img/scenes/arcade-codenames.jpg"),
-    "/lantern": ("Last Lantern", "Match the colour or symbol and empty your hand first. Call your last card before someone catches you.", "/img/scenes/arcade-lantern.jpg"),
+    "/lantern": ("Last Card", "Match the colour or symbol and empty your hand first. Call your last card before someone catches you.", "/img/scenes/arcade-lantern.jpg"),
     "/forged": ("Forged Brush", "Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.", "/img/scenes/arcade-forged.jpg"),
     "/scroll": ("Broken Scroll", "Write a prompt, draw it, guess the drawing, repeat—then watch every scroll derail in the reveal theater.", "/img/scenes/arcade-scroll.jpg"),
     "/silhouette": ("Guess the Silhouette", "Name the anime character as their shadow, blur, or zoom clears—or battle in Higher or Lower and AI speed trivia.", "/img/scenes/arcade-silhouette.jpg"),
-    "/dial": ("Festival Dial", "One Psychic sees the hidden target on a wild spectrum and gives one clue. Everyone else slides the dial to match.", "/img/scenes/arcade-dial.jpg"),
+    "/dial": ("Spectrum Dial", "One Psychic sees the hidden target on a wild spectrum and gives one clue. Everyone else slides the dial to match.", "/img/scenes/arcade-dial.jpg"),
     "/clash": ("Caption Clash", "Write the funniest answer to unhinged prompts, battle head-to-head in the vote, and get roasted by AI.", "/img/scenes/stall-clash.jpg"),
     "/bluff": ("Fox's Bluff", "Place Sakura Blossoms or your Cursed Fox Mask face-down, raise the stakes, and flip—or watch a bluff explode.", "/img/scenes/arcade-bluff.jpg"),
     "/mask": ("Forehead Mask", "Everyone sees the character on your forehead except you. Ask Yes/No questions and guess who you are first.", "/img/scenes/arcade-mask.jpg"),
@@ -178,8 +180,39 @@ def html_esc(s):
     return str(s or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+FONTS_HEAD = (
+    b'\n<script>(function(){try{var l=localStorage.getItem("agn:lang");'
+    b'if(l==="ar"){document.documentElement.lang="ar";document.documentElement.dir="rtl";}'
+    b'else{document.documentElement.lang="en";document.documentElement.dir="ltr";}'
+    b'}catch(e){}})();</script>'
+    b'\n<link rel="preconnect" href="https://fonts.googleapis.com">'
+    b'\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+    b'\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">'
+)
+
+_FILE_CACHE = {}
+_FILE_CACHE_LOCK = threading.Lock()
+
+
+def read_cached_file(abspath, compress=False):
+    """In-memory file + gzip + ETag cache keyed by mtime_ns so edits show up immediately while repeat hits cost ~0ms."""
+    st = os.stat(abspath)
+    mtime = st.st_mtime_ns
+    with _FILE_CACHE_LOCK:
+        hit = _FILE_CACHE.get(abspath)
+        if hit and hit[0] == mtime:
+            return hit[1], hit[2], hit[3]
+    with open(abspath, "rb") as f:
+        raw = f.read()
+    etag = f'W/"{mtime:x}-{len(raw):x}"'
+    gz = gzip.compress(raw, compresslevel=5) if compress and len(raw) >= 512 else None
+    with _FILE_CACHE_LOCK:
+        _FILE_CACHE[abspath] = (mtime, raw, gz, etag)
+    return raw, gz, etag
+
+
 def inject_og(raw_bytes, path, qs, proto, host):
-    """Injects Open Graph / Discord embed meta tags so pasted room links unfurl with stall art and live status."""
+    """Injects anti-flash lang/RTL boot script, preconnected fonts, i18n.js, and Open Graph / Discord embed meta tags."""
     title, desc, img = STALL_META.get(path, STALL_META["/"])
     room_code = ((qs.get("room") or [""])[0]).strip().upper()
     if room_code:
@@ -205,11 +238,18 @@ def inject_og(raw_bytes, path, qs, proto, host):
         f'\n<meta name="twitter:title" content="{html_esc(title)}">'
         f'\n<meta name="twitter:description" content="{html_esc(desc)}">'
         f'\n<meta name="twitter:image" content="{html_esc(img_url)}">'
+        f'\n<script src="/i18n.js"></script>'
     ).encode("utf-8")
-    idx = raw_bytes.lower().find(b"</head>")
+    out = raw_bytes
+    low = out.lower()
+    h_open = low.find(b"<head>")
+    if h_open >= 0:
+        out = out[:h_open + 6] + FONTS_HEAD + out[h_open + 6:]
+    low = out.lower()
+    idx = low.find(b"</head>")
     if idx < 0:
-        return raw_bytes
-    return raw_bytes[:idx] + tags + raw_bytes[idx:]
+        return out
+    return out[:idx] + tags + out[idx:]
 
 
 def kick_from_room(room, pid):
@@ -1017,14 +1057,22 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
-    def send_json(self, obj, status=200):
-        body = json.dumps(obj).encode("utf-8")
+    def accepts_gzip(self):
+        return "gzip" in (self.headers.get("Accept-Encoding") or "").lower()
+
+    def send_json(self, obj, status=200, cache="no-store"):
+        body = json.dumps(obj, separators=(",", ":")).encode("utf-8")
+        use_gz = status == 200 and len(body) >= 512 and self.accepts_gzip()
+        payload = gzip.compress(body, compresslevel=5) if use_gz else body
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", cache)
+        if use_gz:
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
+        self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
-        self.wfile.write(body)
+        self.wfile.write(payload)
 
     def err(self, msg, status=400):
         self.send_json({"error": msg}, status)
@@ -1038,13 +1086,27 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             return {}
 
-    def send_bytes(self, data, ctype, cache):
+    def send_bytes(self, data, ctype, cache, etag=None, gz_data=None):
+        if etag and self.headers.get("If-None-Match") == etag:
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", cache)
+            self.end_headers()
+            return
+        compressible = any(k in ctype for k in ("text/", "javascript", "json", "svg"))
+        use_gz = compressible and self.accepts_gzip() and len(data) >= 512
+        payload = (gz_data if gz_data is not None else gzip.compress(data, compresslevel=5)) if use_gz else data
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Cache-Control", cache)
-        self.send_header("Content-Length", str(len(data)))
+        if etag:
+            self.send_header("ETag", etag)
+        if use_gz:
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
+        self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
-        self.wfile.write(data)
+        self.wfile.write(payload)
 
     def do_HEAD(self):
         self.send_response(200)
@@ -1056,11 +1118,14 @@ class Handler(BaseHTTPRequestHandler):
         qs = urllib.parse.parse_qs(u.query)
 
         if u.path in PAGES:
-            with open(os.path.join(HERE, PAGES[u.path]), "rb") as f:
-                raw = f.read()
+            raw, _, file_etag = read_cached_file(os.path.join(HERE, PAGES[u.path]), compress=False)
             proto = (self.headers.get("X-Forwarded-Proto") or "http").split(",")[0].strip()
             host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").split(",")[0].strip()
-            return self.send_bytes(inject_og(raw, u.path, qs, proto, host), "text/html; charset=utf-8", "no-store")
+            has_room = bool(((qs.get("room") or [""])[0]).strip())
+            page = inject_og(raw, u.path, qs, proto, host)
+            etag = None if has_room else f'W/"{hashlib.md5((file_etag + proto + host).encode()).hexdigest()[:14]}"'
+            cache = "no-cache" if has_room else "public, max-age=30, stale-while-revalidate=300"
+            return self.send_bytes(page, "text/html; charset=utf-8", cache, etag=etag)
 
         if parts[:2] == ["api", "img"] and len(parts) == 3:
             raw = media.IMAGES.get(parts[2])
@@ -1087,15 +1152,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(out)
 
         if parts == ["api", "avatars"]:
-            return self.send_json({"avatars": avatar_gallery()})
+            return self.send_json({"avatars": avatar_gallery()}, cache="public, max-age=300")
 
         # the site's art: Werewolf role cards and festival scenes (made offline, see art/gen.py)
         if len(parts) == 3 and parts[0] == "img" and parts[1] in IMG_DIRS and re.fullmatch(r"[a-z0-9-]+\.(webp|jpg)", parts[2]):
             path = os.path.join(HERE, "img", parts[1], parts[2])
             if os.path.isfile(path):
                 ctype = "image/jpeg" if parts[2].endswith(".jpg") else "image/webp"
-                with open(path, "rb") as f:
-                    return self.send_bytes(f.read(), ctype, "public, max-age=604800")
+                raw, _, etag = read_cached_file(path, compress=False)
+                return self.send_bytes(raw, ctype, "public, max-age=604800", etag=etag)
             return self.err("Not found", 404)
 
         # prank sound effects: /sounds/fart serves sounds/fart.mp3, .ogg or .wav, whichever is there
@@ -1103,14 +1168,14 @@ class Handler(BaseHTTPRequestHandler):
             for ext, ctype in (("mp3", "audio/mpeg"), ("ogg", "audio/ogg"), ("wav", "audio/wav")):
                 path = os.path.join(HERE, "sounds", f"{parts[1]}.{ext}")
                 if os.path.isfile(path):
-                    with open(path, "rb") as f:
-                        return self.send_bytes(f.read(), ctype, "no-cache")  # swapped sounds show up right away
+                    raw, _, etag = read_cached_file(path, compress=False)
+                    return self.send_bytes(raw, ctype, "public, max-age=300", etag=etag)
             return self.err("Not found", 404)
 
         if u.path in STATIC:
             ctype, cache = STATIC[u.path]
-            with open(os.path.join(HERE, u.path.lstrip("/")), "rb") as f:
-                return self.send_bytes(f.read(), ctype, cache)
+            raw, gz, etag = read_cached_file(os.path.join(HERE, u.path.lstrip("/")), compress=True)
+            return self.send_bytes(raw, ctype, cache, etag=etag, gz_data=gz)
 
         if parts[:2] == ["api", "search"]:
             q, kind = (qs.get("q") or [""])[0].strip(), (qs.get("kind") or ["anime"])[0]
@@ -1201,7 +1266,7 @@ class Handler(BaseHTTPRequestHandler):
                     room["hostPid"] = b.get("pid")
 
             if action == "join":
-                name = (b.get("name") or "").strip()[:24]
+                name = (b.get("name") or "").strip()[:16]
                 if not name:
                     return self.err("Enter a name to join.")
                 # same name rejoins the same board ONLY when that player is offline (stops mid-game role/hand peeking)
@@ -1286,13 +1351,27 @@ class Handler(BaseHTTPRequestHandler):
                 changed(room)
                 return self.send_json({"ok": True})
 
+            if action == "kickplayer":
+                if not is_host:
+                    return self.err("Only the host can kick players.", 403)
+                target = b.get("target")
+                if not target or target not in room["players"]:
+                    return self.err("That player isn't in the room anymore.", 404)
+                if target == room.get("hostPid") or target == b.get("pid"):
+                    return self.err("You can't kick yourself.")
+                kicked_name = room["players"][target].get("name", "A player")
+                kick_from_room(room, target)
+                media.chat_say(room, f"{kicked_name} was kicked from the room.")
+                changed(room)
+                return self.send_json({"ok": True})
+
             if action == "switchgame":
                 if not is_host:
                     return self.err("Only the host can switch the game.", 403)
                 to = str(b.get("to") or "")
                 valid_games = set(GAMES) | {"tierlist"}
                 if to not in valid_games:
-                    return self.err("Pick a valid stall.")
+                    return self.err("Pick a valid game.")
                 new_code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
                 while new_code in rooms:
                     new_code = rid(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
@@ -1527,16 +1606,18 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_json({"ok": True, "provider": entry["provider"]})
 
 
-STATIC = {  # files the pages load: the shared avatar picker and what makes the site installable as an app
-    "/avatars.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/backguard.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/theme.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/chat.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/pranks.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/roombar.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/howto.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/juice.js": ("text/javascript; charset=utf-8", "no-store"),
-    "/festival.css": ("text/css; charset=utf-8", "no-store"),
+STATIC = {  # files the pages load: cached with ETag + gzip for instant zero-reload navigation
+    "/avatars.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/backguard.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/theme.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/chat.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/pranks.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/roombar.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/howto.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/juice.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/i18n.js": ("text/javascript; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
+    "/sw.js": ("text/javascript; charset=utf-8", "no-cache"),
+    "/festival.css": ("text/css; charset=utf-8", "public, max-age=120, stale-while-revalidate=86400"),
     "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),
     "/icon-192.png": ("image/png", "public, max-age=86400"),
     "/icon-512.png": ("image/png", "public, max-age=86400"),

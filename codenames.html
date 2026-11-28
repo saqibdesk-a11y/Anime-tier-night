@@ -20,8 +20,8 @@
 :root{
   --bg:var(--night); --bg2:var(--night-2); --line2:var(--line-2);
   --glass:color-mix(in srgb,var(--night-2) 92%,transparent); --glass2:rgba(243,235,221,.07);
-  --red:var(--lantern); --red2:color-mix(in srgb,var(--lantern) 62%,#000); --redglow:color-mix(in srgb,var(--lantern) 45%,transparent);
-  --blue:var(--shrine); --blue2:color-mix(in srgb,var(--shrine) 62%,#000); --blueglow:color-mix(in srgb,var(--shrine) 45%,transparent);
+  --red:#FF3B5C; --red2:#9F1239; --redglow:rgba(255,59,92,.48);
+  --blue:#38BDF8; --blue2:#075985; --blueglow:rgba(56,189,248,.48);
   --card:var(--paper); --card2:var(--paper-2); --neutral:#CDBD98; --neutral2:#A99770;
   --ass:#120E1C; --mono:var(--body); --cardfont:var(--body);
 }
@@ -29,7 +29,7 @@
 html,body{margin:0;overflow-x:hidden;overflow-x:clip}  /* flying cards must never widen the page on phones */
 body{overflow-x:hidden}
 /* whose turn it is tints the whole night a little */
-body.turn-red{background-color:color-mix(in srgb,var(--night) 90%,var(--lantern))} body.turn-blue{background-color:color-mix(in srgb,var(--night) 88%,var(--shrine))}
+body.turn-red{background-color:color-mix(in srgb,var(--night) 90%,var(--red))} body.turn-blue{background-color:color-mix(in srgb,var(--night) 88%,var(--blue))}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
@@ -345,7 +345,7 @@ const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
 const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
 const botFace = (cls="face") => `<span class="${cls} ai" style="background:var(--night-3);color:var(--gold)"><svg width="60%" height="60%"><use href="#bot"/></svg></span>`;
-const TEAM = {red:"Lantern", blue:"Shrine"};
+const TEAM = {red:"Red", blue:"Blue"};
 const other = t => t === "red" ? "blue" : "red";
 const mine = () => room && me && room.players[me.pid];
 const isSpy = () => mine()?.role === "spy";
@@ -390,10 +390,10 @@ function home(){
   $("#stage").innerHTML = `<div class="main"><div class="hero fadeup">${heroGrid()}<h1>Codenames</h1>
     <p class="sub">Your spymaster sees which slips are your team's and gives one-word clues. Find all of yours first. Never touch the assassin.</p></div>
     <div style="display:grid;gap:14px;max-width:520px;margin:0 auto">
-    <form class="panel" id="createForm"><h2>Start a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+    <form class="panel" id="createForm"><h2>Start a game</h2><div><label for="cName">Your name</label><input type="text" id="cName" maxlength="16" autocomplete="nickname"></div>
       <div class="err" id="cErr"></div><button class="btn primary wide">Create game</button><p class="hint">Teams, word packs, timers and the AI spymaster are set in the lobby.</p></form>
     <form class="panel" id="joinForm"><h2>Join a game</h2><div class="row2"><div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em"></div>
-      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div></div>
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div></div>
       <div class="err" id="jErr"></div><button class="btn primary wide">Join</button></form></div></div>`;
   $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n = $("#cName").value.trim(); if(!n){ $("#cErr").textContent="Enter your name."; return; }
     try{ const r = await api("/api/rooms", {game:"codenames", title:"Codenames"}); const m = await api(`/api/rooms/${r.code}/join`, {name:n}); store("cn:"+r.code, {hostKey:r.hostKey, me:m}); openRoom(r.code); }catch(err){ $("#cErr").textContent = err.message; } };
@@ -451,7 +451,7 @@ function gate(){
   view = "gate"; $("#dock").hidden = true;
   if($("#gate")) return;  // already showing: rebuilding it would wipe the name being typed
   $("#stage").innerHTML = `<div class="main"><form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join this game</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form></div>`;
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form></div>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("cn:"+code, {me, hostKey}); lobbySig = ""; poll(++pollGen, -1); }catch(err){ $("#gErr").textContent = err.message; } };
 }

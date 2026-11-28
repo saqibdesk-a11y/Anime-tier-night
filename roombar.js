@@ -12,11 +12,11 @@
   const STALLS = [
     ["op", "Guess the OP", "#9333EA"],
     ["codenames", "Codenames", "#F2603A"],
-    ["lantern", "Last Lantern", "#3F6FD8"],
+    ["lantern", "Last Card", "#3F6FD8"],
     ["forged", "Forged Brush", "#7A4BC7"],
     ["scroll", "Broken Scroll", "#D6456B"],
     ["silhouette", "Silhouette", "#1E7F9E"],
-    ["dial", "Festival Dial", "#E07A2F"],
+    ["dial", "Spectrum Dial", "#E07A2F"],
     ["clash", "Caption Clash", "#C93B8E"],
     ["bluff", "Fox's Bluff", "#B53535"],
     ["mask", "Forehead Mask", "#2B8C82"],
@@ -65,8 +65,10 @@
   .rb-tag{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.1);color:var(--muted,#97A3C6)}
   .rb-tag.host{background:var(--gold,#FFC83D);color:#0D1122}
   .rb-tag.off{background:rgba(255,107,123,.18);color:#FF8B99}
-  .rb-act{border:1px solid var(--line-2,rgba(255,255,255,.22));background:rgba(255,255,255,.08);color:var(--fg,#F4F6FF);border-radius:999px;padding:4px 11px;font:700 12px var(--body,system-ui);cursor:pointer}
+  .rb-act{border:1px solid var(--line-2,rgba(255,255,255,.22));background:rgba(255,255,255,.08);color:var(--fg,#F4F6FF);border-radius:999px;padding:4px 11px;font:700 12px var(--body,system-ui);cursor:pointer;white-space:nowrap}
+  .rb-act.kick{border-color:rgba(255,77,109,.45);color:#FF8B9E;background:rgba(255,77,109,.12)}
   .rb-act.sure{background:#FF3E78;border-color:#FF3E78;color:#fff}
+  .rb-acts{display:inline-flex;align-items:center;gap:6px;flex:none}
   .rb-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:11px 13px}
   .rb-toggle small{display:block;font-size:12.5px;color:var(--muted,#97A3C6)}
   .rb-sw{width:50px;height:28px;border-radius:999px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.14);position:relative;flex:none;cursor:pointer;transition:background .2s}
@@ -217,24 +219,31 @@
     bannerWrap.innerHTML = html;
   }
 
+  let sheetEl = null, sheetSig = "";
   function openSheet(){
     if(scrim || !room || !me) return;
     scrim = document.createElement("div"); scrim.className = "rb-scrim";
+    sheetEl = document.createElement("div"); sheetEl.className = "rb-sheet";
+    sheetEl.setAttribute("role", "dialog"); sheetEl.setAttribute("aria-label", "Room & Players");
+    scrim.appendChild(sheetEl);
     document.body.appendChild(scrim);
+    sheetSig = "";
     drawSheet();
     scrim.onclick = handleSheetClick;
   }
-  function closeSheet(){ if(scrim){ scrim.remove(); scrim = null; } }
+  function closeSheet(){ if(scrim){ scrim.remove(); scrim = null; sheetEl = null; sheetSig = ""; } }
 
   function drawSheet(){
-    if(!scrim || !room || !me) return;
+    if(!sheetEl || !room || !me) return;
     const meta = room.roomMeta || {}, onlineSet = new Set(meta.online || []);
     const wantOut = (meta.wantSitout || []).includes(me.pid);
     const isHost = !!(hostKey || meta.isHost);
     const curGame = game || room.game || "tierlist";
     const pids = Object.keys(room.players);
-    scrim.innerHTML = `<div class="rb-sheet" role="dialog" aria-label="Room & Players">
-      <div class="rb-head"><h2>Room ${esc(room.code)}</h2><button type="button" class="rb-x" data-rb-close aria-label="Close">×</button></div>
+    const sig = JSON.stringify([room.code, wantOut, isHost, curGame, meta.hostPid, meta.wantSitout, [...onlineSet].sort(), pids.map(p => room.players[p]?.name)]);
+    if(sig === sheetSig) return;
+    sheetSig = sig;
+    sheetEl.innerHTML = `<div class="rb-head"><h2>Room ${esc(room.code)}</h2><button type="button" class="rb-x" data-rb-close aria-label="Close">×</button></div>
       <div class="rb-toggle">
         <div><b>Sit out next round</b><small>Stay in the room to watch, chat and throw pranks without being dealt in.</small></div>
         <button type="button" class="rb-sw ${wantOut?"on":""}" data-rb-sit="${wantOut?0:1}" aria-pressed="${wantOut}" aria-label="Sit out next round"></button>
@@ -247,7 +256,7 @@
             ${isH?'<span class="rb-tag host">Host</span>':""}
             ${!on?'<span class="rb-tag off">Offline</span>':""}
             ${out?'<span class="rb-tag">Sitting out</span>':""}
-            ${isHost && pid !== me.pid ? `<button type="button" class="rb-act" data-rb-pass="${esc(pid)}">Make host</button>` : ""}
+            ${isHost && pid !== me.pid ? `<span class="rb-acts"><button type="button" class="rb-act" data-rb-pass="${esc(pid)}">Make host</button><button type="button" class="rb-act kick" data-rb-kick="${esc(pid)}">Kick</button></span>` : ""}
           </div>`;
         }).join("")}</div></div>
       ${isHost ? `<div class="rb-sec"><h3>Switch game together</h3>
@@ -255,8 +264,7 @@
         <div class="rb-stalls">${STALLS.map(([id, label, col]) =>
           `<button type="button" class="rb-stall ${id===curGame?"cur":""}" data-rb-switch="${id}" style="background:${col}" ${id===curGame?"disabled":""}><span>${label}</span><span>${id===curGame?"Here":"→"}</span></button>`
         ).join("")}</div></div>` : ""}
-      <button type="button" class="rb-close" data-rb-close>Done</button>
-    </div>`;
+      <button type="button" class="rb-close" data-rb-close>Done</button>`;
   }
 
   async function handleSheetClick(e){
@@ -265,8 +273,20 @@
     if(sit){ try{ await act("sitout", {sitout: sit.dataset.rbSit === "1"}); }catch(err){ alert(err.message); } return; }
     const pass = e.target.closest("[data-rb-pass]");
     if(pass){
-      if(pass.dataset.sure !== "1"){ pass.dataset.sure = "1"; pass.classList.add("sure"); pass.textContent = "Confirm?"; return; }
+      if(pass.dataset.sure !== "1"){
+        scrim.querySelectorAll(".rb-act.sure").forEach(x => { x.dataset.sure = ""; x.classList.remove("sure"); x.textContent = x.dataset.rbKick ? "Kick" : "Make host"; });
+        pass.dataset.sure = "1"; pass.classList.add("sure"); pass.textContent = "Confirm?"; return;
+      }
       try{ await act("passhost", {target: pass.dataset.rbPass}); closeSheet(); }catch(err){ alert(err.message); }
+      return;
+    }
+    const kick = e.target.closest("[data-rb-kick]");
+    if(kick){
+      if(kick.dataset.sure !== "1"){
+        scrim.querySelectorAll(".rb-act.sure").forEach(x => { x.dataset.sure = ""; x.classList.remove("sure"); x.textContent = x.dataset.rbKick ? "Kick" : "Make host"; });
+        kick.dataset.sure = "1"; kick.classList.add("sure"); kick.textContent = "Confirm?"; return;
+      }
+      try{ await act("kickplayer", {target: kick.dataset.rbKick}); }catch(err){ alert(err.message); }
       return;
     }
     const sw = e.target.closest("[data-rb-switch]");

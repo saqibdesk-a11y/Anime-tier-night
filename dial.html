@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Game Night">
-<title>Festival Dial</title>
+<title>Spectrum Dial</title>
 <link rel="stylesheet" href="/festival.css">
 <style>
 :root{
@@ -96,7 +96,7 @@ body.has-hostbar{--chat-lift:66px}
 <body>
 <header class="top noren">
   <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
-  <h1>Festival Dial</h1>
+  <h1>Spectrum Dial</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
   <span class="timer" id="timer" hidden></span>
@@ -139,19 +139,19 @@ const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" s
 function home(){
   $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
   document.body.classList.remove("has-hostbar"); curView="home";
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">The Wavelength Fan Stall</div><h1 class="title">Festival Dial</h1>
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">Psychic Spectrum Game</div><h1 class="title">Spectrum Dial</h1>
     <p class="sub">The Psychic gives one clue for a hidden spot on a spectrum. Slide the dial to match their mind!</p></div>
     <div class="row2 fadeup" style="margin-top:20px">
       <form class="panel" id="createForm"><h2>Host a game</h2>
-        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
       <form class="panel" id="joinForm"><h2>Join with a code</h2>
         <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
-        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="jErr"></div><button class="btn wide">Join</button></form>
     </div><div class="fadeup">${HowTo.button("dial")}</div>`;
   $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n=$("#cName").value.trim(); if(!n) return $("#cErr").textContent="Enter your name.";
-    try{ const r=await api("/api/rooms",{game:"dial",title:"Festival Dial"}); const m=await api(`/api/rooms/${r.code}/join`,{name:n}); store("dl:"+r.code,{me:m,hostKey:r.hostKey}); history.replaceState({},"","/dial?room="+r.code); openRoom(r.code); }catch(err){ $("#cErr").textContent=err.message; } };
+    try{ const r=await api("/api/rooms",{game:"dial",title:"Spectrum Dial"}); const m=await api(`/api/rooms/${r.code}/join`,{name:n}); store("dl:"+r.code,{me:m,hostKey:r.hostKey}); history.replaceState({},"","/dial?room="+r.code); openRoom(r.code); }catch(err){ $("#cErr").textContent=err.message; } };
   $("#joinForm").onsubmit = async e=>{ e.preventDefault(); const c=$("#jCode").value.trim().toUpperCase(), n=$("#jName").value.trim(); if(!c||!n) return $("#jErr").textContent="Enter code and name.";
     try{ const m=await api(`/api/rooms/${c}/join`,{name:n}); store("dl:"+c,{me:m,hostKey:null}); history.replaceState({},"","/dial?room="+c); openRoom(c); }catch(err){ $("#jErr").textContent=err.message; } };
 }
@@ -232,8 +232,8 @@ function render(){
 }
 function gate(){
   if($("#gate")) return; curView="gate";
-  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Festival Dial</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Spectrum Dial</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Join</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
     try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("dl:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
 }

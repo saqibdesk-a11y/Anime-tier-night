@@ -73,12 +73,12 @@ def create(room, b):
         "category": b.get("category") if b.get("category") in CATEGORIES or b.get("category") == "custom" else "mix",
         "theme": (b.get("theme") or "").strip()[:200],  # what the host typed for a custom category
         "spice": b.get("spice") if b.get("spice") in SPICE else "spicy",
-        "teams": [{"id": "t1", "name": "Lantern team"}, {"id": "t2", "name": "Shrine team"}],
+        "teams": [{"id": "t1", "name": "Red team"}, {"id": "t2", "name": "Blue team"}],
         "phase": "lobby", "round": -1, "prompts": [], "deadline": None, "roundData": [], "show": None,
     })
 
 
-TEAM_NAMES = ["Lantern team", "Shrine team", "Bamboo team", "Gold team"]
+TEAM_NAMES = ["Red team", "Blue team", "Green team", "Gold team"]
 
 
 def cleanup(code):

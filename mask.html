@@ -333,11 +333,11 @@ function home(){
     <p class="sub">Play <b>Which Character Am I?</b>, <b>Which Anime Am I?</b> with genre filters, or Friends Pick! Everyone sees your card except YOU—unlock hints or ask Yes/No questions to unmask yourself first.</p></div>
     <div class="row2 fadeup" style="margin-top:20px">
       <form class="panel" id="createForm"><h2>Host a room</h2>
-        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
       <form class="panel" id="joinForm"><h2>Join with a code</h2>
         <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
-        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="jErr"></div><button class="btn wide">Join</button></form>
     </div><div class="fadeup">${HowTo.button("mask")}</div>`;
   $("#createForm").onsubmit = async e=>{ e.preventDefault(); const n=$("#cName").value.trim(); if(!n) return $("#cErr").textContent="Enter your name.";
@@ -403,7 +403,7 @@ function render(){
 function gate(){
   if($("#gate")) return; curView="gate";
   $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join Forehead Mask</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Put on a mask</button></form>`;
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Put on a mask</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
     try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("mk:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
 }

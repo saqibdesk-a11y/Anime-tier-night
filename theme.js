@@ -35,32 +35,40 @@
     .th-sheet h2{font:700 24px/1.1 var(--display,sans-serif);margin:0 0 4px}
     .th-sheet p{margin:0 0 14px;color:var(--muted,#97A3C6);font-size:14px}
     .th-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .th-tile{position:relative;border:2px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 12px 12px;cursor:pointer;text-align:left;color:#F4F6FF;min-height:100px;display:grid;align-content:end;gap:2px;font:inherit;transition:transform .14s,border-color .16s,box-shadow .18s}
+    @media (max-width:440px){.th-grid{grid-template-columns:1fr}}
+    .th-tile{position:relative;border:2px solid rgba(255,255,255,.1);border-radius:16px;padding:14px;cursor:pointer;text-align:start;color:#F4F6FF;min-height:108px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;gap:12px;font:inherit;transition:transform .14s,border-color .16s,box-shadow .18s}
     .th-tile:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.28)}
     .th-tile.on{border-color:var(--gold,#FFC83D);box-shadow:0 0 24px -6px var(--tile-glow,rgba(255,200,61,.6))}
-    .th-tile b{font-size:15.5px;font-family:var(--display,sans-serif)}
-    .th-tile small{font-size:12.5px;color:rgba(244,246,255,.72)}
-    .th-tile .dots{position:absolute;top:12px;left:12px;display:flex;gap:6px}
-    .th-tile .dots i{width:13px;height:13px;border-radius:50%;box-shadow:0 0 10px currentColor}
+    .th-tile .dots{display:flex;gap:6px;flex:none}
+    .th-tile .dots i{width:12px;height:12px;border-radius:50%;box-shadow:0 0 10px currentColor}
+    .th-tile .info{display:grid;gap:3px;width:100%;min-width:0}
+    .th-tile b{font-size:15.5px;line-height:1.25;font-family:var(--display,sans-serif)}
+    .th-tile small{font-size:12.5px;line-height:1.35;color:rgba(244,246,255,.74)}
     .th-close{margin-top:16px;width:100%;border:0;background:var(--paper,#F5F7FF);color:var(--ink,#0D1122);border-radius:999px;padding:12px;font:700 15px var(--body,system-ui);cursor:pointer}`;
 
   let close = null;
   function open(){
     if(close) return;
     const scrim = document.createElement("div"); scrim.className = "th-scrim";
-    const draw = () => {
-      scrim.innerHTML = `<div class="th-sheet" role="dialog" aria-label="Arcade theme"><h2>Arcade theme</h2><p>Only you see this. Applies across all 13 games on this device.</p>
-        <div class="th-grid">${Object.entries(THEMES).map(([k, t]) => `<button type="button" class="th-tile ${k === theme ? "on" : ""}" data-th="${k}" style="background:radial-gradient(circle at 85% 15%,${t.lantern}30,transparent 60%),${t.night};--tile-glow:${t.lantern}" aria-pressed="${k === theme}">
-          <span class="dots"><i style="background:${t.lantern};color:${t.lantern}"></i><i style="background:${t.gold};color:${t.gold}"></i><i style="background:${t.shrine};color:${t.shrine}"></i></span>
-          <b>${t.name}</b><small>${t.note}</small></button>`).join("")}</div>
-        <button type="button" class="th-close">Done</button></div>`;
-    };
-    draw();
+    scrim.innerHTML = `<div class="th-sheet" role="dialog" aria-label="Arcade theme"><h2>Arcade theme</h2><p>Only you see this. Applies across all 14 games on this device.</p>
+      <div class="th-grid">${Object.entries(THEMES).map(([k, t]) => `<button type="button" class="th-tile ${k === theme ? "on" : ""}" data-th="${k}" style="background:radial-gradient(circle at 85% 15%,${t.lantern}30,transparent 60%),${t.night};--tile-glow:${t.lantern}" aria-pressed="${k === theme}">
+        <span class="dots"><i style="background:${t.lantern};color:${t.lantern}"></i><i style="background:${t.gold};color:${t.gold}"></i><i style="background:${t.shrine};color:${t.shrine}"></i></span>
+        <span class="info"><b>${t.name}</b><small>${t.note}</small></span></button>`).join("")}</div>
+      <button type="button" class="th-close">Done</button></div>`;
     document.body.appendChild(scrim);
     close = () => { scrim.remove(); close = null; };
     scrim.onclick = e => {
       const th = e.target.closest("button[data-th]");
-      if(th){ theme = th.dataset.th; set("gn:arcadeTheme", theme); apply(); draw(); return; }
+      if(th){
+        theme = th.dataset.th; set("gn:arcadeTheme", theme); apply();
+        if(window.Juice && Juice.sfx) Juice.sfx.click();
+        scrim.querySelectorAll("button[data-th]").forEach(btn => {
+          const on = btn.dataset.th === theme;
+          btn.classList.toggle("on", on);
+          btn.setAttribute("aria-pressed", String(on));
+        });
+        return;
+      }
       if(e.target === scrim || e.target.closest(".th-close")) close();
     };
   }

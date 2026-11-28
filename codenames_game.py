@@ -186,7 +186,7 @@ def say(room, text):
 gallery = None  # server.py plugs in the anime character list for picture cards
 
 
-TEAM_NAME = {"red": "Lantern", "blue": "Shrine"}
+TEAM_NAME = {"red": "Red", "blue": "Blue"}
 
 
 def chat_rules(room, pid):
@@ -196,7 +196,7 @@ def chat_rules(room, pid):
         return {"read": [], "write": [], "names": {}, "why": "Chat is off in this game."}
     team = p.get("team")
     ch = "all" if mode == "all" or team not in TEAMS else team
-    names = {"all": "Everyone", "red": "Lantern team", "blue": "Shrine team"}
+    names = {"all": "Everyone", "red": "Red team", "blue": "Blue team"}
     quiet = p.get("role") == "spy" and room["phase"] in ("clue", "guess")
     return {"read": [ch], "write": [] if quiet else [ch], "names": names,
             "why": "Spymasters can't chat mid-game. Your clues do the talking."}

@@ -310,16 +310,16 @@ function home(){
         <path d="M88 38 C154 28 178 106 112 146" stroke="#9333EA" stroke-width="7"/>
       </svg>
     </div>
-    <div class="fadeup"><div class="eyebrow">The Forgery Stall</div><h1 class="title">Forged Brush</h1>
+    <div class="fadeup"><div class="eyebrow">Fake Artist Game</div><h1 class="title">Forged Brush</h1>
       <p class="sub">Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.</p></div>
     <div class="row2 fadeup" style="margin-top:20px">
       <form class="panel" id="createForm"><h2>Host a gallery</h2>
-        <div><label for="cName">Your name</label><input type="text" id="cName" placeholder="e.g. Saqib" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="cName">Your name</label><input type="text" id="cName" placeholder="e.g. Saqib" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="cErr"></div>
         <button class="btn primary wide">Create room</button></form>
       <form class="panel" id="joinForm"><h2>Join with a code</h2>
         <div><label for="jCode">Room code</label><input type="text" id="jCode" placeholder="e.g. K7QX" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em"></div>
-        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname"></div>
+        <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="16" autocomplete="nickname"></div>
         <div class="err" id="jErr"></div>
         <button class="btn wide">Join</button></form>
     </div>
@@ -514,7 +514,7 @@ function gate(){
   if($("#gate")) return;
   curView = "gate";
   $("#stage").innerHTML = `<form class="panel fadeup" id="gate" style="margin-top:8vh"><div class="eyebrow">Pick up a brush</div><h2 style="text-align:center">Join Forged Brush</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit at the easel</button></form>`;
+    <input type="text" id="gName" placeholder="Your name" maxlength="16" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit at the easel</button></form>`;
   $("#gate").onsubmit = async e=>{
     e.preventDefault(); const n = $("#gName").value.trim(); if(!n) return;
     try{ me = await api(`/api/rooms/${code}/join`, {name:n}); store("fb:"+code, {me, hostKey}); curView = ""; poll(++pollGen, -1); }

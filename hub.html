@@ -231,6 +231,9 @@ body{overflow-x:hidden}
   box-shadow:0 0 20px -2px color-mix(in srgb,var(--acc) 85%,transparent);
   transform:translateX(2px);
 }
+html[dir="rtl"] .gcard:hover .play{transform:translateX(-2px)}
+html[dir="rtl"] .gcard .tag::before{margin-right:0;margin-left:6px}
+html[dir="rtl"] .hero p,html[dir="rtl"] .gcard p{line-height:1.65}
 
 @media (max-width:600px){
   .hero{min-height:58vh;padding-top:28px;padding-bottom:32px}
@@ -288,7 +291,7 @@ body{overflow-x:hidden}
 const GAMES = [
   {slug:"op", title:"Guess the OP", cat:"quiz", tag:"Music Quiz", players:"1–12P", meta:"Anime OPs & Normal Songs", acc:"#C084FC", img:"/img/scenes/arcade-op.jpg?v=1",
     desc:"Blast live 30-second previews of iconic Anime Openings—or switch to Global Pop, Hip-Hop, K-Pop, Rock, Bollywood, or any Custom Artist!"},
-  {slug:"lantern", title:"Last Lantern", cat:"cards", tag:"Card Table", players:"2–10P", meta:"Fast Uno · Speed mode", acc:"#38BDF8", img:"/img/scenes/arcade-lantern.jpg?v=1",
+  {slug:"lantern", title:"Last Card", cat:"cards", tag:"Card Table", players:"2–10P", meta:"Fast Uno · Speed mode", acc:"#38BDF8", img:"/img/scenes/arcade-lantern.jpg?v=1",
     desc:"Match the colour or symbol and empty your hand first. Stack +2s and catch anyone who forgets their last card."},
   {slug:"bluff", title:"Fox's Bluff", cat:"cards", tag:"Bluff Table", players:"2–8P", meta:"Pure mind games", acc:"#FF4D6D", img:"/img/scenes/arcade-bluff.jpg?v=1",
     desc:"Hide Sakura Blossoms or your Cursed Fox Mask face-down, raise the bid, and flip coasters without hitting a trap."},
@@ -300,7 +303,7 @@ const GAMES = [
     desc:"Secretly write the funniest reply to unhinged prompts, vote head-to-head, and watch the AI roast the losers."},
   {slug:"silhouette", title:"Guess the Silhouette", cat:"quiz", tag:"Speed Quiz", players:"1–12P", meta:"Reveal · Higher/Lower · AI", acc:"#00E0FF", img:"/img/scenes/arcade-silhouette.jpg?v=1",
     desc:"Name anime characters as shadows, blurs, or zooms clear up—or play Higher or Lower and AI speed trivia."},
-  {slug:"dial", title:"Festival Dial", cat:"quiz", tag:"Spectrum", players:"2–12P", meta:"Zero typing for guessers", acc:"#FF9F43", img:"/img/scenes/arcade-dial.jpg?v=1",
+  {slug:"dial", title:"Spectrum Dial", cat:"quiz", tag:"Spectrum", players:"2–12P", meta:"Zero typing for guessers", acc:"#FF9F43", img:"/img/scenes/arcade-dial.jpg?v=1",
     desc:"One Psychic sees a hidden target on a wild spectrum and gives one clue. Everyone else slides the dial to match."},
   {slug:"mask", title:"Forehead Mask", cat:"social", tag:"Who Am I?", players:"2–10P", meta:"Anime & Characters · Hints", acc:"#1FE6A8", img:"/img/scenes/arcade-mask.jpg?v=1",
     desc:"Play Which Character Am I? or Which Anime Am I? with genre filters. Unlock progressive hints or ask Yes/No questions!"},
@@ -322,9 +325,9 @@ const grid = document.querySelector("#grid");
 function renderGrid(){
   const list = activeCat === "all" ? GAMES : GAMES.filter(g => g.cat === activeCat);
   grid.innerHTML = list.map((g, i) => `
-    <a class="gcard ${g.legacy ? "legacy-art" : ""}" href="/${g.slug}" style="--acc:${g.acc};${g.rh ? `--rh:${g.rh};` : ""}animation-delay:${Math.min(i * 35, 280)}ms">
+    <a class="gcard ${g.legacy ? "legacy-art" : ""}" href="/${g.slug}" style="--acc:${g.acc};${g.rh ? `--rh:${g.rh};` : ""}animation-delay:${Math.min(i * 22, 160)}ms">
       <div class="art">
-        <img src="${g.img}" alt="${g.title}" loading="${i < 4 ? "eager" : "lazy"}">
+        <img src="${g.img}" alt="${g.title}" loading="${i < 4 ? "eager" : "lazy"}" decoding="async" ${i < 4 ? 'fetchpriority="high"' : ""}>
         <div class="badges"><span class="tag">${g.tag}</span><span class="pcnt">${g.players}</span></div>
       </div>
       <div class="body">
@@ -335,6 +338,7 @@ function renderGrid(){
         <div class="foot"><span class="meta">${g.meta}</span><span class="play">Play →</span></div>
       </div>
     </a>`).join("");
+  if(window.I18n) I18n.apply(grid);
 }
 
 grid.addEventListener("pointermove", e => {

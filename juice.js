@@ -231,14 +231,15 @@
       b.title = muted ? "Unmute sound" : "Mute sound";
     });
   }
-  const MUTE_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>`;
-  const MUTE_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+  const MUTE_ON = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>`;
+  const MUTE_OFF = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
 
   function mountMute(container){
     const host = container || document.querySelector("header.top, .bar .wrap");
     if(!host || host.querySelector("[data-juice-mute]") || host.querySelector("#soundBtn")) return;
     const b = document.createElement("button");
     b.type = "button"; b.className = "iconbtn"; b.dataset.juiceMute = "1";
+    b.setAttribute("aria-pressed", String(muted));
     b.innerHTML = muted ? MUTE_OFF : MUTE_ON;
     b.title = muted ? "Unmute sound" : "Mute sound";
     b.setAttribute("aria-label", b.title);
