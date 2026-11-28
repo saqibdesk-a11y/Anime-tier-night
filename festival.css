@@ -1,73 +1,153 @@
-/* Festival night: the look every page shares. A summer festival street after dark; each game is a
-   stall on it. Pages build their own parts from these tokens, and theme.js swaps the night, lantern,
-   gold and shrine tokens for the other festival recolors. */
-@import url("https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap");
+/* Neon Tokyo Arcade: the modern design system every page shares.
+   Deep obsidian glass, crisp floating navigation, electric neon accents, and clean geometric
+   typography. All legacy CSS variable names (--night, --lantern, --gold, --shrine, --paper, --ink)
+   are preserved so every game and theme recolor updates seamlessly. */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
 
 :root{
-  --night:#1B1F4B; --night-2:#252A5E; --night-3:#313773;
-  --paper:#F3EBDD; --paper-2:#E4D7BF; --ink:#1E1A2E; --ink-2:#5B5670;
-  --lantern:#F2603A; --on-lantern:#1E1A2E; --gold:#D9A441; --shrine:#2E8B6E; --on-shrine:#F3EBDD;
-  --fg:#F3EBDD; --muted:#B4B0D2; --line:rgba(243,235,221,.14); --line-2:rgba(243,235,221,.28);
-  --danger:#FF8A7A;
-  --display:"Yuji Syuku","Hiragino Mincho ProN","Times New Roman",serif;
-  --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --r-tag:10px; --r-panel:16px;
+  --night:#0A0D18; --night-2:#12172B; --night-3:#1B2340;
+  --paper:#F5F7FF; --paper-2:#E1E6F7; --ink:#0D1122; --ink-2:#525B7A;
+  --lantern:#FF3E78; --on-lantern:#FFFFFF; --gold:#FFC83D; --shrine:#00D4AA; --on-shrine:#07131A;
+  --fg:#F4F6FF; --muted:#97A3C6; --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.22);
+  --danger:#FF6B7B;
+  --display:"Space Grotesk","Plus Jakarta Sans",system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  --r-tag:12px; --r-panel:20px;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{min-height:100vh;background-color:var(--night);color:var(--fg);font:16px/1.55 var(--body);-webkit-font-smoothing:antialiased;
-  /* the only glow on the page: lantern light spilling from the top edge */
-  background-image:radial-gradient(120% 60% at 50% -12%,color-mix(in srgb,var(--lantern) 16%,transparent),transparent 70%);background-repeat:no-repeat;background-attachment:fixed}
+body{
+  min-height:100vh;
+  background-color:var(--night);
+  color:var(--fg);
+  font:15.5px/1.55 var(--body);
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 520px at 12% -10%, color-mix(in srgb,var(--lantern) 19%,transparent), transparent 62%),
+    radial-gradient(760px 480px at 92% -6%, color-mix(in srgb,var(--shrine) 15%,transparent), transparent 60%),
+    radial-gradient(rgba(255,255,255,.038) 1px, transparent 1px);
+  background-size:100% 100%, 100% 100%, 28px 28px;
+  background-attachment:fixed;
+}
 button,input,select,textarea{font:inherit;color:inherit}
-:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+:focus-visible{outline:2.5px solid var(--gold);outline-offset:2px}
 [hidden]{display:none!important}
-h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:0;text-wrap:balance;margin:0}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.025em;text-wrap:balance;margin:0}
 ::selection{background:var(--lantern);color:var(--on-lantern)}
 
-/* the noren: the cloth curtain hung over each stall, which every game page uses as its header.
-   Markup: <header class="noren"><a class="noren-back" href="/">Festival</a><h1>Codenames</h1>...</header> */
-.noren{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;min-height:58px;
-  padding:calc(6px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px));
-  background:var(--lantern);color:var(--on-lantern);
-  /* the curtain is split into flaps: thin night-colored slits at the bottom edge */
-  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,repeating-linear-gradient(90deg,#000 0 calc(25% - 3px),transparent calc(25% - 3px) 25%) bottom/100% 8px no-repeat;
-          mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,repeating-linear-gradient(90deg,#000 0 calc(25% - 3px),transparent calc(25% - 3px) 25%) bottom/100% 8px no-repeat}
-.noren h1{font-size:24px;line-height:1;flex:none}
-.noren .noren-back{color:inherit;text-decoration:none;font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:4px;opacity:.85}
-.noren .noren-back:hover{opacity:1}
-.noren .spacer{flex:1}
-.noren .th-btn{border-color:rgba(30,26,46,.35)}
+/* Floating Obsidian-Glass Arcade Nav Bar (replaces the old cloth-flap noren across every game) */
+.noren,.bar{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in srgb,var(--night) 80%,transparent)!important;
+  color:var(--fg)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.45);
+  backdrop-filter:blur(20px) saturate(1.45);
+  border-bottom:1px solid var(--line);
+  -webkit-mask:none!important;
+  mask:none!important;
+  box-shadow:0 10px 34px -18px rgba(0,0,0,.85);
+}
+.noren{
+  display:flex;align-items:center;gap:10px;min-height:60px;flex-wrap:nowrap;
+  padding:calc(8px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+}
+.bar{padding-bottom:0!important}
+.bar .btn{background:rgba(255,255,255,.07)!important;border-color:var(--line-2)!important;color:var(--fg)!important}
+.bar .code{font-family:var(--mono)!important;color:var(--gold)!important;border-color:color-mix(in srgb,var(--gold) 40%,transparent)!important;background:rgba(255,255,255,.06)!important}
+.noren::after,.bar::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--lantern) 85%,transparent) 25%,color-mix(in srgb,var(--gold) 80%,transparent) 55%,color-mix(in srgb,var(--shrine) 85%,transparent) 85%,transparent 100%);
+  opacity:.72;
+}
+.noren > *{flex:none}
+.noren h1{
+  font-size:clamp(18px,4.8vw,22px);line-height:1.1;letter-spacing:-.02em;
+  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.noren .noren-back{
+  color:var(--fg);text-decoration:none;font-weight:700;font-size:13.5px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:999px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);
+  transition:background .16s,border-color .16s,transform .14s;
+}
+.noren .noren-back:hover{background:rgba(255,255,255,.12);border-color:var(--line-2);transform:translateX(-2px)}
+.noren .spacer{flex:1 1 0;min-width:0}
+.noren .th-btn,.noren .iconbtn,.noren .rb-btn{
+  border-color:var(--line)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:var(--fg)!important;
+  transition:background .16s,border-color .16s,transform .14s,box-shadow .16s;
+}
+.noren .th-btn:hover,.noren .iconbtn:hover,.noren .rb-btn:hover{
+  background:rgba(255,255,255,.12)!important;
+  border-color:color-mix(in srgb,var(--lantern) 65%,var(--line-2))!important;
+  box-shadow:0 0 18px -4px color-mix(in srgb,var(--lantern) 55%,transparent);
+  transform:translateY(-1px);
+}
+.noren button.code,.noren .code{
+  font-family:var(--mono)!important;font-weight:700;font-size:13px;letter-spacing:.14em;
+  background:rgba(255,255,255,.07)!important;color:var(--gold)!important;
+  border:1px solid color-mix(in srgb,var(--gold) 38%,transparent)!important;
+  border-radius:999px;padding:4px 11px;opacity:1;cursor:pointer;
+  transition:background .15s,transform .12s,box-shadow .15s;
+}
+.noren button.code:hover{
+  background:color-mix(in srgb,var(--gold) 16%,transparent)!important;
+  box-shadow:0 0 18px -4px color-mix(in srgb,var(--gold) 60%,transparent);
+}
+.noren button.code:active{transform:scale(.95)}
+.noren .timer{
+  font-family:var(--mono)!important;font-weight:700;
+  background:rgba(255,255,255,.09);color:var(--fg);border:1px solid var(--line-2);
+}
 
-/* buttons: paper tags. Primary is lantern orange, plain is paper, quiet is an outline */
-.f-btn{border:0;border-radius:999px;padding:11px 20px;font-weight:700;cursor:pointer;background:var(--paper);color:var(--ink);transition:transform .12s}
-.f-btn:active{transform:scale(.97)}
-.f-btn.primary{background:var(--lantern);color:var(--on-lantern)}
-.f-btn.quiet{background:none;color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
-.f-btn:disabled{opacity:.45;cursor:not-allowed}
+/* Modern Arcade Buttons */
+.f-btn{
+  border:0;border-radius:999px;padding:11px 22px;font-weight:700;cursor:pointer;
+  background:var(--paper);color:var(--ink);
+  transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .18s,filter .18s;
+}
+.f-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 26px -10px rgba(255,255,255,.35)}
+.f-btn:active:not(:disabled){transform:scale(.96)}
+.f-btn.primary{
+  background:linear-gradient(135deg,var(--lantern),color-mix(in srgb,var(--lantern) 72%,var(--gold)));
+  color:var(--on-lantern);
+  box-shadow:0 10px 28px -8px color-mix(in srgb,var(--lantern) 65%,transparent);
+}
+.f-btn.primary:hover:not(:disabled){
+  filter:brightness(1.07);
+  box-shadow:0 14px 34px -8px color-mix(in srgb,var(--lantern) 80%,transparent);
+}
+.f-btn.quiet{background:rgba(255,255,255,.06);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
+.f-btn:disabled{opacity:.42;cursor:not-allowed}
+
+/* Subtle glass elevation for panels shared across games */
+.panel{
+  box-shadow:0 20px 50px -28px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.07);
+}
+.hostbar{
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  background:color-mix(in srgb,var(--night-2) 86%,transparent)!important;
+  border-top:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))!important;
+}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
 
-/* profile pictures: every avatar fills its frame and crops the same way, wherever it appears
-   (a picture without this shows only the top-left corner of the full image, which looks zoomed in) */
-[data-pid] > img, .face > img, .mini > img, .av > img, .pic > img, .owner > img, .pin > img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;object-position:50% 20%;display:block}
+/* Profile pictures: consistent head-safe square circle crop everywhere (never stretches into an oval) */
+[data-pid] > img, .face > img, .mini > img, .av > img, .pic > img, .owner > img, .pin > img{
+  width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;object-position:50% 20%;display:block;
+}
+.mini,.face{flex:none;aspect-ratio:1/1}
 
-/* the curtain header always fits on one line: the back link never wraps, the game name shrinks or
-   trims, and on phones the back link is just the arrow so the code and timer stay on screen */
-.noren{flex-wrap:nowrap}
-.noren > *{flex:none}
-.noren .noren-back{white-space:nowrap}
-.noren h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(19px,5.4vw,24px)}
-.noren .spacer{flex:1 1 0;min-width:0}
-.noren button.code{background:none;color:inherit;cursor:pointer;transition:opacity .15s,transform .12s}
-.noren button.code:hover{opacity:1}
-.noren button.code:active{transform:scale(.95)}
 @media (max-width:480px){
-  .noren{gap:8px}
-  .noren .noren-back{font-size:0;width:28px}
-  .noren .noren-back::before{content:"\2190";font-size:24px;line-height:1}
-  .noren h1{font-size:19px}
-  .noren .code{letter-spacing:.06em!important;padding:1px 7px!important;font-size:13px!important}
+  .noren{gap:7px;padding-left:10px;padding-right:10px}
+  .noren .noren-back{font-size:0;width:34px;height:34px;padding:0;justify-content:center}
+  .noren .noren-back::before{content:"\2190";font-size:19px;line-height:1}
+  .noren h1{font-size:17px}
+  .noren .code{letter-spacing:.08em!important;padding:3px 8px!important;font-size:12px!important}
   .noren .th-btn,.noren .iconbtn,.noren .rb-btn{width:34px!important;height:34px!important}
-  .noren .timer{padding:3px 9px!important;font-size:15px!important}
+  .noren .timer{padding:3px 9px!important;font-size:14px!important}
 }

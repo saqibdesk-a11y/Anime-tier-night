@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -71,72 +71,108 @@ select option{background:var(--night)}
 .seg button.on{border-color:var(--amber);background:rgba(217,164,65,.1)}
 
 /* people */
-.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px;margin-top:14px}
-.tok{position:relative;display:grid;justify-items:center;gap:5px;border:0;background:none;padding:6px 2px;border-radius:14px;transition:transform .15s}
-.tok .face{position:relative;width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.18);display:grid;place-items:center;font-weight:900;font-size:26px;color:var(--ink);box-shadow:0 10px 24px -10px rgba(0,0,0,.9)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;margin-top:16px}
+.tok{position:relative;display:grid;justify-items:center;gap:6px;border:1px solid transparent;background:rgba(255,255,255,.03);padding:10px 6px;border-radius:18px;transition:transform .2s cubic-bezier(.2,1.5,.4,1),background .18s,border-color .18s,box-shadow .2s}
+.tok .face{position:relative;width:72px;height:72px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(255,255,255,.22);display:grid;place-items:center;font-weight:900;font-size:26px;color:var(--ink);box-shadow:0 12px 26px -10px rgba(0,0,0,.9);transition:border-color .2s,box-shadow .2s}
 .tok .face img,.mini img,.pin img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
 .tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tok.pick{cursor:pointer}
-.tok.pick:hover{transform:translateY(-3px)}
-.tok.sel .face{border-color:var(--red);box-shadow:0 0 0 4px rgba(242,96,58,.3),0 0 26px rgba(242,96,58,.5)}
+.tok.pick:hover{transform:translateY(-5px) scale(1.03);background:rgba(255,255,255,.07);border-color:var(--line2)}
+.tok.sel{background:color-mix(in srgb,var(--lantern) 14%,transparent);border-color:color-mix(in srgb,var(--lantern) 65%,transparent);box-shadow:0 0 28px -8px color-mix(in srgb,var(--lantern) 65%,transparent)}
+.tok.sel .face{border-color:var(--lantern);box-shadow:0 0 0 4px color-mix(in srgb,var(--lantern) 35%,transparent),0 0 28px var(--lantern)}
 .tok.off{opacity:.4;cursor:not-allowed}
-.mini{width:20px;height:20px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:9px;font-weight:900;color:var(--ink);border:1.5px solid var(--desk);vertical-align:middle}
-.voters{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;min-height:20px}
+.mini{width:22px;height:22px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:9px;font-weight:900;color:var(--ink);border:1.5px solid var(--desk);vertical-align:middle}
+.voters{display:flex;justify-content:center;flex-wrap:wrap;gap:3px;min-height:22px}
 .voters .mini{animation:drop .35s cubic-bezier(.3,1.6,.5,1) backwards}
 @keyframes drop{from{transform:translateY(-14px) scale(.4);opacity:0}}
-.count{font-size:16px;color:var(--lantern);font-weight:900}
+.count{font-family:var(--mono);font-size:15px;color:var(--lantern);font-weight:900}
 
-/* the envelope */
+/* the classified neon dossier */
 .filewrap{display:grid;justify-items:center;margin:22px 0 8px;perspective:1200px}
 .file{position:relative;width:min(330px,86vw);aspect-ratio:4/5;cursor:pointer}
-.file .paper{position:absolute;left:6%;right:6%;top:9%;bottom:4%;background:var(--paper);border-radius:4px;box-shadow:0 2px 0 rgba(0,0,0,.08);color:var(--ink);padding:20px 18px;display:grid;align-content:start;gap:10px;transition:transform .8s cubic-bezier(.3,1.3,.4,1)}
-.file .paper .lbl{font-size:14px;font-weight:700;color:var(--ink-2)}
-.file .paper .word{margin-right:64px;font-family:var(--display);font-size:clamp(32px,9vw,46px);line-height:1.1;overflow-wrap:anywhere}
-.file .paper .note{font-size:15px;line-height:1.5}
-.file .cover{position:absolute;inset:0;transform-origin:left center;transition:transform 1s cubic-bezier(.4,1.2,.4,1);background:linear-gradient(160deg,var(--manila),var(--manila2));border-radius:6px 14px 14px 6px;box-shadow:0 30px 60px -20px rgba(0,0,0,.95),inset 0 0 0 1px rgba(80,50,10,.25);display:grid;place-items:center;backface-visibility:hidden;z-index:2}
-/* the envelope's flap and its gold band */
-.file .cover::before{content:"";position:absolute;left:0;right:0;top:0;height:34%;background:color-mix(in srgb,var(--lantern) 82%,#000);clip-path:polygon(0 0,100% 0,50% 100%);border-radius:6px 14px 0 0}
-.file .cover::after{content:"";position:absolute;left:14%;right:14%;top:66%;height:3px;background:var(--gold);border-radius:2px}
-.file .cover .ts{width:34%;color:var(--paper);margin-top:-6%}
+.file .paper{
+  position:absolute;left:5%;right:5%;top:7%;bottom:4%;
+  background:linear-gradient(165deg,#192242,#0e1428);color:var(--fg);
+  border:1.5px solid color-mix(in srgb,var(--shrine) 45%,var(--line2));
+  border-radius:16px;box-shadow:0 18px 40px -16px #000,inset 0 1px 0 rgba(255,255,255,.12);
+  padding:22px 18px;display:grid;align-content:start;gap:10px;
+  transition:transform .8s cubic-bezier(.3,1.3,.4,1);
+}
+.file.imp .paper{border-color:color-mix(in srgb,var(--lantern) 70%,transparent);background:linear-gradient(165deg,#2c1125,#110a1a)}
+.file .paper .lbl{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--shrine)}
+.file.imp .paper .lbl{color:var(--lantern)}
+.file .paper .word{margin-right:64px;font-family:var(--display);font-size:clamp(30px,8.5vw,44px);line-height:1.08;overflow-wrap:anywhere;color:var(--fg)}
+.file .paper .note{font-size:14.5px;line-height:1.5;color:var(--muted)}
+.file .cover{
+  position:absolute;inset:0;transform-origin:left center;transition:transform .95s cubic-bezier(.35,1.25,.4,1);
+  background:radial-gradient(circle at 80% 18%,color-mix(in srgb,var(--lantern) 42%,transparent),transparent 55%),linear-gradient(155deg,#1d2342,#0d1022);
+  border:1.5px solid color-mix(in srgb,var(--lantern) 65%,rgba(255,255,255,.2));
+  border-radius:10px 18px 18px 10px;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.95),0 0 36px -12px color-mix(in srgb,var(--lantern) 55%,transparent);
+  display:grid;place-items:center;backface-visibility:hidden;z-index:2;overflow:hidden;
+}
+.file .cover::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--lantern),var(--gold),var(--shrine))}
+.file .cover::after{content:"";position:absolute;left:14%;right:14%;top:66%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:2px}
+.file .cover .ts{width:34%;color:var(--lantern);margin-top:-6%;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--lantern) 75%,transparent))}
 .file .cover .ts svg{display:block;width:100%}
-.file .cover .agent{position:absolute;bottom:20%;font-family:var(--display);color:var(--paper);font-size:22px}
-.file .cover .tap{position:absolute;bottom:7%;font-weight:700;font-size:14px;color:var(--paper);animation:breathe 2s infinite}
+.file .cover .agent{position:absolute;bottom:20%;font-family:var(--display);color:var(--fg);font-size:21px}
+.file .cover .tap{position:absolute;bottom:7%;font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);animation:breathe 2s infinite}
 @keyframes breathe{50%{opacity:.35}}
 .file.open .cover{transform:rotateY(-160deg)}
-.file .pin{position:absolute;top:12%;right:9%;width:58px;height:58px;border-radius:4px;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.35);transform:rotate(4deg);display:grid;place-items:center;font-weight:900;font-size:22px;color:var(--ink)}
-.file.imp .paper .word{color:var(--red)}
-.stamp{position:absolute;left:50%;top:58%;z-index:4;transform:translate(-50%,-50%) rotate(-14deg) scale(2.6);opacity:0;font-family:var(--display);font-size:clamp(32px,9vw,48px);border:6px solid currentColor;border-radius:8px;padding:2px 16px;mix-blend-mode:multiply;animation:slam .45s .9s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
-.stamp.imp{color:var(--red)} .stamp.crew{color:var(--green)}
-@keyframes slam{to{opacity:.92;transform:translate(-50%,-50%) rotate(-14deg) scale(1)}}
+.file .pin{position:absolute;top:12%;right:9%;width:58px;height:58px;border-radius:50%;overflow:hidden;border:2.5px solid var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.55);display:grid;place-items:center;font-weight:900;font-size:22px;color:var(--ink)}
+.file.imp .paper .word{color:var(--lantern);text-shadow:0 0 24px color-mix(in srgb,var(--lantern) 55%,transparent)}
+.stamp{position:absolute;left:50%;top:58%;z-index:4;transform:translate(-50%,-50%) rotate(-12deg) scale(2.6);opacity:0;font-family:var(--display);font-size:clamp(30px,8.5vw,46px);border:5px solid currentColor;border-radius:12px;padding:3px 18px;background:rgba(10,13,24,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:slam .45s .9s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
+.stamp.imp{color:#FF3E78;box-shadow:0 0 30px rgba(255,62,120,.5)} .stamp.crew{color:var(--green);box-shadow:0 0 30px rgba(0,212,170,.45)}
+@keyframes slam{to{opacity:.96;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}}
 
-/* clue board */
-.turns{display:flex;gap:8px;overflow-x:auto;padding:10px 2px;scrollbar-width:none}
-.turns .t{flex:none;display:grid;justify-items:center;gap:3px;opacity:.45;transition:opacity .3s,transform .3s}
-.turns .t .face{width:46px;height:46px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);border:2px solid transparent}
-.turns .t span{font-size:13px;font-weight:700}
-.turns .t.done{opacity:.8}
-.turns .t.now{opacity:1;transform:scale(1.12)}
-.turns .t.now .face{border-color:var(--amber);box-shadow:0 0 22px rgba(217,164,65,.6)}
-.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
-.slip{position:relative;background:var(--paper);color:var(--ink);padding:14px 12px 10px;border-radius:6px;box-shadow:0 10px 20px -10px rgba(0,0,0,.8);transform:rotate(var(--r,0deg));animation:slip .5s cubic-bezier(.2,1.4,.4,1) backwards}
-@keyframes slip{from{opacity:0;transform:translateY(-20px) rotate(-10deg) scale(.8)}}
-/* the cord the plaque hangs from */
-.slip::before{content:"";position:absolute;top:-9px;left:50%;width:22px;height:14px;transform:translateX(-50%);border:2px solid var(--lantern);border-bottom:0;border-radius:12px 12px 0 0}
-.slip .who{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2)}
-.slip .txt{font-family:var(--display);font-size:22px;line-height:1.25;margin-top:4px;overflow-wrap:anywhere}
-.slip.late .txt{opacity:.5;font-size:15px}
-.slip.imp{outline:3px solid var(--red);outline-offset:2px}
-.yourturn{background:var(--paper);color:var(--ink);border-radius:12px;padding:16px;display:grid;gap:10px;box-shadow:0 20px 40px -20px rgba(0,0,0,.9);animation:slip .5s backwards}
-.yourturn b{font-family:var(--display);font-size:24px}
-.yourturn input{background:#fff;color:var(--ink);border-color:rgba(30,26,46,.3);font-family:var(--display);font-size:20px}
-.peek{display:flex;justify-content:center;margin-top:6px}
-.peek button{border:1px dashed var(--line2);background:none;border-radius:999px;padding:6px 16px;font-weight:700;font-size:14px}
+/* neon clue cards */
+.turns{display:flex;gap:10px;overflow-x:auto;padding:10px 4px;scrollbar-width:none}
+.turns .t{flex:none;display:grid;justify-items:center;gap:4px;opacity:.42;transition:opacity .3s,transform .3s}
+.turns .t .face{width:46px;height:46px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);border:2px solid rgba(255,255,255,.15)}
+.turns .t span{font-size:12.5px;font-weight:700}
+.turns .t.done{opacity:.82}
+.turns .t.now{opacity:1;transform:scale(1.14)}
+.turns .t.now .face{border-color:var(--amber);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 35%,transparent),0 0 24px var(--amber)}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:14px}
+.slip{
+  position:relative;overflow:hidden;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--night-2) 95%,transparent),color-mix(in srgb,var(--night) 98%,transparent));
+  color:var(--fg);padding:14px 13px 12px;border-radius:16px;
+  border:1px solid var(--line2);
+  box-shadow:0 14px 30px -16px rgba(0,0,0,.9);
+  animation:slip .45s cubic-bezier(.2,1.4,.4,1) backwards;
+  transition:transform .18s,border-color .18s,box-shadow .18s;
+}
+.slip:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--gold) 55%,var(--line2))}
+@keyframes slip{from{opacity:0;transform:translateY(14px) scale(.9)}}
+.slip::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--lantern),var(--gold));opacity:.7}
+.slip .who{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.slip .txt{font-family:var(--display);font-size:21px;line-height:1.22;margin-top:6px;overflow-wrap:anywhere;color:var(--fg)}
+.slip.late .txt{opacity:.45;font-size:15px}
+.slip.imp{border-color:#FF3E78;box-shadow:0 0 0 1px #FF3E78,0 0 26px -8px #FF3E78}
+.slip.imp::before{background:#FF3E78;opacity:1}
+.yourturn{
+  background:linear-gradient(160deg,color-mix(in srgb,var(--amber) 14%,var(--night-2)),var(--night-2));
+  color:var(--fg);border:1.5px solid var(--amber);border-radius:20px;padding:18px;
+  display:grid;gap:11px;box-shadow:0 20px 44px -20px #000,0 0 32px -12px color-mix(in srgb,var(--amber) 50%,transparent);
+  animation:slip .45s backwards;
+}
+.yourturn b{font-family:var(--display);font-size:22px;color:var(--amber)}
+.yourturn input{background:var(--night);color:var(--fg);border:1.5px solid var(--line2);font-family:var(--display);font-size:20px}
+.yourturn input:focus{border-color:var(--amber);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 20%,transparent)}
+.yourturn .btn.red{background:linear-gradient(135deg,var(--lantern),#FF6B4A);border-color:transparent;color:#fff;box-shadow:0 8px 24px -8px color-mix(in srgb,var(--lantern) 70%,transparent)}
+.peek{display:flex;justify-content:center;margin-top:8px}
+.peek button{border:1px solid color-mix(in srgb,var(--amber) 45%,var(--line2));background:rgba(255,255,255,.06);border-radius:999px;padding:7px 18px;font-weight:700;font-size:14px;transition:background .15s,transform .12s}
+.peek button:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
 
 /* results */
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.wordcard{background:var(--paper);color:var(--ink);border-radius:8px;padding:14px;text-align:center;box-shadow:0 16px 30px -16px rgba(0,0,0,.9);animation:slip .6s backwards}
+.wordcard{background:linear-gradient(165deg,#18213e,#0e1428);color:var(--fg);border:1.5px solid color-mix(in srgb,var(--shrine) 55%,transparent);border-radius:18px;padding:16px;text-align:center;box-shadow:0 18px 36px -18px rgba(0,0,0,.9);animation:slip .5s backwards}
+.wordcard .lbl{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--shrine);margin-bottom:4px}
 .wordcard .w{font-family:var(--display);font-size:clamp(24px,6vw,34px);overflow-wrap:anywhere}
-.wordcard.imp .w{color:var(--red)}
+.wordcard.imp{border-color:color-mix(in srgb,var(--lantern) 70%,transparent);background:linear-gradient(165deg,#2b1125,#120a1b)}
+.wordcard.imp .lbl{color:var(--lantern)}
+.wordcard.imp .w{color:var(--lantern)}
 .chat{display:grid;gap:9px;margin-top:14px}
 .msg{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:start;animation:slip .45s backwards}
 .msg .bot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:12px;background:var(--amber);color:var(--ink)}
@@ -171,9 +207,10 @@ body.has-hostbar{--chat-lift:66px}
 .rolechips{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 .rolechips button{display:grid;gap:1px;text-align:left;border-radius:12px}
 .rolechips button small{font-weight:600;color:var(--muted);font-size:11px}
-.slip .flag{position:absolute;right:6px;bottom:6px;border:1px solid rgba(30,26,46,.25);background:rgba(255,255,255,.6);border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;color:var(--ink-2);display:flex;gap:4px;align-items:center}
+.slip .flag{position:absolute;right:8px;bottom:8px;border:1px solid var(--line2);background:rgba(255,255,255,.08);border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;color:var(--muted);display:flex;gap:4px;align-items:center;transition:background .15s,color .15s}
+.slip .flag:hover{background:rgba(255,255,255,.16);color:var(--fg)}
 .slip .flag svg{width:12px;height:12px}
-.slip .flag.on{background:var(--red);border-color:var(--red);color:#fff}
+.slip .flag.on{background:#FF3E78;border-color:#FF3E78;color:#fff}
 .slip.flagged{box-shadow:0 0 0 3px var(--red),0 10px 20px -10px rgba(0,0,0,.8)}
 .slip.flagged::after{content:"Too obvious  -1";position:absolute;top:6px;right:-6px;transform:rotate(8deg);background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:2px 8px;border-radius:4px}
 .slip .rl{font-size:11px;font-weight:900;color:var(--rc);margin-left:auto}
@@ -191,7 +228,7 @@ details summary{cursor:pointer;font-weight:800}
 </head>
 <body>
 <header class="top noren">
-  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
   <h1>Imposter</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
@@ -208,6 +245,7 @@ details summary{cursor:pointer;font-weight:800}
 <script src="/pranks.js"></script>
 <script src="/roombar.js"></script>
 <script src="/howto.js"></script>
+<script src="/juice.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -228,6 +266,7 @@ const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}
 Chat.mount({act});
 Pranks.mount({act});
 RoomBar.mount({act, game:"imposter", onHostChange:(hk, became)=>{ hostKey = hk; lastSig = ""; if(became) toast("You are now the host!"); if(room){ render(); document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden); } }});
+if(window.Juice) Juice.mountMute();
 const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc(p.name[0].toUpperCase()); };
 const face = (pid, cls="mini") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
@@ -267,11 +306,15 @@ async function poll(gen, v){
       if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("imp:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me) Avatars.apply(act, room.players[me.pid]);  // your saved profile picture
       if(prev && (prev.phase !== room.phase || prev.round !== room.round)){
-        if(room.phase === "reveal"){ opened = false; peek = false; }
-        if(room.phase === "clues" && room.turnPid === me?.pid) buzz(120);
+        if(room.phase === "reveal"){ opened = false; peek = false; window.Juice?.sfx.deal(); }
+        if(room.phase === "clues" && room.turnPid === me?.pid){ buzz(120); window.Juice?.sfx.turn(); }
+        if(room.phase === "vote") window.Juice?.sfx.pop();
+        if(room.phase === "verdict"){ window.Juice?.sfx.boom(); setTimeout(()=>window.Juice?.shake($("#stage"), 7), 180); }
+        if(room.phase === "results") window.Juice?.sfx.wild();
+        if(room.phase === "final"){ window.Juice?.sfx.win(); setTimeout(()=>window.Juice?.confetti({count:95}), 150); }
         window.scrollTo({top:0, behavior:"smooth"});
       }
-      if(prev && prev.turnPid !== room.turnPid && room.turnPid === me?.pid) buzz([80,60,80]);
+      if(prev && prev.turnPid !== room.turnPid && room.turnPid === me?.pid){ buzz([80,60,80]); window.Juice?.sfx.turn(); }
       if(!Chat.socialOnly(prev, room)) render();  // chat and pranks never redraw the clue box you're typing in
       document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
       Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
@@ -429,9 +472,9 @@ function clues(){
     ${myWord}${strip}${discuss ? detectivePanel(r, m) : ""}
     ${myTurn ? `<form class="yourturn" id="clueForm"><b>Your clue</b><input type="text" id="clueIn" maxlength="40" autocomplete="off" placeholder="One word or a few"><div class="err" id="clueErr" style="color:var(--red)"></div><button class="btn red">Pin it to the board</button></form>` : ""}
     <div class="board">${r.clues.map((c,i)=>slipHTML(c,i,{flag:discuss})).join("") || '<p class="hint">No clues yet.</p>'}</div>`;
-  $("#peekBtn").onclick = ()=>{ peek = !peek; render(); };
+  $("#peekBtn").onclick = ()=>{ peek = !peek; window.Juice?.sfx.flip(); render(); };
   if(myTurn){ $("#clueIn").focus(); $("#clueForm").onsubmit = async e=>{ e.preventDefault(); const t = $("#clueIn").value.trim(); if(!t) return;
-    try{ await act("clue", {text:t}); }catch(err){ $("#clueErr").textContent = err.message; } }; }
+    try{ await act("clue", {text:t}); window.Juice?.sfx.pop(); }catch(err){ $("#clueErr").textContent = err.message; } }; }
 }
 
 /* ---------- vote ---------- */
@@ -445,7 +488,7 @@ function vote(){
     ${inRound ? `<div style="display:flex;justify-content:center;margin-top:14px"><button class="btn ${mine==="skip"?"primary":""}" data-vote="skip">Skip ${tally("skip").length?`(${tally("skip").length})`:""}</button></div>` : ""}
     ${detectivePanel(r, r.mine||{})}
     <div class="board" style="margin-top:20px">${r.clues.map((c,i)=>slipHTML(c,i,{flag:true})).join("")}</div>`;
-  document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>act("vote", {target:b.dataset.vote}).then(()=>buzz(40)).catch(err=>toast(err.message)));
+  document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>act("vote", {target:b.dataset.vote}).then(()=>{ buzz(40); window.Juice?.sfx.pop(); }).catch(err=>toast(err.message)));
 }
 
 /* ---------- verdict and last guess ---------- */

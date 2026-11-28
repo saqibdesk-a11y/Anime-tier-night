@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0D18">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<title>Guess the OP &amp; Songs</title>
+<link rel="stylesheet" href="/festival.css">
+<style>
+:root{
+  --cloth:#7C3AED; --on-cloth:#F4F6FF;
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 90%,transparent);
+  --glass2:rgba(255,255,255,.06); --amber:var(--gold); --mint:var(--shrine);
+  --neon-pink:#FF3E78; --neon-cyan:#00E0FF; --neon-violet:#C084FC;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+.noren{background:linear-gradient(120deg,#5B21B6,#9333EA 52%,#DB2777);color:var(--on-cloth)}
+.noren .th-btn,.noren .iconbtn,.noren .rb-btn{border-color:rgba(255,255,255,.32)}
+.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:2px 11px;opacity:.92}
+.timer{font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:4px 13px;background:rgba(10,13,24,.78);color:#F4F6FF;border:1px solid rgba(255,255,255,.16)}
+.timer.low{background:var(--neon-pink);color:#fff;border-color:var(--neon-pink);animation:beat .85s infinite}
+@keyframes beat{50%{transform:scale(1.08)}}
+
+.stage{width:min(840px,100%);margin:0 auto;padding:10px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--neon-cyan)}
+.title{font-size:clamp(30px,7vw,50px);line-height:1.08;text-align:center;margin-top:4px;letter-spacing:-.025em}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:56ch;font-size:15px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:14px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 18px 46px -26px rgba(0,0,0,.85)}
+.panel h2{font-size:22px;margin:0}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:800;transition:transform .12s,background .18s,box-shadow .18s;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover:not(:disabled){background:rgba(255,255,255,.12)}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:linear-gradient(135deg,var(--neon-pink),#A855F7);border-color:transparent;color:#fff;box-shadow:0 10px 26px -10px rgba(255,62,120,.75)}
+.btn.primary:hover:not(:disabled){filter:brightness(1.08)}
+.btn.cyan{background:linear-gradient(135deg,#06B6D4,#3B82F6);border-color:transparent;color:#06101E;box-shadow:0 10px 26px -10px rgba(0,224,255,.65)}
+.btn.small{padding:7px 14px;font-size:13px}
+.btn.wide{width:100%}
+label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:rgba(7,10,20,.85);border:1px solid var(--line);border-radius:12px;padding:11px 14px;outline:none;color:var(--fg);font-size:16px;transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus,select:focus{border-color:var(--neon-cyan);box-shadow:0 0 0 3px rgba(0,224,255,.16)}
+select option{background:#0D1122;color:#F4F6FF}
+.err{color:#FF6B8A;font-size:14px;font-weight:700;min-height:1.2em}
+.errbox{background:rgba(255,62,120,.14);border:1.5px solid rgba(255,94,138,.55);color:#FFD6E0;border-radius:14px;padding:12px 15px;font-size:14px;font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:580px){.row2{grid-template-columns:1fr}}
+
+/* Playlist grid */
+.packs{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:9px}
+.pack{
+  position:relative;border:1.5px solid var(--line);background:rgba(8,11,24,.62);
+  border-radius:14px;padding:12px;text-align:left;display:grid;gap:4px;
+  transition:transform .14s,border-color .18s,background .18s,box-shadow .18s;
+}
+.pack:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(255,255,255,.28)}
+.pack.on{
+  border-color:var(--neon-cyan);
+  background:linear-gradient(145deg,rgba(192,132,252,.2),rgba(0,224,255,.12));
+  box-shadow:0 0 0 1px rgba(0,224,255,.35),0 12px 26px -14px rgba(0,224,255,.65);
+}
+.pack .ptop{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pack .pico{font-size:20px;line-height:1}
+.pack .ptag{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.09);color:var(--muted)}
+.pack.on .ptag{background:var(--neon-cyan);color:#06101E}
+.pack b{font-size:15px;line-height:1.2}
+.pack small{font-size:12px;color:var(--muted);line-height:1.3}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(8,11,24,.6);border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;transition:all .15s}
+.chips button:hover:not(:disabled){border-color:rgba(255,255,255,.3)}
+.chips button.on{border-color:var(--neon-violet);background:rgba(192,132,252,.22);color:#F5D0FE;box-shadow:0 0 14px -4px rgba(192,132,252,.7)}
+
+.face{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none;aspect-ratio:1/1}
+.face img,.mini img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.mini{width:26px;height:26px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);flex:none;aspect-ratio:1/1}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .face{width:64px;height:64px;border:2.5px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:12px}
+.tok{display:grid;justify-items:center;gap:5px}
+.tok .face{width:60px;height:60px;border:2.5px solid rgba(192,132,252,.45);font-size:22px}
+.tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Live Neon Sound Booth Deck */
+.deck{
+  position:relative;margin:14px auto 0;max-width:660px;
+  border-radius:24px;padding:22px 18px 18px;overflow:hidden;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,62,120,.2),transparent 52%),
+    radial-gradient(circle at 82% 24%,rgba(0,224,255,.18),transparent 52%),
+    linear-gradient(165deg,rgba(16,20,42,.94),rgba(9,11,24,.97));
+  border:1px solid rgba(192,132,252,.32);
+  box-shadow:0 26px 60px -24px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.05) inset;
+  display:grid;justify-items:center;gap:14px;
+}
+
+/* Spinning Neon Vinyl */
+.vinyl-wrap{position:relative;width:186px;height:186px;display:grid;place-items:center}
+.vinyl-halo{
+  position:absolute;inset:-14px;border-radius:50%;
+  background:conic-gradient(from 0deg,#FF3E78,#C084FC,#00E0FF,#1FE6A8,#FF3E78);
+  filter:blur(18px);opacity:.48;animation:spin 7s linear infinite;
+}
+.vinyl-wrap.paused .vinyl-halo,.vinyl-wrap.paused .vinyl{animation-play-state:paused}
+.vinyl{
+  position:relative;width:176px;height:176px;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,#0A0D18 0 11%,#FF3E78 11.5% 27%,#7C3AED 27.5% 32%,#12162A 32.5% 100%),
+    repeating-radial-gradient(circle at 50% 50%,rgba(255,255,255,.06) 0 1px,transparent 1px 6px);
+  background-blend-mode:normal,screen;
+  border:3px solid rgba(0,224,255,.65);
+  box-shadow:0 16px 36px rgba(0,0,0,.75),0 0 26px -4px rgba(192,132,252,.65);
+  display:grid;place-items:center;
+  animation:spin 3.8s linear infinite;
+}
+.vinyl::before{
+  content:"";position:absolute;inset:10px;border-radius:50%;
+  border:1px dashed rgba(255,255,255,.16);
+}
+.vinyl::after{
+  content:"";width:20px;height:20px;border-radius:50%;
+  background:#0A0D18;border:2.5px solid var(--neon-cyan);z-index:2;
+}
+.vinyl-note{
+  position:absolute;z-index:3;font-size:28px;font-weight:900;color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.7);pointer-events:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Animated Equalizer */
+.eq{display:flex;align-items:flex-end;justify-content:center;gap:5px;height:36px}
+.eq span{
+  width:6px;height:10px;border-radius:999px;
+  background:linear-gradient(180deg,var(--neon-cyan),var(--neon-violet) 55%,var(--neon-pink));
+  animation:eqbar .72s ease-in-out infinite alternate;
+  animation-delay:calc(var(--i) * -.11s);
+}
+.eq.paused span{animation:none;height:6px;opacity:.45}
+@keyframes eqbar{0%{height:6px}100%{height:calc(14px + var(--h) * 1px)}}
+
+/* Audio controls dock */
+.aud-bar{
+  width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
+  background:rgba(6,9,20,.65);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:9px 12px;
+}
+.aud-prog{flex:1;min-width:120px;height:7px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.aud-prog i{display:block;height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--neon-pink),var(--neon-violet),var(--neon-cyan));transition:width .18s linear}
+.vol-wrap{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.vol-wrap input[type=range]{width:78px;accent-color:var(--neon-cyan);cursor:pointer}
+
+.tap-play{
+  width:100%;border:0;border-radius:14px;padding:13px 16px;
+  background:linear-gradient(90deg,#FF3E78,#A855F7,#00E0FF);color:#fff;
+  font-weight:900;font-size:15px;letter-spacing:.02em;
+  box-shadow:0 12px 28px -8px rgba(255,62,120,.8);
+  animation:pulsebtn 1.3s ease-in-out infinite;
+}
+@keyframes pulsebtn{50%{transform:scale(1.02)}}
+
+/* Reveal Art Showcase */
+.rev-card{
+  width:100%;display:grid;grid-template-columns:138px 1fr;gap:16px;align-items:center;text-align:left;
+}
+@media (max-width:520px){.rev-card{grid-template-columns:1fr;justify-items:center;text-align:center}}
+.rev-art{
+  width:138px;height:138px;border-radius:18px;overflow:hidden;position:relative;
+  border:2px solid rgba(0,224,255,.65);background:#12172B;
+  box-shadow:0 18px 38px -12px rgba(0,0,0,.85),0 0 28px -6px rgba(192,132,252,.7);
+  animation:artPop .38s cubic-bezier(.2,.9,.3,1.15) both;
+}
+@keyframes artPop{from{transform:scale(.76) rotate(-6deg);opacity:0}}
+.rev-art img{width:100%;height:100%;object-fit:cover;display:block}
+.rev-info{display:grid;gap:5px;min-width:0}
+.rev-badge{display:inline-flex;align-items:center;gap:6px;width:fit-content;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+@media (max-width:520px){.rev-badge{margin:0 auto}}
+.rev-badge.ok{background:rgba(31,230,168,.2);color:#5EEAD4;border:1px solid rgba(31,230,168,.55)}
+.rev-badge.bad{background:rgba(255,62,120,.2);color:#FDA4AF;border:1px solid rgba(255,62,120,.55)}
+.rev-badge.neu{background:rgba(192,132,252,.2);color:#E9D5FF;border:1px solid rgba(192,132,252,.5)}
+.rev-title{font-size:clamp(22px,4.5vw,30px);font-weight:900;line-height:1.12;margin:0}
+.rev-sub{font-size:15px;color:#E2E8F0;font-weight:700}
+.rev-artst{font-size:13.5px;color:var(--muted);font-weight:600}
+
+/* 4 Arcade Buzzer Choices */
+.qprompt{text-align:center;font-size:18px;font-weight:800;margin:4px 0 0;color:#F8FAFC}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:660px;margin:14px auto 0}
+@media (max-width:540px){.opts{grid-template-columns:1fr}}
+.opt{
+  border:2px solid rgba(255,255,255,.14);background:rgba(14,19,38,.86);
+  border-radius:16px;padding:14px 16px;font-weight:800;font-size:15.5px;text-align:left;
+  display:flex;align-items:center;gap:12px;
+  transition:transform .12s,border-color .16s,background .16s,box-shadow .16s;
+}
+.opt:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(0,224,255,.55);box-shadow:0 12px 26px -14px rgba(0,224,255,.55)}
+.opt:active:not(:disabled){transform:scale(.97)}
+.opt .ltr{
+  width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;
+  font-size:13px;font-weight:900;background:rgba(255,255,255,.1);color:var(--neon-cyan);
+}
+.opt.sel{border-color:var(--amber);background:rgba(255,200,61,.18);box-shadow:0 0 0 2px rgba(255,200,61,.35)}
+.opt.sel .ltr{background:var(--amber);color:#0A0D18}
+.opt.ok{border-color:#1FE6A8;background:rgba(31,230,168,.2);box-shadow:0 0 24px -6px rgba(31,230,168,.7)}
+.opt.ok .ltr{background:#1FE6A8;color:#051A12}
+.opt.bad{border-color:#FF3E78;background:rgba(255,62,120,.2);opacity:.78}
+.opt.bad .ltr{background:#FF3E78;color:#fff}
+
+.typebox{display:flex;gap:9px;max-width:560px;margin:14px auto 0}
+.typebox input{flex:1}
+.locked-msg{text-align:center;margin-top:12px;font-weight:800;color:var(--neon-cyan);font-size:14.5px}
+
+/* Answer chips & Leaderboard */
+.prog{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 5px;border-radius:999px;background:rgba(14,19,38,.8);border:1px solid var(--line);font-size:12.5px;font-weight:700}
+.pchip.ok{border-color:#1FE6A8;color:#A7F3D0}
+
+.scores{display:grid;gap:8px;margin-top:14px;max-width:660px;margin-inline:auto}
+.srow{display:grid;grid-template-columns:34px 30px 1fr auto auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:9px 13px;font-weight:800}
+.srow.first{border-color:var(--amber);background:linear-gradient(90deg,rgba(255,200,61,.18),rgba(192,132,252,.1))}
+.srow .rk{text-align:center;color:var(--muted)} .srow.first .rk{color:var(--amber)}
+.srow .plus{color:#1FE6A8;font-size:13px} .srow .pts{font-size:18px;font-variant-numeric:tabular-nums}
+.srow .typed{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.streak{background:linear-gradient(90deg,#FF3E78,#F97316);color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:6px}
+
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end;max-width:560px;margin:18px auto 6px}
+.pod{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:14px 10px;display:grid;justify-items:center;gap:6px;text-align:center}
+.pod.p1{border-color:var(--amber);background:linear-gradient(180deg,rgba(255,200,61,.22),rgba(16,20,42,.92));padding-top:22px;box-shadow:0 18px 40px -16px rgba(255,200,61,.45)}
+.pod .medal{font-size:24px}
+.pod .nm{font-weight:900;font-size:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .sc{font-weight:900;font-size:18px;color:var(--neon-cyan);font-variant-numeric:tabular-nums}
+
+.fadeup{animation:fadeup .38s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:rgba(12,15,30,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:2px solid var(--neon-violet)}
+body.has-hostbar{--chat-lift:66px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:800;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<header class="top noren">
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
+  <h1>Guess the OP</h1>
+  <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
+  <span class="spacer"></span>
+  <span class="timer" id="timer" hidden></span>
+</header>
+<!-- Persistent audio player kept OUTSIDE #stage so live re-renders never interrupt playback -->
+<audio id="player" preload="auto" playsinline></audio>
+<main class="stage" id="stage"></main>
+<div class="hostbar" id="hostbar" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/avatars.js"></script>
+<script src="/backguard.js"></script>
+<script src="/theme.js"></script>
+<script src="/chat.js"></script>
+<script src="/pranks.js"></script>
+<script src="/roombar.js"></script>
+<script src="/howto.js"></script>
+<script src="/juice.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 72% 72%)`; };
+function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
+const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
+  if(!r.ok) throw new Error(j.error || "Something went wrong");
+  return j;
+}
+
+if(window.Juice) Juice.mountMute();
+
+const PACKS = [
+  {id:"anime_op", ico:"⚡", tag:"Anime", name:"Anime OPs & EDs", sub:"54 iconic bangers: JJK, AoT, Naruto, Chainsaw Man & more"},
+  {id:"pop", ico:"✨", tag:"Normal", name:"Global Pop", sub:"The Weeknd, Dua Lipa, Billie Eilish, Bruno Mars, Taylor Swift"},
+  {id:"hiphop", ico:"🔥", tag:"Normal", name:"Hip-Hop & Rap", sub:"Kendrick, Travis Scott, Eminem, Drake, Post Malone"},
+  {id:"kpop", ico:"💜", tag:"Normal", name:"K-Pop Hits", sub:"BTS, BLACKPINK, NewJeans, Stray Kids, ROSÉ, aespa"},
+  {id:"rock", ico:"🎸", tag:"Normal", name:"Rock & Throwbacks", sub:"Queen, Linkin Park, Nirvana, Arctic Monkeys, Coldplay"},
+  {id:"bollywood", ico:"🎬", tag:"Desi", name:"Bollywood & Desi", sub:"Arijit Singh, AP Dhillon, Pasoori, Diljit Dosanjh"},
+  {id:"mix_songs", ico:"🎲", tag:"Normal", name:"All Songs Mix", sub:"Shuffle Pop, Rap, K-Pop, Rock & Desi together!"},
+  {id:"custom", ico:"🔎", tag:"Any", name:"Custom Search", sub:"Type any artist, anime, or genre to build a live quiz!"},
+];
+const PACK_NAME = Object.fromEntries(PACKS.map(p => [p.id, p.name]));
+const ANIME_SUBS = [
+  ["all", "All OPs"], ["shounen", "Shounen Bangers"], ["modern", "Modern (2019+)"],
+  ["classic", "Classics"], ["romance", "Movies & Romance"],
+];
+const CUSTOM_SUGGESTIONS = ["YOASOBI", "The Weeknd", "Eminem", "One Piece", "BTS", "Arijit Singh", "Linkin Park", "Studio Ghibli"];
+
+const player = $("#player");
+let vol = Number(store("op:vol"));
+if(!Number.isFinite(vol) || vol < 0 || vol > 1) vol = 0.72;
+player.volume = vol;
+
+let playingKey = "", needTap = false, isPlaying = false;
+player.addEventListener("play", () => { isPlaying = true; needTap = false; syncDeckUI(); });
+player.addEventListener("pause", () => { isPlaying = false; syncDeckUI(); });
+player.addEventListener("ended", () => { isPlaying = false; syncDeckUI(); });
+player.addEventListener("timeupdate", () => {
+  const bar = $("#audProg");
+  if(bar && player.duration) bar.style.width = Math.min(100, (player.currentTime / player.duration) * 100) + "%";
+});
+
+function syncDeckUI(){
+  const vw = $("#vinylWrap"), eq = $("#eqBars"), tp = $("#tapPlay"), pb = $("#playBtn");
+  if(vw) vw.classList.toggle("paused", !isPlaying);
+  if(eq) eq.classList.toggle("paused", !isPlaying);
+  if(tp) tp.hidden = !needTap;
+  if(pb) pb.textContent = isPlaying ? "↻ Replay" : "▶ Play Clip";
+}
+
+function tryPlay(forceRestart=false){
+  if(!player.src) return;
+  if(forceRestart){ try{ player.currentTime = 0; }catch(e){} }
+  player.volume = vol;
+  const p = player.play();
+  if(p && typeof p.then === "function"){
+    p.then(() => { needTap = false; isPlaying = true; syncDeckUI(); })
+     .catch(() => { needTap = true; isPlaying = false; syncDeckUI(); });
+  }
+}
+
+function stopAudio(){
+  playingKey = "";
+  needTap = false;
+  isPlaying = false;
+  try{ player.pause(); player.removeAttribute("src"); player.load(); }catch(e){}
+}
+
+function syncAudioForRoom(){
+  if(!room || !me || !room.players?.[me.pid]) return stopAudio();
+  const ph = room.phase;
+  if(ph === "question" || ph === "reveal"){
+    const url = room.track?.preview || "";
+    const key = `${room.qIndex}:${url}`;
+    if(url && key !== playingKey){
+      playingKey = key;
+      player.src = url;
+      tryPlay(true);
+    }
+  } else {
+    stopAudio();
+  }
+}
+
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, curView="", prevPhase="", prevQ=-1;
+const serverNow = () => Date.now()/1000 + clockOffset;
+const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
+Chat.mount({act});
+Pranks.mount({act});
+RoomBar.mount({act, game:"op", onHostChange:(hk, became)=>{ hostKey = hk; curView = ""; if(became) toast("You are now the host!"); if(room) render(); }});
+const P = pid => room.players[pid] || {name:"Someone"};
+const picOf = p => { const s = Avatars.src(p); return s ? `<img src="${esc(s)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
+const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+
+function home(){
+  stopAudio();
+  $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
+  document.body.classList.remove("has-hostbar"); curView = "home";
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:2.5vh">
+    <div class="eyebrow">Neon Music Quiz · 30s Live Previews</div>
+    <h1 class="title">Guess the OP &amp; Songs</h1>
+    <p class="sub">Blast real 30-second previews of iconic Anime Openings—or switch to Global Pop, Hip-Hop, K-Pop, Rock, Bollywood, or any Custom Artist!</p>
+  </div>
+  <div class="row2 fadeup" style="margin-top:20px">
+    <form class="panel" id="createForm"><h2>Host a music quiz</h2>
+      <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname" placeholder="e.g. Gojo"></div>
+      <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
+    <form class="panel" id="joinForm"><h2>Join with a code</h2>
+      <div><label for="jCode">Room code</label><input type="text" id="jCode" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:.15em" placeholder="ABCDE"></div>
+      <div><label for="jName">Your name</label><input type="text" id="jName" maxlength="24" autocomplete="nickname" placeholder="Your name"></div>
+      <div class="err" id="jErr"></div><button class="btn wide">Join room</button></form>
+  </div>
+  <div class="fadeup">${HowTo.button("op")}</div>`;
+  $("#createForm").onsubmit = async e=>{
+    e.preventDefault(); const n=$("#cName").value.trim(); if(!n) return $("#cErr").textContent="Enter your name.";
+    try{
+      const r=await api("/api/rooms",{game:"op",title:"Guess the OP"});
+      const m=await api(`/api/rooms/${r.code}/join`,{name:n});
+      store("op:"+r.code,{me:m,hostKey:r.hostKey});
+      history.replaceState({},"","/op?room="+r.code);
+      openRoom(r.code);
+    }catch(err){ $("#cErr").textContent=err.message; }
+  };
+  $("#joinForm").onsubmit = async e=>{
+    e.preventDefault(); const c=$("#jCode").value.trim().toUpperCase(), n=$("#jName").value.trim();
+    if(!c||!n) return $("#jErr").textContent="Enter code and name.";
+    try{
+      const m=await api(`/api/rooms/${c}/join`,{name:n});
+      store("op:"+c,{me:m,hostKey:null});
+      history.replaceState({},"","/op?room="+c);
+      openRoom(c);
+    }catch(err){ $("#jErr").textContent=err.message; }
+  };
+}
+
+function openRoom(c){
+  code = c; const s = store("op:"+c) || {}; me = s.me || null; hostKey = s.hostKey || null;
+  $("#hCode").textContent = c; $("#hCode").hidden = false; BackGuard.arm(); poll(++pollGen, -1);
+}
+
+async function poll(gen, v){
+  while(gen === pollGen){
+    try{
+      const who = (me ? `&pid=${me.pid}&key=${me.key}` : "") + (hostKey ? `&hk=${hostKey}` : "");
+      const next = await api(`/api/rooms/${code}?v=${v}${who}`);
+      if(gen !== pollGen) return;
+      const prev = room; room = next; v = room.version; clockOffset = room.now - Date.now()/1000;
+      if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("op:"+code, {hostKey}); toast("You were removed from this game"); }
+      if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
+      if(prev && prev.phase !== room.phase){
+        if(room.phase === "reveal" && window.Juice){
+          const my = room.answers?.[me?.pid];
+          my?.correct ? Juice.sfx.turn() : Juice.sfx.warn();
+        }
+        if(room.phase === "final" && window.Juice){
+          Juice.sfx.win(); Juice.confetti(48);
+        }
+      }
+      syncAudioForRoom();
+      if(!Chat.socialOnly(prev, room)) render();
+      Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
+    }catch(e){
+      if(e.message.includes("not found")){ toast("Room not found"); return home(); }
+      await new Promise(r=>setTimeout(r,2000));
+    }
+  }
+}
+
+function render(){
+  renderHostbar();
+  document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden);
+  if(!me || !room.players[me.pid]) return gate();
+  const ph = room.phase;
+  if(ph === "lobby") lobby();
+  else if(ph === "starting"){
+    curView = "starting";
+    $("#stage").innerHTML = `<div class="fadeup" style="margin-top:11vh;text-align:center">
+      <div class="vinyl-wrap" style="margin:0 auto 18px"><div class="vinyl-halo"></div><div class="vinyl"></div><span class="vinyl-note">♪</span></div>
+      <h1 class="title">Cueing up the tracks…</h1>
+      <p class="sub">Fetching live 30-second previews and cover art for <b>${esc(PACK_NAME[room.settings.pack] || "Music Quiz")}</b>.</p>
+    </div>`;
+  }
+  else if(ph === "question") questionView();
+  else if(ph === "reveal") revealView();
+  else finalView();
+  prevPhase = ph; prevQ = room.qIndex;
+  tickTimer();
+}
+
+function gate(){
+  if($("#gate")) return; curView="gate";
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh">
+    <h2 style="text-align:center">Join Guess the OP &amp; Songs</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname">
+    <div class="err" id="gErr"></div><button class="btn primary wide">Join room</button></form>`;
+  $("#gate").onsubmit = async e=>{
+    e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
+    try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("op:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }
+    catch(err){ $("#gErr").textContent=err.message; }
+  };
+}
+
+function lobby(){
+  // Avoid clobbering focused custom search input while host is typing
+  const focusedCust = document.activeElement && document.activeElement.id === "sCust";
+  if(curView === "lobby" && focusedCust) return;
+  curView = "lobby";
+  const s = room.settings, ps = Object.keys(room.players), mine = P(me.pid), H = !!hostKey;
+  const sel = (id, opts, val) => `<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Sound Booth Lobby</div>
+    <h1 class="title">${ps.length} player${ps.length===1?"":"s"} ready</h1>
+    <p class="sub">Share room code <b style="letter-spacing:.2em;color:var(--neon-cyan)">${room.code}</b> — turn up your volume!</p>
+  </div>
+  ${room.loadErr ? `<div class="errbox fadeup" style="margin-top:12px">⚠️ ${esc(room.loadErr)}</div>` : ""}
+  <div class="panel" style="margin-top:14px">
+    <div class="photo-pick">
+      <button class="face" id="photoBtn" type="button">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
+      <div><b>${esc(mine.name)}</b><p class="hint">Tap your avatar to customize it.</p></div>
+    </div>
+  </div>
+  <div class="ring">${ps.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div>
+  <div class="panel" style="margin-top:16px">
+    <h2>${H ? "Choose Playlist &amp; Rules" : "Quiz Settings"}</h2>
+    <div><label>Music Playlist (Anime OPs OR Normal Songs)</label>
+      <div class="packs">${PACKS.map(pk => `<button type="button" class="pack ${s.pack===pk.id?"on":""}" data-pack="${pk.id}" ${H?"":"disabled"}>
+        <div class="ptop"><span class="pico">${pk.ico}</span><span class="ptag">${pk.tag}</span></div>
+        <b>${pk.name}</b><small>${pk.sub}</small></button>`).join("")}</div>
+    </div>
+    ${s.pack === "anime_op" ? `<div><label>Anime OP Vibe</label>
+      <div class="chips">${ANIME_SUBS.map(([v,t])=>`<button type="button" class="${s.sub===v?"on":""}" data-sub="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div>
+    </div>` : ""}
+    ${s.pack === "custom" ? `<div><label for="sCust">Search Any Artist, Anime, or Genre</label>
+      <input type="text" id="sCust" maxlength="120" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Taylor Swift, Naruto, Eminem, Studio Ghibli, Arijit Singh">
+      ${H ? `<div class="chips" style="margin-top:8px">${CUSTOM_SUGGESTIONS.map(q=>`<button type="button" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>` : ""}
+    </div>` : ""}
+    <div class="row2">
+      <div><label>Answer Style</label>
+        <div class="chips">
+          <button type="button" class="${s.input==="choices"?"on":""}" data-input="choices" ${H?"":"disabled"}>4 Choices (Fast)</button>
+          <button type="button" class="${s.input==="type"?"on":""}" data-input="type" ${H?"":"disabled"}>Type Name (Hardcore)</button>
+        </div>
+        <p class="hint" style="margin-top:6px">${s.input==="type" ? "Forgives typos — accepts anime title, song name, or artist!" : "4 glowing arcade choices (keys 1–4 supported)."}</p>
+      </div>
+      <div class="row2">
+        <div><label for="sRounds">Songs</label>${sel("sRounds",[[5,"5 songs"],[8,"8 songs"],[10,"10 songs"],[12,"12 songs"],[15,"15 songs"]], s.rounds)}</div>
+        <div><label for="sSec">Clip Timer</label>${sel("sSec",[[12,"12 sec"],[18,"18 sec"],[25,"25 sec"]], s.sec)}</div>
+      </div>
+    </div>
+  </div>
+  ${HowTo.button("op")}`;
+
+  $("#photoBtn").onclick = () => Avatars.open(act, mine);
+  if(H){
+    const save = patch => { if(window.Juice) Juice.sfx.click(); act("settings", patch).catch(e=>toast(e.message)); };
+    document.querySelectorAll("[data-pack]").forEach(b => b.onclick = () => save({pack: b.dataset.pack}));
+    document.querySelectorAll("[data-sub]").forEach(b => b.onclick = () => save({sub: b.dataset.sub}));
+    document.querySelectorAll("[data-input]").forEach(b => b.onclick = () => save({input: b.dataset.input}));
+    document.querySelectorAll("[data-q]").forEach(b => b.onclick = () => save({custom: b.dataset.q}));
+    $("#sRounds").onchange = e => save({rounds: Number(e.target.value)});
+    $("#sSec").onchange = e => save({sec: Number(e.target.value)});
+    const sc = $("#sCust");
+    if(sc){
+      let t = null;
+      sc.oninput = () => { clearTimeout(t); t = setTimeout(() => act("settings", {custom: sc.value}).catch(()=>{}), 420); };
+      sc.onchange = () => { clearTimeout(t); act("settings", {custom: sc.value}).catch(()=>{}); };
+    }
+  }
+}
+
+function deckAudioBarHTML(){
+  return `<button type="button" class="tap-play" id="tapPlay" ${needTap?"":"hidden"}>▶ Tap here to play the song!</button>
+  <div class="aud-bar">
+    <button type="button" class="btn small" id="playBtn">${isPlaying ? "↻ Replay" : "▶ Play Clip"}</button>
+    <div class="aud-prog"><i id="audProg"></i></div>
+    <label class="vol-wrap" style="margin:0;text-transform:none;letter-spacing:0">🔊
+      <input type="range" id="volRange" min="0" max="1" step="0.02" value="${vol}" aria-label="Music volume">
+    </label>
+  </div>`;
+}
+
+function wireDeckControls(){
+  const tp = $("#tapPlay"); if(tp) tp.onclick = () => tryPlay(false);
+  const pb = $("#playBtn"); if(pb) pb.onclick = () => tryPlay(true);
+  const vr = $("#volRange");
+  if(vr){
+    vr.oninput = () => {
+      vol = Number(vr.value);
+      player.volume = vol;
+      store("op:vol", vol);
+    };
+  }
+  syncDeckUI();
+}
+
+function questionView(){
+  const t = room.track || {};
+  const my = room.myAnswer;
+  const s = room.settings;
+  const qKey = `q:${room.qIndex}:${my ? "locked" : "open"}`;
+  const answered = new Set(room.answeredPids || []);
+  const ps = Object.keys(room.players);
+
+  // If already rendered this question & lock-state, only update player answer chips so typed text isn't wiped!
+  if(curView === qKey && $("#progChips")){
+    $("#progChips").innerHTML = ps.map(pid => `<span class="pchip ${answered.has(pid)?"ok":""}">${face(pid,"mini")}${esc(P(pid).name)}${answered.has(pid)?" ✓":""}</span>`).join("");
+    return;
+  }
+  curView = qKey;
+
+  const packLabel = s.pack === "custom" && s.custom ? s.custom : (PACK_NAME[s.pack] || "Music Quiz");
+  const isAnime = t.kind === "anime_op";
+  const eqHeights = [14,22,10,26,18,28,12,24,20,27,15,25,11,22,19,26,13,20];
+  const LTRS = ["A", "B", "C", "D"];
+
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Track ${room.qIndex + 1} of ${room.totalTracks} · ${esc(packLabel)}</div>
+    <div class="deck">
+      <div class="vinyl-wrap ${isPlaying?"":"paused"}" id="vinylWrap">
+        <div class="vinyl-halo"></div>
+        <div class="vinyl"></div>
+        <span class="vinyl-note">♪</span>
+      </div>
+      <div class="eq ${isPlaying?"":"paused"}" id="eqBars">${eqHeights.map((h,i)=>`<span style="--i:${i};--h:${h}"></span>`).join("")}</div>
+      <div class="qprompt">${isAnime ? "Which Anime is this Opening from?" : "Name this Song!"}</div>
+      ${deckAudioBarHTML()}
+    </div>
+    ${s.input === "type" ? `
+      ${my ? `<div class="locked-msg">Locked in: <b>${esc(my.text)}</b> — waiting for everyone else…</div>` : `
+        <form class="typebox" id="typeForm">
+          <input type="text" id="typeInp" maxlength="60" autocomplete="off" placeholder="${isAnime ? "Type the anime or song name…" : "Type the song or artist name…"}">
+          <button class="btn primary">Lock in</button>
+        </form>`}
+    ` : `
+      <div class="opts">${(t.options || []).map((opt, idx) => `
+        <button type="button" class="opt ${my && my.choice===idx ? "sel" : ""}" data-idx="${idx}" ${my ? "disabled" : ""}>
+          <span class="ltr">${LTRS[idx]}</span><span>${esc(opt)}</span>
+        </button>`).join("")}</div>
+      ${my ? `<div class="locked-msg">Answer locked in! Waiting for the rest of the room…</div>` : ""}
+    `}
+    <div class="prog" id="progChips">${ps.map(pid => `<span class="pchip ${answered.has(pid)?"ok":""}">${face(pid,"mini")}${esc(P(pid).name)}${answered.has(pid)?" ✓":""}</span>`).join("")}</div>
+  </div>`;
+
+  wireDeckControls();
+
+  if(!my){
+    if(s.input === "type"){
+      const f = $("#typeForm"), inp = $("#typeInp");
+      if(inp && window.innerWidth > 700) inp.focus();
+      if(f) f.onsubmit = async e => {
+        e.preventDefault(); const v = inp.value.trim(); if(!v) return;
+        f.querySelector("button").disabled = true;
+        try{
+          if(window.Juice) Juice.sfx.pop();
+          buzz(18);
+          await act("answer", {text: v});
+        }catch(err){ toast(err.message); f.querySelector("button").disabled = false; }
+      };
+    } else {
+      document.querySelectorAll(".opt[data-idx]").forEach(b => b.onclick = async () => {
+        const idx = Number(b.dataset.idx);
+        document.querySelectorAll(".opt").forEach(x => x.disabled = true);
+        b.classList.add("sel");
+        try{
+          if(window.Juice) Juice.sfx.pop();
+          buzz(18);
+          await act("answer", {choice: idx});
+        }catch(err){ toast(err.message); document.querySelectorAll(".opt").forEach(x => x.disabled = false); b.classList.remove("sel"); }
+      });
+    }
+  }
+}
+
+function revealView(){
+  const rKey = `rev:${room.qIndex}`;
+  if(curView === rKey) return;
+  curView = rKey;
+  const t = room.track || {};
+  const ans = room.answers || {};
+  const my = ans[me.pid];
+  const isAnime = t.kind === "anime_op";
+  const s = room.settings;
+  const LTRS = ["A", "B", "C", "D"];
+
+  let badge = `<span class="rev-badge neu">Time's Up!</span>`;
+  if(my){
+    if(my.correct){
+      const st = room.streaks?.[me.pid] || 0;
+      badge = `<span class="rev-badge ok">✓ Correct! +${my.pts || 0} pts${st >= 2 ? ` · 🔥 ${st}× Streak` : ""}</span>`;
+    } else {
+      badge = `<span class="rev-badge bad">✕ Missed!</span>`;
+    }
+  }
+
+  const board = Object.keys(room.players).sort((a,b) => (room.scores[b]||0) - (room.scores[a]||0));
+
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Track ${room.qIndex + 1} of ${room.totalTracks} · Reveal</div>
+    <div class="deck">
+      <div class="rev-card">
+        <div class="rev-art">${t.art ? `<img src="${esc(t.art)}" alt="">` : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:44px">🎵</div>`}</div>
+        <div class="rev-info">
+          ${badge}
+          <h2 class="rev-title">${esc(isAnime ? t.anime : t.song)}</h2>
+          <div class="rev-sub">${isAnime ? `🎵 ${esc(t.song)}` : `🎤 ${esc(t.artist)}`}</div>
+          ${isAnime ? `<div class="rev-artst">🎤 ${esc(t.artist)}</div>` : ""}
+        </div>
+      </div>
+      ${deckAudioBarHTML()}
+    </div>
+    ${s.input === "choices" ? `<div class="opts">${(t.options || []).map((opt, idx) => {
+      const isOk = idx === t.correctIdx;
+      const isBad = my && my.choice === idx && !isOk;
+      return `<div class="opt ${isOk?"ok":isBad?"bad":""}"><span class="ltr">${LTRS[idx]}</span><span>${esc(opt)}</span></div>`;
+    }).join("")}</div>` : ""}
+    <div class="scores">${board.map((pid, i) => {
+      const a = ans[pid], st = room.streaks?.[pid] || 0;
+      return `<div class="srow ${i===0?"first":""}">
+        <span class="rk">#${i+1}</span>${face(pid,"mini")}
+        <div><span>${esc(P(pid).name)}${st>=2?`<span class="streak">🔥${st}</span>`:""}</span>
+          ${s.input==="type" && a?.text ? `<span class="typed">Guessed: “${esc(a.text)}” ${a.correct?"✓":"✕"}</span>` : ""}
+        </div>
+        <span class="plus">${a?.pts ? `+${a.pts}` : ""}</span>
+        <span class="pts">${room.scores[pid]||0}</span>
+      </div>`;
+    }).join("")}</div>
+  </div>`;
+
+  wireDeckControls();
+}
+
+function finalView(){
+  if(curView === "final") return;
+  curView = "final";
+  const board = Object.keys(room.players).sort((a,b) => (room.scores[b]||0) - (room.scores[a]||0));
+  const top3 = [board[1], board[0], board[2]].filter(Boolean);
+  const medals = new Map([[board[0],"👑"],[board[1],"🥈"],[board[2],"🥉"]]);
+  $("#stage").innerHTML = `<div class="fadeup">
+    <div class="eyebrow">Final Results</div>
+    <h1 class="title">${esc(P(board[0]).name)} Wins!</h1>
+    <p class="sub">${board.length === 1 ? `Final score across ${room.totalTracks} tracks!` : `Music champion across ${room.totalTracks} tracks.`}</p>
+    ${top3.length >= 2 ? `<div class="podium">${top3.map(pid => `<div class="pod ${pid===board[0]?"p1":""}">
+      <span class="medal">${medals.get(pid)}</span>${face(pid,"face")}
+      <span class="nm">${esc(P(pid).name)}</span><span class="sc">${room.scores[pid]||0}</span>
+    </div>`).join("")}</div>` : ""}
+    <div class="scores">${board.map((pid,i) => `<div class="srow ${i===0?"first":""}">
+      <span class="rk">#${i+1}</span>${face(pid,"mini")}<span>${esc(P(pid).name)}</span><span></span><span class="pts">${room.scores[pid]||0}</span>
+    </div>`).join("")}</div>
+  </div>`;
+}
+
+function renderHostbar(){
+  const hb = $("#hostbar");
+  if(!hostKey || !room){ hb.hidden = true; return; }
+  const ph = room.phase;
+  if(ph === "lobby"){
+    const needCustom = room.settings.pack === "custom" && !room.settings.custom;
+    hb.innerHTML = `<button class="btn primary" id="hbStart" ${needCustom?"disabled":""}>▶ Start Music Quiz (${room.settings.rounds} songs)</button>`;
+    hb.hidden = false;
+    $("#hbStart").onclick = async () => {
+      if(window.Juice) Juice.sfx.pop();
+      // Prime audio element on user gesture so autoplay works smoothly for host
+      try{ player.play().catch(()=>{}); }catch(e){}
+      try{ await act("start"); }catch(e){ toast(e.message); }
+    };
+  } else if(ph === "question"){
+    hb.innerHTML = `<button class="btn" id="hbSkip">Reveal Answer Now</button>`;
+    hb.hidden = false;
+    $("#hbSkip").onclick = () => act("skip").catch(e=>toast(e.message));
+  } else if(ph === "reveal"){
+    const last = room.qIndex + 1 >= room.totalTracks;
+    hb.innerHTML = `<button class="btn primary" id="hbNext">${last ? "See Final Podium →" : "Next Song →"}</button>`;
+    hb.hidden = false;
+    $("#hbNext").onclick = () => act("next").catch(e=>toast(e.message));
+  } else if(ph === "final"){
+    hb.innerHTML = `<button class="btn primary" id="hbAgain">Play Again</button>`;
+    hb.hidden = false;
+    $("#hbAgain").onclick = () => act("playagain").catch(e=>toast(e.message));
+  } else {
+    hb.hidden = true;
+  }
+}
+
+function tickTimer(){
+  const el = $("#timer");
+  if(!room || !room.deadline || (room.phase !== "question" && room.phase !== "reveal")){ el.hidden = true; return; }
+  const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
+  el.textContent = left + "s";
+  el.classList.toggle("low", room.phase === "question" && left <= 5);
+  el.hidden = false;
+}
+setInterval(tickTimer, 250);
+
+// Keyboard shortcuts 1-4 for fast buzzer picks in 4-choice mode
+document.addEventListener("keydown", e => {
+  if(!room || room.phase !== "question" || room.settings?.input !== "choices" || room.myAnswer) return;
+  if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const idx = ["1","2","3","4"].indexOf(e.key);
+  if(idx >= 0){
+    const btn = document.querySelector(`.opt[data-idx="${idx}"]`);
+    if(btn && !btn.disabled) btn.click();
+  }
+});
+
+$("#hCode").onclick = () => {
+  const url = `${location.origin}/op?room=${code}`;
+  navigator.clipboard?.writeText(url).then(() => toast("Invite link copied!")).catch(() => toast("Room code: " + code));
+};
+
+const qsCode = new URLSearchParams(location.search).get("room");
+if(qsCode) openRoom(qsCode.trim().toUpperCase()); else home();
+</script>
+</body>
+</html>

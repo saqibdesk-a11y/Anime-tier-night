@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -110,7 +110,7 @@ select option{background:var(--bg2)}
 .ops{display:grid;gap:6px}
 .op{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;animation:fadeup .4s backwards}
 .op .face{width:30px;height:30px;font-size:12px;flex:none}
-.op span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.op span:not(.face):not(.mini){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .op .kick{border:0;background:none;color:var(--muted);font-size:11px;padding:2px 4px}
 .photo-pick{display:flex;align-items:center;gap:14px}
 .photo-pick .face{width:60px;height:60px;border:2px dashed var(--line2);background:rgba(0,0,0,.3);font-size:11px;color:var(--muted);font-weight:700}
@@ -145,30 +145,33 @@ select option{background:var(--bg2)}
 /* ---------- the board ---------- */
 .board{display:grid;grid-template-columns:repeat(var(--cols,5),minmax(0,1fr));gap:clamp(4px,1.2vw,9px);width:min(640px,100%);margin:0 auto}
 .board.pics{width:min(560px,100%)}
-.card{position:relative;border:0;padding:0;background:none;aspect-ratio:1.5;perspective:700px;border-radius:8px;font:inherit;color:var(--ink);touch-action:manipulation}
+.card{position:relative;border:0;padding:0;background:none;aspect-ratio:1.5;perspective:700px;border-radius:12px;font:inherit;color:var(--fg);touch-action:manipulation}
 .board.pics .card{aspect-ratio:.78}
-.card .inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.3,1.35,.45,1)}
+.card .inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .72s cubic-bezier(.3,1.35,.45,1)}
 .card.revealed .inner{transform:rotateY(180deg)}
-.card .f{position:absolute;inset:0;border-radius:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
-.card .front{background:linear-gradient(180deg,var(--card),var(--card2));box-shadow:0 6px 14px -8px #000,inset 0 0 0 1px rgba(0,0,0,.08);display:grid;place-items:center;transition:box-shadow .25s,transform .2s}
-/* a fortune slip: the fold line across the top */
-.card .front::before{content:"";position:absolute;left:8%;right:8%;top:18%;border-top:1px dashed rgba(30,26,46,.22)}
-.card .word{position:relative;font-family:var(--cardfont,var(--display));font-weight:900;letter-spacing:0;line-height:1.02;font-size:calc(var(--fs,1) * clamp(9px,2.75vw,16px));padding:0 3px;text-align:center;overflow-wrap:anywhere;z-index:1}
-.card .up{position:absolute;top:4px;left:0;right:0;text-align:center;transform:rotate(180deg);font-weight:700;font-size:clamp(6px,1.5vw,9px);opacity:.3;white-space:nowrap;overflow:hidden}
+.card .f{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.card .front{
+  background:linear-gradient(165deg,#1d2546,#11162c);color:var(--fg);
+  box-shadow:0 10px 22px -10px #000,inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.14);
+  display:grid;place-items:center;transition:box-shadow .22s,transform .2s;
+}
+.card .front::before{content:"";position:absolute;left:12%;right:12%;top:12%;height:2px;border-top:0;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent)}
+.card .word{position:relative;font-family:var(--display);font-weight:700;letter-spacing:-.01em;line-height:1.05;font-size:calc(var(--fs,1) * clamp(9.5px,2.75vw,16px));padding:0 4px;text-align:center;overflow-wrap:anywhere;z-index:1}
+.card .up{position:absolute;top:4px;left:0;right:0;text-align:center;transform:rotate(180deg);font-weight:700;font-size:clamp(6px,1.5vw,9px);opacity:.22;white-space:nowrap;overflow:hidden}
 .card .pic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
-.board.pics .card .word{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(239,231,212,.97),rgba(239,231,212,.86));padding:3px 2px 2px;font-size:calc(var(--fs,1) * clamp(7px,2vw,12px))}
-.card .back{transform:rotateY(180deg);display:grid;place-items:center;box-shadow:0 6px 14px -8px #000}
-.card .back svg{width:62%;height:62%;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
-.card .back .wl{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-weight:700;font-size:clamp(7px,1.7vw,11px);opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
-.back.red{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--lantern) 70%,#fff),var(--red) 50%,var(--red2));color:#fff}
-.back.blue{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--shrine) 70%,#fff),var(--blue) 50%,var(--blue2));color:#fff}
-.back.neutral{background:radial-gradient(circle at 50% 30%,#E8DDC2,var(--neutral) 50%,var(--neutral2));color:#4b3e22}
-.back.assassin{background:radial-gradient(circle at 50% 35%,#3a0d16,var(--ass) 65%);color:var(--lantern);box-shadow:0 0 0 2px var(--lantern),0 0 26px -2px color-mix(in srgb,var(--lantern) 70%,transparent)}
-/* the spymaster's key, on cards that are still face down */
-.card.k-red:not(.revealed) .front{box-shadow:inset 0 0 0 3px var(--red),0 6px 14px -8px #000;background:linear-gradient(180deg,color-mix(in srgb,var(--lantern) 18%,var(--paper)),color-mix(in srgb,var(--lantern) 34%,var(--paper)))}
-.card.k-blue:not(.revealed) .front{box-shadow:inset 0 0 0 3px var(--blue),0 6px 14px -8px #000;background:linear-gradient(180deg,color-mix(in srgb,var(--shrine) 18%,var(--paper)),color-mix(in srgb,var(--shrine) 34%,var(--paper)))}
-.card.k-neutral:not(.revealed) .front{background:linear-gradient(180deg,#e9dfc8,#cfc0a0)}
-.card.k-assassin:not(.revealed) .front{background:linear-gradient(180deg,#2b2b30,#121215);color:var(--paper);box-shadow:inset 0 0 0 3px var(--lantern),0 0 16px -4px color-mix(in srgb,var(--lantern) 70%,transparent)}
+.board.pics .card .word{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(10,13,24,.96),rgba(10,13,24,.78));color:#F4F6FF;padding:4px 3px 3px;font-size:calc(var(--fs,1) * clamp(7.5px,2vw,12px))}
+.card .back{transform:rotateY(180deg);display:grid;place-items:center;box-shadow:0 10px 22px -10px #000}
+.card .back svg{width:62%;height:62%;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
+.card .back .wl{position:absolute;left:0;right:0;bottom:3px;text-align:center;font-weight:800;font-size:clamp(7px,1.7vw,11px);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.back.red{background:radial-gradient(circle at 50% 28%,color-mix(in srgb,var(--lantern) 80%,#fff),var(--red) 52%,var(--red2));color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 0 24px -6px var(--redglow)}
+.back.blue{background:radial-gradient(circle at 50% 28%,color-mix(in srgb,var(--shrine) 80%,#fff),var(--blue) 52%,var(--blue2));color:#061318;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 0 24px -6px var(--blueglow)}
+.back.neutral{background:radial-gradient(circle at 50% 28%,#4c5472,#2d334c 60%,#1c2033);color:#c7cde6;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.back.assassin{background:radial-gradient(circle at 50% 35%,#4a0a1e,#0b0610 68%);color:#FF3E78;box-shadow:0 0 0 2px #FF3E78,0 0 30px -2px rgba(255,62,120,.8)}
+/* the spymaster's key, on cyber tiles still face down */
+.card.k-red:not(.revealed) .front{box-shadow:inset 0 0 0 2.5px var(--red),0 8px 18px -10px var(--redglow);background:linear-gradient(165deg,color-mix(in srgb,var(--lantern) 28%,#161c36),#11162c)}
+.card.k-blue:not(.revealed) .front{box-shadow:inset 0 0 0 2.5px var(--blue),0 8px 18px -10px var(--blueglow);background:linear-gradient(165deg,color-mix(in srgb,var(--shrine) 28%,#161c36),#11162c)}
+.card.k-neutral:not(.revealed) .front{background:linear-gradient(165deg,#252b45,#161a2e);opacity:.85}
+.card.k-assassin:not(.revealed) .front{background:linear-gradient(165deg,#2d0a18,#0b0610);color:#FF8BA7;box-shadow:inset 0 0 0 2.5px #FF3E78,0 0 18px -4px rgba(255,62,120,.75)}
 .card.k-assassin:not(.revealed) .front::before{border-color:color-mix(in srgb,var(--lantern) 40%,transparent)}
 /* on picture cards the photo covers the tint, so the key goes on top as a frame and a glow from below */
 .card.k-red{--kc:var(--red);--kt:color-mix(in srgb,var(--lantern) 55%,transparent)} .card.k-blue{--kc:var(--blue);--kt:color-mix(in srgb,var(--shrine) 55%,transparent)}
@@ -180,7 +183,8 @@ select option{background:var(--bg2)}
 .card.late .inner{transition-duration:1s}
 .card.late .back{opacity:.6;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
 .card.can{cursor:pointer}
-.card.can:hover .front{transform:translateY(-2px)}
+.card.can .front{transition:transform .18s cubic-bezier(.2,1.4,.4,1),box-shadow .2s}
+.card.can:hover .front{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 24px -8px rgba(0,0,0,.75),0 0 0 2px color-mix(in srgb,var(--gold) 55%,transparent)}
 .card.can:active .front{transform:scale(.96)}
 .card.mine .front{box-shadow:0 0 0 3px var(--gold),0 0 22px -2px color-mix(in srgb,var(--gold) 70%,transparent)}
 /* your marked card gets a Lock in button; tapping the card itself again takes the mark off */
@@ -247,7 +251,7 @@ body.quake .stage{animation:quake .6s}
 .award .d{font-size:12px;color:var(--muted)}
 
 /* ---------- dock (your controls) and sheets ---------- */
-.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--night-2) 86%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
 .dock .in{width:min(640px,100%);margin:0 auto;display:grid;gap:8px}
 .dock .role{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:700;color:var(--muted)}
 .dock .role .tools .btn{padding:5px 10px}
@@ -300,7 +304,7 @@ body.quake .stage{animation:quake .6s}
   </defs>
 </svg>
 <header class="top noren">
-  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
   <h1>Codenames</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>

@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Game Night">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <title>Tier List Night</title>
 <link rel="stylesheet" href="/festival.css">
 <style>
@@ -68,10 +68,10 @@ label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bot
 .bar h1{font-size:24px;min-width:0;overflow-wrap:anywhere}
 .code{font-weight:700;font-size:14px;background:color-mix(in srgb,var(--lantern) 10%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--lantern) 30%,transparent);border-radius:999px;padding:3px 12px;letter-spacing:.18em}
 .bar .spacer{flex:1}
-.tabs{display:flex;gap:2px;background:rgba(30,26,46,.12);border:1px solid var(--line);border-radius:999px;padding:4px;flex-wrap:wrap}
-.tabs button{border:0;background:none;border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px;color:inherit;opacity:.75;transition:background .15s,color .15s}
-.tabs button:hover{opacity:1}
-.tabs button[aria-selected=true]{background:var(--ink);color:var(--paper);opacity:1}
+.tabs{display:flex;gap:3px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:4px;flex-wrap:wrap}
+.tabs button{border:0;background:none;border-radius:999px;padding:6px 14px;font-weight:700;font-size:13.5px;color:var(--muted);transition:background .16s,color .16s,box-shadow .18s}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected=true]{background:var(--paper);color:var(--ink);box-shadow:0 4px 16px -6px rgba(255,255,255,.45)}
 .players{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
 .chip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 3px;font-size:13px;font-weight:600}
 .av{width:24px;height:24px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;font-size:12px;color:#0a0d18;flex:none}
@@ -81,27 +81,27 @@ label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bot
 .chip .done{color:var(--C)}
 
 /* ---------- tier board ---------- */
-.board{display:grid;gap:6px;margin-top:16px}
-.row{display:grid;grid-template-columns:78px 1fr;min-height:calc(var(--card-w)*1.42 + 14px);background:var(--panel);border-radius:var(--r);overflow:hidden;border:1px solid var(--line);transition:border-color .15s,box-shadow .15s}
-.row .lab{position:relative;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:30px;color:#0a0d18;cursor:pointer;user-select:none;background:linear-gradient(160deg,var(--c),color-mix(in srgb,var(--c) 65%,#000));text-shadow:0 1px 0 rgba(255,255,255,.25)}
-.row .lab::after{content:"";position:absolute;inset:0 -1px 0 auto;width:1px;box-shadow:0 0 24px 6px color-mix(in srgb,var(--c) 45%,transparent)}
-.row .drop{display:flex;flex-wrap:wrap;gap:7px;padding:7px;align-content:flex-start;min-width:0}
-.row.over{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--lantern) 15%,transparent),inset 0 0 40px color-mix(in srgb,var(--lantern) 6%,transparent)}
+.board{display:grid;gap:8px;margin-top:16px}
+.row{display:grid;grid-template-columns:78px 1fr;min-height:calc(var(--card-w)*1.42 + 16px);background:linear-gradient(90deg,color-mix(in srgb,var(--c) 9%,var(--night-2)),color-mix(in srgb,var(--night-2) 90%,transparent) 32%);border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 12px 30px -20px #000;transition:border-color .18s,box-shadow .18s,transform .18s}
+.row .lab{position:relative;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:32px;color:#070a14;cursor:pointer;user-select:none;background:linear-gradient(155deg,color-mix(in srgb,var(--c) 88%,#fff),var(--c));text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.row .lab::after{content:"";position:absolute;inset:0 -1px 0 auto;width:2px;box-shadow:0 0 26px 8px color-mix(in srgb,var(--c) 55%,transparent)}
+.row .drop{display:flex;flex-wrap:wrap;gap:8px;padding:8px;align-content:flex-start;min-width:0}
+.row.over{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 55%,transparent),inset 0 0 46px color-mix(in srgb,var(--c) 16%,transparent);transform:scale(1.006)}
 .pool{margin-top:20px;background:rgba(0,0,0,.2);border:1px dashed var(--line-strong);border-radius:18px;padding:14px}
 .pool h3{font-family:var(--body);font-weight:700;font-size:14px;color:var(--muted);margin-bottom:12px}
 .pool .drop{display:flex;flex-wrap:wrap;gap:7px;min-height:calc(var(--card-w)*1.42)}
 .pool.over{border-color:var(--accent)}
 .hint{font-size:13px;color:var(--muted);margin:12px 0 0}
 
-.card{position:relative;width:var(--card-w);aspect-ratio:225/320;max-width:100%;border-radius:10px;overflow:hidden;background:var(--panel2);flex:none;cursor:grab;user-select:none;-webkit-user-select:none;box-shadow:0 6px 16px -8px rgba(0,0,0,.8),inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .15s,box-shadow .15s}
+.card{position:relative;width:var(--card-w);aspect-ratio:225/320;max-width:100%;border-radius:12px;overflow:hidden;background:var(--panel2);flex:none;cursor:grab;user-select:none;-webkit-user-select:none;box-shadow:0 8px 18px -8px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.1);transition:transform .2s cubic-bezier(.2,1.5,.4,1),box-shadow .2s}
 .card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .card .cap{position:absolute;inset:auto 0 0 0;padding:16px 6px 5px;font-size:10.5px;line-height:1.2;font-weight:700;background:linear-gradient(transparent,rgba(4,7,14,.94));display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card .ph{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;font-weight:700;color:var(--muted)}
 .card.searching .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);background-size:200% 100%;animation:shine 1.2s infinite}
 @keyframes shine{from{background-position:200% 0}to{background-position:-200% 0}}
-.card.sel{box-shadow:0 0 0 3px var(--accent),0 10px 30px -6px color-mix(in srgb,var(--lantern) 60%,transparent);transform:translateY(-4px)}
+.card.sel{box-shadow:0 0 0 3px var(--gold),0 14px 32px -6px color-mix(in srgb,var(--gold) 65%,transparent);transform:translateY(-6px) scale(1.04)}
 .card.dragging{opacity:.3}
-.card:hover{transform:translateY(-3px);box-shadow:0 14px 24px -10px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.12)}
+.card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 16px 28px -10px rgba(0,0,0,.95),0 0 0 1.5px rgba(255,255,255,.22)}
 .mini{--card-w:52px}
 .mini .card .cap{font-size:8.5px;padding:10px 3px 2px}
 .mini .row{grid-template-columns:44px 1fr;min-height:calc(var(--card-w)*1.42 + 10px)}
@@ -252,7 +252,7 @@ select option{background:var(--panel-solid)}
 <section id="home" hidden>
   <div class="wrap">
     <div class="hero">
-      <a class="back" href="/">&larr; Festival</a>
+      <a class="back" href="/">&larr; Arcade</a>
       <h1>Tier List Night <span class="tiers"><i style="background:var(--S)">S</i><i style="background:var(--A)">A</i><i style="background:var(--B)">B</i><i style="background:var(--C)">C</i></span></h1>
       <p>Rank anime, characters, movies or anything else with friends. Then the boards are revealed and the AI roasts your taste.</p>
       <div id="howHome" style="max-width:420px"></div>
@@ -309,7 +309,7 @@ select option{background:var(--panel-solid)}
 <section id="room" hidden>
   <div class="bar">
     <div class="wrap">
-      <a class="back" href="/" title="All games" aria-label="Back to all games">&larr; Festival</a>
+      <a class="back" href="/" title="All games" aria-label="Back to all games">&larr; Arcade</a>
       <h1 id="rTitle"></h1>
       <span class="code" id="rCode" title="Room code"></span>
       <button class="btn small" id="copyLink">Copy invite link</button>
@@ -434,6 +434,7 @@ select option{background:var(--panel-solid)}
 <script src="/pranks.js"></script>
 <script src="/roombar.js"></script>
 <script src="/howto.js"></script>
+<script src="/juice.js"></script>
 <script>document.addEventListener("DOMContentLoaded",()=>{ const h=document.getElementById("howHome"); if(h) h.innerHTML=HowTo.button("tierlist"); document.querySelectorAll(".howSlot").forEach(x=>x.innerHTML=HowTo.button("tierlist","margin-top:8px")); });</script>
 <script>
 const TIERS = ["S","A","B","C","D","F"];
@@ -777,21 +778,22 @@ mine.addEventListener("drop", e=>{
   const over = e.target.closest(".card"); const id = dragging; dragging = null;
   document.querySelectorAll(".over").forEach(x=>x.classList.remove("over"));
   move(id, z.dataset.tier, over && over.dataset.id !== id ? over.dataset.id : null);
+  window.Juice?.sfx.pop();
 });
 mine.addEventListener("click", e=>{
   if(e.target.closest("#submitArea")) return;
   const c = e.target.closest(".card"); const z = e.target.closest("[data-tier]");
-  if(c && !selected){ selected = c.dataset.id; renderMine(); return; }
+  if(c && !selected){ selected = c.dataset.id; window.Juice?.sfx.click(); renderMine(); return; }
   if(c && selected === c.dataset.id){ selected = null; renderMine(); return; }
-  if(selected && z){ move(selected, z.dataset.tier, c ? c.dataset.id : null); }
+  if(selected && z){ move(selected, z.dataset.tier, c ? c.dataset.id : null); window.Juice?.sfx.pop(); }
 });
 mine.addEventListener("keydown", e=>{
   const c = e.target.closest(".card"); if(!c) return;
   const k = e.key.toUpperCase();
-  if(TIERS.includes(k)){ move(c.dataset.id, k, null); }
-  else if(k==="U" || k==="BACKSPACE" || k==="DELETE"){ move(c.dataset.id, "pool", null); }
+  if(TIERS.includes(k)){ move(c.dataset.id, k, null); window.Juice?.sfx.pop(); }
+  else if(k==="U" || k==="BACKSPACE" || k==="DELETE"){ move(c.dataset.id, "pool", null); window.Juice?.sfx.click(); }
 });
-$("#doneBtn").onclick = ()=>{ const d = !room.players[me.pid].done; room.players[me.pid].done = d; renderMine(); queueSave({done:d}); };
+$("#doneBtn").onclick = ()=>{ const d = !room.players[me.pid].done; room.players[me.pid].done = d; if(d) window.Juice?.sfx.turn(); renderMine(); queueSave({done:d}); };
 $("#resetBtn").onclick = ()=>{ for(const t of TIERS) myTiers[t]=[]; renderMine(); queueSave(); };
 
 /* ---------- secret picks ---------- */
@@ -1060,7 +1062,10 @@ function renderShow(){
   const rs = room.roastState || {};
   // redraw only when the slide or roast changes, so animations play once
   const sig = [slides[i], (room.roasts||[])[0]?.id, rs.status, Object.keys(room.players).length].join("|");
-  if(renderShow.sig !== sig){ renderShow.sig = sig; $("#stage").innerHTML = slideHTML(slides[i]); window.scrollTo({top:0}); }
+  if(renderShow.sig !== sig){ renderShow.sig = sig; $("#stage").innerHTML = slideHTML(slides[i]); window.scrollTo({top:0});
+    if(slides[i] === "finale"){ window.Juice?.sfx.win(); setTimeout(()=>window.Juice?.confetti({count:100}), 220); }
+    else { window.Juice?.sfx.turn(); }
+  }
   const last = i === slides.length-1, paused = room.show.paused;
   const holding = i === 0 && rs.status === "working";
   const bsig = [i, slides.length, paused, holding, room.show.at].join("|");
@@ -1091,6 +1096,7 @@ document.addEventListener("keydown", e=>{
   if(e.key === "ArrowLeft"){ e.preventDefault(); showAction("prev"); }
 });
 
+if(window.Juice) Juice.mountMute(document.querySelector(".bar .wrap"));
 boot();
 </script>
 </body>

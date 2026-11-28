@@ -26,6 +26,7 @@ import imposter_game
 import lantern_game
 import mask_game
 import media
+import op_game
 import scroll_game
 import silhouette_game
 import werewolf_game
@@ -33,7 +34,7 @@ import werewolf_game
 GAMES = {
     "draw": draw_game, "forged": forged_game, "scroll": scroll_game,
     "silhouette": silhouette_game, "dial": dial_game, "clash": clash_game,
-    "bluff": bluff_game, "mask": mask_game,
+    "bluff": bluff_game, "mask": mask_game, "op": op_game,
     "werewolf": werewolf_game, "imposter": imposter_game,
     "codenames": codenames_game, "lantern": lantern_game,
 }  # every game module has the same hooks
@@ -154,17 +155,18 @@ def safe_int(val, default):
 # ---------- Discord Open Graph previews, presence & host takeover ----------
 
 STALL_META = {
-    "/": ("Anime Game Night", "13 party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Fox's Bluff, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
-    "/index.html": ("Anime Game Night", "13 party games for friends: Codenames, Last Lantern, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Fox's Bluff, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/hero.webp"),
-    "/codenames": ("Codenames", "Two teams, one grid of words. Give one-word clues and find all your agents before the other team.", "/img/scenes/stall-codenames.webp"),
-    "/lantern": ("Last Lantern", "Match the colour or symbol and empty your hand first. Call your last card before someone catches you.", "/img/scenes/stall-lantern.webp"),
-    "/forged": ("Forged Brush", "Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.", "/img/scenes/stall-forged.jpg"),
-    "/scroll": ("Broken Scroll", "Write a prompt, draw it, guess the drawing, repeat—then watch every scroll derail in the reveal theater.", "/img/scenes/stall-scroll.jpg"),
-    "/silhouette": ("Guess the Silhouette", "Name the anime character as their shadow, blur, or zoom clears—or battle in Higher or Lower and AI speed trivia.", "/img/scenes/stall-silhouette.jpg"),
-    "/dial": ("Festival Dial", "One Psychic sees the hidden target on a wild spectrum and gives one clue. Everyone else slides the festival fan to match.", "/img/scenes/stall-dial.jpg"),
+    "/": ("Anime Game Night", "14 neon multiplayer party games for friends: Guess the OP & Songs, Last Lantern, Fox's Bluff, Codenames, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/arcade-hero.jpg"),
+    "/index.html": ("Anime Game Night", "14 neon multiplayer party games for friends: Guess the OP & Songs, Last Lantern, Fox's Bluff, Codenames, Forged Brush, Broken Scroll, Guess the Silhouette, Festival Dial, Caption Clash, Forehead Mask, Werewolf, Imposter, Tier List & Draw It.", "/img/scenes/arcade-hero.jpg"),
+    "/op": ("Guess the OP & Songs", "Blast 30-second live music previews of iconic Anime Openings—or switch to Pop, Hip-Hop, K-Pop, Rock, Bollywood, or any custom artist!", "/img/scenes/arcade-op.jpg"),
+    "/codenames": ("Codenames", "Two teams, one grid of words. Give one-word clues and find all your agents before the other team.", "/img/scenes/arcade-codenames.jpg"),
+    "/lantern": ("Last Lantern", "Match the colour or symbol and empty your hand first. Call your last card before someone catches you.", "/img/scenes/arcade-lantern.jpg"),
+    "/forged": ("Forged Brush", "Everyone draws the same secret subject—one brushstroke per turn—except the Forger, who has to fake it.", "/img/scenes/arcade-forged.jpg"),
+    "/scroll": ("Broken Scroll", "Write a prompt, draw it, guess the drawing, repeat—then watch every scroll derail in the reveal theater.", "/img/scenes/arcade-scroll.jpg"),
+    "/silhouette": ("Guess the Silhouette", "Name the anime character as their shadow, blur, or zoom clears—or battle in Higher or Lower and AI speed trivia.", "/img/scenes/arcade-silhouette.jpg"),
+    "/dial": ("Festival Dial", "One Psychic sees the hidden target on a wild spectrum and gives one clue. Everyone else slides the dial to match.", "/img/scenes/arcade-dial.jpg"),
     "/clash": ("Caption Clash", "Write the funniest answer to unhinged prompts, battle head-to-head in the vote, and get roasted by AI.", "/img/scenes/stall-clash.jpg"),
-    "/bluff": ("Fox's Bluff", "Place Sakura Blossoms or your Cursed Fox Mask face-down, raise the stakes, and flip—or watch a bluff explode.", "/img/scenes/stall-bluff.jpg"),
-    "/mask": ("Forehead Mask", "Everyone sees the character on your forehead except you. Ask Yes/No questions and guess who you are first.", "/img/scenes/stall-mask.jpg"),
+    "/bluff": ("Fox's Bluff", "Place Sakura Blossoms or your Cursed Fox Mask face-down, raise the stakes, and flip—or watch a bluff explode.", "/img/scenes/arcade-bluff.jpg"),
+    "/mask": ("Forehead Mask", "Everyone sees the character on your forehead except you. Ask Yes/No questions and guess who you are first.", "/img/scenes/arcade-mask.jpg"),
     "/werewolf": ("Werewolf", "Secret roles. Wolves hunt at night, the village votes by day. 13 roles with built-in chat.", "/img/scenes/stall-werewolf.webp"),
     "/imposter": ("Imposter", "Everyone gets the same secret word except one. Give clues, spot the fake, and roast the round.", "/img/scenes/stall-imposter.webp"),
     "/tierlist": ("Tier List Night", "Rank anime, characters or anything else together. Watch the reveal show and get roasted by AI.", "/img/scenes/stall-tierlist.webp"),
@@ -329,6 +331,10 @@ def hurry_offline_turn(room, now):
         bg = room.get("g")
         if bg:
             turn_pid = bg.get("bidder") if room.get("phase") == "flip" else bg.get("turn")
+    elif g == "mask" and room.get("phase") == "play":
+        mg = room.get("g")
+        if mg and mg.get("turnStage") == "choose":
+            turn_pid = mask_game.current_pid(room)
     elif g == "scroll" and room.get("phase") == "playing":
         # in Broken Scroll, if all online active players are done and remaining unfinished players are offline 15s+
         act_pids = scroll_game.active_order(room)
@@ -416,14 +422,50 @@ def to_option(a):
 
 
 CHAR_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { characters(sort: [FAVOURITES_DESC]) {
-  name { full } favourites image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } } } } } }"""
-SHOW_QUERY = """query ($id: Int) { Media(id: $id) { characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } favourites image { large } } } } }"""
+  name { full } favourites image { large } media(perPage: 1, sort: [POPULARITY_DESC]) { nodes { title { english romaji } genres seasonYear } } } } }"""
+SHOW_QUERY = """query ($id: Int) { Media(id: $id) { genres seasonYear characters(sort: [FAVOURITES_DESC], perPage: 26) { nodes { name { full } favourites image { large } } } } }"""
+ANIME_GALLERY_QUERY = """query ($p: Int) { Page(page: $p, perPage: 50) { media(type: ANIME, isAdult: false, sort: [POPULARITY_DESC]) {
+  id title { english romaji } synonyms genres seasonYear format episodes averageScore coverImage { extraLarge large } } } }"""
 FEATURED_SHOWS = [(235, "Detective Conan"), (813, "Dragon Ball Z")]  # AniList ids, picked by request
 SKIP_CHARACTERS = {"Narrator", "Lum"}
 ALIASES = {"Ai Haibara": "Sherry"}  # Sherry is Ai Haibara's Black Organization codename; AniList has no separate entry
 _avatars = {"list": None, "at": 0}
 _avatars_lock = threading.Lock()
+_anime_gal = {"list": None, "at": 0}
+_anime_gal_lock = threading.Lock()
 AVATAR_HOST = "https://s4.anilist.co/"
+
+
+def anime_gallery():
+    """Top 100 most-popular anime series on AniList with posters, genres and years (cached for a day)."""
+    with _anime_gal_lock:
+        fresh = 86400 if _anime_gal.get("complete") else 180
+        if _anime_gal["list"] and time.time() - _anime_gal["at"] < fresh:
+            return _anime_gal["list"]
+        out, complete = [], True
+        for page in (1, 2):
+            items = ((anilist_post(ANIME_GALLERY_QUERY, {"p": page}) or {}).get("Page") or {}).get("media")
+            if not items:
+                complete = False
+                continue
+            for m in items:
+                t = m.get("title") or {}
+                nm = t.get("english") or t.get("romaji") or ""
+                alt = t.get("romaji") if t.get("english") and t.get("romaji") != t.get("english") else ""
+                img = (m.get("coverImage") or {}).get("extraLarge") or (m.get("coverImage") or {}).get("large") or ""
+                if nm and img:
+                    out.append({
+                        "name": nm, "alias": alt, "synonyms": (m.get("synonyms") or [])[:4],
+                        "img": img, "genres": m.get("genres") or [],
+                        "year": m.get("seasonYear"), "format": m.get("format") or "TV",
+                        "episodes": m.get("episodes"), "score": m.get("averageScore"),
+                    })
+        old = _anime_gal["list"] or []
+        if out and (complete or len(out) > len(old)):
+            _anime_gal.update(list=out, at=time.time(), complete=complete)
+        else:
+            _anime_gal["at"] = time.time()
+        return _anime_gal["list"] or out
 
 
 def avatar_gallery():
@@ -442,19 +484,27 @@ def avatar_gallery():
                 continue
             for c in chars:
                 img = (c.get("image") or {}).get("large") or ""
-                show = ((((c.get("media") or {}).get("nodes") or [{}])[0] or {}).get("title") or {})
+                mnode = (((c.get("media") or {}).get("nodes") or [{}])[0] or {})
+                show = mnode.get("title") or {}
                 if img.startswith(AVATAR_HOST) and "default" not in img:
-                    out.append({"name": (c.get("name") or {}).get("full") or "", "show": show.get("english") or show.get("romaji") or "", "img": img, "favs": c.get("favourites") or 0})
+                    out.append({
+                        "name": (c.get("name") or {}).get("full") or "",
+                        "show": show.get("english") or show.get("romaji") or "",
+                        "img": img, "favs": c.get("favourites") or 0,
+                        "genres": mnode.get("genres") or [], "year": mnode.get("seasonYear"),
+                    })
         seen = {c["img"] for c in out}
         for media_id, show in FEATURED_SHOWS:
-            nodes = ((((anilist_post(SHOW_QUERY, {"id": media_id}) or {}).get("Media") or {}).get("characters") or {}).get("nodes"))
+            mdata = ((anilist_post(SHOW_QUERY, {"id": media_id}) or {}).get("Media") or {})
+            nodes = ((mdata.get("characters") or {}).get("nodes"))
             if not nodes:
                 complete = False
                 continue
+            mgenres, myear = mdata.get("genres") or [], mdata.get("seasonYear")
             for c in nodes:
                 img, nm = (c.get("image") or {}).get("large") or "", (c.get("name") or {}).get("full") or ""
                 if img.startswith(AVATAR_HOST) and "default" not in img and nm not in SKIP_CHARACTERS and img not in seen:
-                    out.append({"name": nm, "show": show, "img": img, "favs": c.get("favourites") or 0})
+                    out.append({"name": nm, "show": show, "img": img, "favs": c.get("favourites") or 0, "genres": mgenres, "year": myear})
                     seen.add(img)
         for c in out:
             if c["name"] in ALIASES:
@@ -1485,6 +1535,7 @@ STATIC = {  # files the pages load: the shared avatar picker and what makes the 
     "/pranks.js": ("text/javascript; charset=utf-8", "no-store"),
     "/roombar.js": ("text/javascript; charset=utf-8", "no-store"),
     "/howto.js": ("text/javascript; charset=utf-8", "no-store"),
+    "/juice.js": ("text/javascript; charset=utf-8", "no-store"),
     "/festival.css": ("text/css; charset=utf-8", "no-store"),
     "/manifest.webmanifest": ("application/manifest+json", "public, max-age=3600"),
     "/icon-192.png": ("image/png", "public, max-age=86400"),
@@ -1496,7 +1547,7 @@ PAGES = {
     "/tierlist": "tierlist.html", "/draw": "draw.html",
     "/forged": "forged.html", "/scroll": "scroll.html",
     "/silhouette": "silhouette.html", "/dial": "dial.html",
-    "/clash": "clash.html", "/bluff": "bluff.html", "/mask": "mask.html",
+    "/clash": "clash.html", "/bluff": "bluff.html", "/mask": "mask.html", "/op": "op.html",
     "/werewolf": "werewolf.html", "/imposter": "imposter.html",
     "/codenames": "codenames.html", "/lantern": "lantern.html",
 }
@@ -1509,6 +1560,7 @@ def main():
     codenames_game.gallery = avatar_gallery  # anime characters for the picture cards
     silhouette_game.gallery = avatar_gallery
     mask_game.gallery = avatar_gallery
+    mask_game.anime_gallery = anime_gallery
     for code, room in rooms.items():  # resume unfinished poster lookups; older rooms predate modes
         room.setdefault("mode", "classic")
         room.setdefault("phase", "ranking")

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -14,10 +14,12 @@
 <title>Forehead Mask</title>
 <link rel="stylesheet" href="/festival.css">
 <style>
+/* Forehead Mask — Neon Tokyo Arcade Redesign:
+   Sleek holographic obsidian identity cards, crisp circular avatars, "Which Anime Am I?" poster cards,
+   progressive unlockable hints, 1-tap starter questions, Friend Nudge hints, and 3D unmask reveal! */
 :root{
-  --cloth:#2B8C82; --on-cloth:#F3EBDD;
-  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
-  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --mint:var(--shrine);
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 90%,transparent);
+  --glass2:rgba(255,255,255,.06); --amber:var(--gold); --mint:var(--shrine); --teal:#1FE6A8;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;overflow-x:hidden}
@@ -25,90 +27,248 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 [hidden]{display:none!important}
 .muted{color:var(--muted)}
-.noren{background:var(--cloth);color:var(--on-cloth)}
-.noren .th-btn,.noren .iconbtn,.noren .rb-btn{border-color:rgba(243,235,221,.35)}
-.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.9}
-.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
+.iconbtn{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:50%;width:38px;height:38px;display:grid;place-items:center;padding:0;color:inherit}
+.iconbtn svg{width:18px;height:18px}
+.timer{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:rgba(255,255,255,.09);color:var(--fg)}
 
-.stage{width:min(860px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
-.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
-.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
-.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
-.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
-.panel h2{font-size:24px}
-.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s}
-.btn:active{transform:scale(.97)}
+.stage{width:min(960px,100%);margin:0 auto;padding:10px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+.title{font-size:clamp(28px,7vw,46px);line-height:1.06;text-align:center;margin-top:4px}
+.sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:56ch;font-size:14.5px}
+.scope-pill{
+  display:inline-flex;align-items:center;gap:7px;margin:0 auto 6px;
+  padding:5px 14px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  background:color-mix(in srgb,var(--teal) 14%,var(--night-2));
+  border:1px solid color-mix(in srgb,var(--teal) 45%,transparent);color:var(--teal);
+}
+.scope-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
+
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:14px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.panel h2{font-size:21px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:10px 18px;font-weight:700;transition:transform .12s,background .15s,border-color .15s}
+.btn:hover:not(:disabled){background:rgba(255,255,255,.13)}
+.btn:active:not(:disabled){transform:scale(.96)}
 .btn:disabled{opacity:.42;cursor:not-allowed}
-.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
-.btn.paper{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+.btn.primary{background:linear-gradient(135deg,var(--lantern),#FF6B4A);border-color:transparent;color:#fff;box-shadow:0 10px 26px -8px color-mix(in srgb,var(--lantern) 65%,transparent)}
+.btn.teal{background:linear-gradient(135deg,var(--teal),#00B8D9);border-color:transparent;color:#051419;font-weight:800}
 .btn.small{padding:6px 13px;font-size:13px}
 .btn.wide{width:100%}
-label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
-input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
-input[type=text]:focus,select:focus{border-color:var(--amber)}
+label{display:block;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:12px;padding:11px 13px;outline:none;color:var(--fg);font-size:15.5px}
+input[type=text]:focus,select:focus{border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 18%,transparent)}
 select option{background:var(--night)}
 .err{color:var(--danger);font-size:14px;min-height:1.3em}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:560px){.row2{grid-template-columns:1fr}}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.seg button,.chips button{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:12px;padding:10px;text-align:left;display:grid;gap:2px}
-.seg button small{color:var(--muted);font-size:12px}
-.seg button.on,.chips button.on{border-color:var(--amber);background:rgba(217,164,65,.14)}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chips button{border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px;display:inline-block}
-.chips button.on{color:var(--amber)}
 
-.face{width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:900;color:var(--ink);flex:none}
+/* Mode & Genre selectors */
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px}
+.mbtn{
+  border:1.5px solid var(--line);background:rgba(255,255,255,.04);border-radius:16px;padding:12px;
+  text-align:left;display:grid;gap:3px;transition:transform .14s,border-color .16s,background .16s,box-shadow .18s;
+}
+.mbtn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--line2);background:rgba(255,255,255,.08)}
+.mbtn b{font-size:14.5px;display:flex;align-items:center;gap:6px}
+.mbtn small{color:var(--muted);font-size:12px;line-height:1.35}
+.mbtn.on{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 14%,transparent);box-shadow:0 0 24px -10px var(--teal)}
+.mbtn:disabled{opacity:.75;cursor:default}
+
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:540px){.seg3{grid-template-columns:1fr}}
+.seg button,.seg3 button{border:1.5px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;padding:10px 12px;text-align:left;display:grid;gap:2px;transition:border-color .15s,background .15s}
+.seg button small,.seg3 button small{color:var(--muted);font-size:12px}
+.seg button.on,.seg3 button.on{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:999px;padding:6px 13px;font-weight:700;font-size:12.5px;transition:background .14s,border-color .14s,color .14s}
+.chips button.on{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 20%,transparent);color:var(--teal)}
+
+/* Crisp Circular Avatars (strictly square 1:1!) */
+.face{width:44px;height:44px;min-width:44px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-weight:900;color:var(--ink);flex:none;aspect-ratio:1/1}
+.mini{width:28px;height:28px;min-width:28px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:12px;font-weight:900;color:var(--ink);border:2px solid rgba(255,255,255,.22);flex:none;aspect-ratio:1/1}
 .face img,.mini img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
-.mini{width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink);border:1.5px solid var(--night);flex:none}
 .photo-pick{display:flex;align-items:center;gap:14px}
-.photo-pick .face{width:64px;height:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
+.photo-pick .face{width:64px;height:64px;min-width:64px;border:3px dashed var(--line2);background:rgba(0,0,0,.3);font-size:12px;color:var(--muted)}
 .ring{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:12px}
 .tok{display:grid;justify-items:center;gap:4px}
-.tok .face{width:62px;height:62px;border:3px solid rgba(255,255,255,.18);font-size:22px}
+.tok .face{width:60px;height:60px;min-width:60px;border:2.5px solid rgba(255,255,255,.18);font-size:22px}
 .tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* forehead identity cards */
-.masks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:14px 0}
-.mcard{background:var(--paper);color:var(--ink);border-radius:16px;overflow:hidden;display:grid;border:3px solid transparent;box-shadow:0 16px 34px -16px #000}
-.mcard.turn{border-color:var(--amber);box-shadow:0 0 26px -6px var(--amber)}
-.mcard.solved{border-color:#22C55E}
-.mcard.secret{background:linear-gradient(155deg,#2B8C82,#18494A);color:var(--paper);border-color:var(--amber)}
-.mcard .head{display:flex;align-items:center;gap:7px;padding:8px 10px;background:rgba(0,0,0,.08);font-weight:800;font-size:13px}
-.mcard.secret .head{background:rgba(0,0,0,.22)}
-.mcard .head span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.mcard .idbox{padding:12px 10px;text-align:center;display:grid;gap:6px;justify-items:center;align-content:center;min-height:142px}
-.mcard .idbox img{width:88px;height:88px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:3px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.25)}
-.mcard .idbox b{font-family:var(--display);font-size:20px;line-height:1.15;overflow-wrap:anywhere}
-.mcard .idbox small{font-size:12px;opacity:.75}
-.mcard .mystery{font-size:48px;line-height:1}
+/* ---------- MYSTERY HERO CARD (YOUR OWN MASK) ---------- */
+.my-mask{
+  position:relative;overflow:hidden;margin:14px 0 16px;
+  border-radius:22px;padding:16px 18px;
+  background:
+    radial-gradient(420px 220px at 88% 12%, color-mix(in srgb,var(--teal) 24%,transparent), transparent 65%),
+    radial-gradient(360px 220px at 8% 90%, color-mix(in srgb,var(--lantern) 18%,transparent), transparent 65%),
+    linear-gradient(155deg,#121d33,#0b1020);
+  border:1.5px solid color-mix(in srgb,var(--teal) 50%,var(--line));
+  box-shadow:0 20px 46px -22px rgba(0,0,0,.9), 0 0 36px -14px color-mix(in srgb,var(--teal) 45%,transparent);
+  display:grid;gap:12px;
+}
+.my-mask.my-turn{
+  border-color:var(--amber);
+  box-shadow:0 20px 48px -20px rgba(0,0,0,.9), 0 0 42px -10px color-mix(in srgb,var(--amber) 55%,transparent);
+}
+.my-mask-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mask-emblem{
+  width:64px;height:64px;border-radius:18px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--teal) 30%,#102536),#12172B);
+  border:1.5px solid color-mix(in srgb,var(--teal) 60%,transparent);
+  box-shadow:0 0 24px -4px color-mix(in srgb,var(--teal) 55%,transparent);
+  font-size:32px;animation:floatMask 3.2s ease-in-out infinite;
+}
+@keyframes floatMask{50%{transform:translateY(-4px) rotate(-2deg)}}
+.my-mask-info{flex:1;min-width:190px;display:grid;gap:3px}
+.my-mask-info h2{font-size:clamp(20px,4.5vw,26px);line-height:1.1}
+.my-mask-info p{margin:0;font-size:13.5px;color:var(--muted)}
+.hint-pills{display:flex;flex-wrap:wrap;gap:7px}
+.hpill{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;
+  background:rgba(255,255,255,.07);border:1px solid color-mix(in srgb,var(--amber) 45%,var(--line));
+  font-size:13px;font-weight:700;color:var(--fg);animation:popIn .3s cubic-bezier(.2,1.5,.4,1) both;
+}
+.hpill b{color:var(--amber);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.hpill.nudge{border-color:color-mix(in srgb,var(--teal) 55%,transparent);background:color-mix(in srgb,var(--teal) 14%,transparent)}
+.hpill.nudge b{color:var(--teal)}
+@keyframes popIn{from{opacity:0;transform:scale(.82) translateY(6px)}}
 
-.qstage{background:var(--glass);border:1.5px solid var(--amber);border-radius:16px;padding:16px;display:grid;gap:12px;margin-top:12px}
-.qstage .qtxt{font-family:var(--display);font-size:clamp(20px,5vw,28px);line-height:1.2}
-.qvotes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.qvotes button{border:1.5px solid var(--line2);background:rgba(0,0,0,.28);border-radius:999px;padding:7px 16px;font-weight:800;font-size:14px}
-.qvotes button.yes.on{background:#22C55E;border-color:#22C55E;color:#140f24}
-.qvotes button.no.on{background:#FF5A7A;border-color:#FF5A7A;color:#140f24}
-.qvotes button.kinda.on{background:var(--amber);border-color:var(--amber);color:#140f24}
-.qform{display:flex;gap:8px;flex-wrap:wrap}
-.qform input{flex:1;min-width:180px}
+/* ---------- OTHER PLAYERS' FOREHEAD CARDS ---------- */
+.masks{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin:12px 0}
+.mcard{
+  position:relative;border-radius:20px;overflow:hidden;display:grid;grid-template-rows:auto 1fr;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--night-2) 94%,transparent),color-mix(in srgb,var(--night) 98%,transparent));
+  border:1.5px solid var(--line);
+  box-shadow:0 16px 36px -20px #000;
+  transition:transform .2s cubic-bezier(.2,1.3,.4,1),border-color .22s,box-shadow .22s;
+}
+.mcard:hover{transform:translateY(-3px);border-color:var(--line2)}
+.mcard.turn{
+  border-color:var(--amber);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--amber) 50%,transparent), 0 0 34px -8px color-mix(in srgb,var(--amber) 60%,transparent);
+}
+.mcard.solved{
+  border-color:var(--teal);
+  box-shadow:0 0 28px -10px color-mix(in srgb,var(--teal) 60%,transparent);
+}
+.mcard.just-solved{animation:unmaskFlip .65s cubic-bezier(.2,1.2,.35,1)}
+@keyframes unmaskFlip{
+  0%{transform:rotateY(-180deg) scale(.86)}
+  60%{transform:rotateY(10deg) scale(1.05)}
+  100%{transform:rotateY(0) scale(1)}
+}
+.mcard .head{
+  display:flex;align-items:center;gap:9px;padding:10px 12px;
+  background:rgba(255,255,255,.045);border-bottom:1px solid var(--line);
+}
+.mcard .head .pname{flex:1;min-width:0;font-weight:800;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcard .head .st-badge{
+  flex:none;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;
+  padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--muted);
+}
+.mcard.turn .head .st-badge.asking{background:var(--amber);color:#090C16}
+.mcard.solved .head .st-badge.done{background:var(--teal);color:#051419}
+
+.mcard .idbox{padding:14px 12px 16px;text-align:center;display:grid;gap:8px;justify-items:center;align-content:center;min-height:178px}
+.mcard .idbox img.portrait{
+  width:94px;height:94px;border-radius:50%;object-fit:cover;object-position:50% 20%;
+  border:2.5px solid rgba(255,255,255,.35);box-shadow:0 10px 24px -6px rgba(0,0,0,.75);
+}
+.mcard .idbox img.poster{
+  width:104px;aspect-ratio:2/3;border-radius:12px;object-fit:cover;
+  border:2px solid rgba(255,255,255,.25);box-shadow:0 12px 28px -8px rgba(0,0,0,.85);
+}
+.mcard .idbox .no-img{
+  width:68px;height:68px;border-radius:18px;display:grid;place-items:center;font-size:32px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);
+}
+.mcard .idbox b{font-family:var(--display);font-size:19px;line-height:1.15;overflow-wrap:anywhere;color:var(--fg)}
+.mcard .idbox small{font-size:12px;color:var(--muted);line-height:1.3}
+.mcard .gtags{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.mcard .gtags i{font-style:normal;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.07);color:rgba(244,246,255,.78);border:1px solid rgba(255,255,255,.08)}
+
+/* ---------- UNIFIED TURN CONSOLE ---------- */
+.console{
+  background:linear-gradient(165deg,color-mix(in srgb,var(--night-2) 95%,transparent),color-mix(in srgb,var(--night) 98%,transparent));
+  border:1.5px solid color-mix(in srgb,var(--amber) 55%,var(--line));
+  border-radius:22px;padding:16px 18px;display:grid;gap:14px;margin-top:14px;
+  box-shadow:0 20px 48px -24px rgba(0,0,0,.9), 0 0 32px -14px color-mix(in srgb,var(--amber) 40%,transparent);
+}
+.console.answering{border-color:color-mix(in srgb,var(--teal) 65%,var(--line));box-shadow:0 20px 48px -24px rgba(0,0,0,.9), 0 0 36px -14px color-mix(in srgb,var(--teal) 45%,transparent)}
+.ctabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(0,0,0,.32);padding:5px;border-radius:16px;border:1px solid var(--line)}
+.ctabs button{
+  border:0;border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:transparent;color:var(--muted);
+  transition:background .16s,color .16s,box-shadow .18s;
+}
+.ctabs button.on{background:var(--fg);color:var(--ink);box-shadow:0 6px 18px -6px rgba(255,255,255,.45)}
+.ctabs button.on.g-tab{background:linear-gradient(135deg,var(--lantern),#FF6B4A);color:#fff;box-shadow:0 8px 22px -6px color-mix(in srgb,var(--lantern) 65%,transparent)}
+.c-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.c-row input{flex:1;min-width:180px}
+.c-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--line)}
+.vc-btn{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;
+  border:1px solid color-mix(in srgb,#818CF8 55%,var(--line));
+  background:color-mix(in srgb,#818CF8 16%,transparent);color:#C7D2FE;font-weight:800;font-size:13px;
+  transition:background .15s,transform .12s;
+}
+.vc-btn:hover{background:color-mix(in srgb,#818CF8 28%,transparent);transform:translateY(-1px)}
+.qstage-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.qtxt{font-family:var(--display);font-size:clamp(20px,4.8vw,28px);line-height:1.18;margin-top:2px}
+.qvotes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:460px){.qvotes{grid-template-columns:1fr}}
+.qvotes button{
+  border:1.5px solid var(--line2);background:rgba(255,255,255,.05);border-radius:16px;
+  padding:13px 14px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .14s,background .15s,border-color .15s,box-shadow .18s;
+}
+.qvotes button:hover{transform:translateY(-2px);background:rgba(255,255,255,.1)}
+.qvotes button.yes.on{background:#1FE6A8;border-color:#1FE6A8;color:#051419;box-shadow:0 0 24px -4px #1FE6A8}
+.qvotes button.no.on{background:#FF3E78;border-color:#FF3E78;color:#fff;box-shadow:0 0 24px -4px #FF3E78}
+.qvotes button.kinda.on{background:var(--amber);border-color:var(--amber);color:#090C16;box-shadow:0 0 24px -4px var(--amber)}
+.starters{display:flex;flex-wrap:wrap;gap:6px}
+.starters button{
+  border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:999px;
+  padding:5px 11px;font-size:12px;font-weight:700;color:var(--muted);transition:color .14s,border-color .14s,background .14s;
+}
+.starters button:hover{color:var(--fg);border-color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,transparent)}
+.nudge-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
+.nudge-row input{flex:1;min-width:150px;padding:8px 12px;font-size:14px}
+
+/* Wrong Guess & Host Award Banner */
+.wg-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin:12px auto 4px;padding:10px 14px;border-radius:16px;
+  background:color-mix(in srgb,var(--lantern) 14%,var(--night-2));
+  border:1px solid color-mix(in srgb,var(--lantern) 45%,transparent);font-size:14px;
+}
+.award-btn{
+  border:0;border-radius:999px;padding:6px 13px;font-weight:800;font-size:12.5px;
+  background:var(--teal);color:#051419;cursor:pointer;white-space:nowrap;
+  box-shadow:0 6px 18px -6px color-mix(in srgb,var(--teal) 75%,transparent);
+  transition:transform .12s,filter .14s;
+}
+.award-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.mcard .card-foot{padding:0 12px 12px;display:flex;justify-content:center}
+.timer.low{background:#FF3E78!important;color:#fff!important;animation:beat 1s infinite}
+@keyframes beat{50%{transform:scale(1.08)}}
+
 .loglist{display:grid;gap:6px}
-.logitem{display:flex;justify-content:space-between;gap:10px;align-items:center;background:rgba(0,0,0,.2);border-radius:10px;padding:7px 12px;font-size:14px}
+.logitem{display:flex;justify-content:space-between;gap:10px;align-items:center;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
 .scores{display:grid;gap:8px;margin-top:12px}
-.srow{display:grid;grid-template-columns:34px 30px 1fr auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800}
-.srow.first{border-color:var(--amber);background:rgba(217,164,65,.14)}
+.srow{display:grid;grid-template-columns:34px 32px 1fr auto;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:9px 13px;font-weight:800}
+.srow.first{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,var(--night-2))}
 .srow .rk{text-align:center;color:var(--muted)} .srow.first .rk{color:var(--amber)}
-.fadeup{animation:fadeup .4s cubic-bezier(.2,.8,.2,1) backwards}
-@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
-.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+.fadeup{animation:fadeup .38s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(12px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:2px solid var(--gold)}
 body.has-hostbar{--chat-lift:66px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
 <header class="top noren">
-  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
   <h1>Forehead Mask</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
@@ -125,6 +285,7 @@ body.has-hostbar{--chat-lift:66px}
 <script src="/pranks.js"></script>
 <script src="/roombar.js"></script>
 <script src="/howto.js"></script>
+<script src="/juice.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -139,23 +300,39 @@ async function api(path, body){
   return j;
 }
 
-let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, curView="";
+let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0, curView="", justSolved=new Set(), turnTab="ask";
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
 Pranks.mount({act});
 RoomBar.mount({act, game:"mask", onHostChange:(hk, became)=>{ hostKey = hk; curView = ""; if(became) toast("You are now the host!"); if(room) render(); }});
+if(window.Juice) Juice.mountMute();
 const P = pid => room.players[pid] || {name:"Someone"};
 const picOf = p => { const s = Avatars.src(p); return s ? `<img src="${esc(s)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
 const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
 
+const MODES = [
+  ["characters", "👤 Which Character Am I?", "AniList portraits · filter by genre"],
+  ["anime_title", "📺 Which Anime Am I?", "Official anime posters · filter by genre"],
+  ["movies", "🎬 Movies & Games", "Heroes, villains & pop-culture icons"],
+  ["things", "🦊 Animals & Objects", "Classic Headbands party deck"],
+  ["mix", "🎲 Party Mix", "Characters, movies & objects mixed"],
+  ["custom", "✨ Custom AI Topic", "Type any fandom, sports, or inside joke"],
+];
+const STARTERS = {
+  anime_title: ["Is it an Action anime?", "Released after 2015?", "Over 50 episodes?", "Is it a Shounen?", "Is it a movie?", "Does it have superpowers?"],
+  characters: ["Am I the main character?", "Am I a hero?", "Do I have superpowers?", "Am I from a Shounen?", "Am I human?", "Do I use a weapon?"],
+  movies: ["Am I from a movie?", "Am I animated?", "Am I a hero?", "Am I human?", "From after 2000?"],
+  things: ["Am I alive?", "Can you eat me?", "Smaller than a backpack?", "Found inside a house?", "Do I use electricity?"],
+};
+
 function home(){
   $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
   document.body.classList.remove("has-hostbar"); curView="home";
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">The Headbands Stall</div><h1 class="title">Forehead Mask</h1>
-    <p class="sub">Everyone sees the secret character stuck to your forehead except YOU. Ask Yes/No questions and unmask yourself first!</p></div>
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">Who Am I? · Discord VC Edition</div><h1 class="title">Forehead Mask</h1>
+    <p class="sub">Play <b>Which Character Am I?</b>, <b>Which Anime Am I?</b> with genre filters, or Friends Pick! Everyone sees your card except YOU—unlock hints or ask Yes/No questions to unmask yourself first.</p></div>
     <div class="row2 fadeup" style="margin-top:20px">
-      <form class="panel" id="createForm"><h2>Host a table</h2>
+      <form class="panel" id="createForm"><h2>Host a room</h2>
         <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
         <div class="err" id="cErr"></div><button class="btn primary wide">Create room</button></form>
       <form class="panel" id="joinForm"><h2>Join with a code</h2>
@@ -181,10 +358,34 @@ async function poll(gen, v){
       const prev = room; room = next; v = room.version; clockOffset = room.now - Date.now()/1000;
       if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("mk:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
-      if(!Chat.socialOnly(prev, room)) render();
+      if(!Chat.socialOnly(prev, room)){ reactMask(prev); render(); }
       Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
     }catch(e){ if(e.message.includes("not found")){ toast("Room not found"); return home(); } await new Promise(r=>setTimeout(r,2000)); }
   }
+}
+
+function reactMask(prev){
+  justSolved = new Set();
+  if(!prev || !room.table) return;
+  const sfx = window.Juice?.sfx;
+  const pt = prev.table, nt = room.table;
+  if(pt && nt && prev.round === room.round){
+    const oldS = new Set(pt.solved || []);
+    (nt.solved || []).forEach(pid => {
+      if(!oldS.has(pid)){
+        justSolved.add(pid);
+        if(pid === me?.pid){ sfx?.win(); Juice?.confetti({count:90}); toast("Unmasked! You nailed it!"); }
+        else { sfx?.flip(); toast(`${P(pid).name} unmasked themselves!`); }
+      }
+    });
+    if((nt.wrongGuesses||[]).length > (pt.wrongGuesses||[]).length){
+      const w = nt.wrongGuesses[nt.wrongGuesses.length - 1];
+      if(w.pid === me?.pid){ sfx?.warn(); Juice?.shake($("#stage"), 5); toast(`Not "${w.text}" — keep asking!`); }
+    }
+    if(nt.turnPid === me?.pid && pt.turnPid !== me?.pid && room.phase === "play"){ sfx?.turn(); buzz(60); }
+    if((nt.myNudges||[]).length > (pt.myNudges||[]).length){ sfx?.pop(); toast("A friend sent you a 1-word hint!"); }
+  }
+  if(room.phase === "final" && prev.phase !== "final"){ sfx?.win(); setTimeout(()=>Juice?.confetti({count:110}), 120); }
 }
 
 function render(){
@@ -193,7 +394,7 @@ function render(){
   if(!me || !room.players[me.pid]) return gate();
   const ph = room.phase;
   if(ph === "lobby") lobby();
-  else if(ph === "starting"){ curView="starting"; $("#stage").innerHTML='<div class="fadeup" style="margin-top:12vh"><h1 class="title">Preparing the masks…</h1></div>'; }
+  else if(ph === "starting"){ curView="starting"; $("#stage").innerHTML='<div class="fadeup" style="margin-top:12vh"><h1 class="title">Dealing the masks…</h1><p class="sub">Loading portraits, posters & hints.</p></div>'; }
   else if(ph === "assign") assignView();
   else if(ph === "play" || ph === "roundover") playView();
   else finalView();
@@ -201,35 +402,64 @@ function render(){
 }
 function gate(){
   if($("#gate")) return; curView="gate";
-  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Forehead Mask</h2>
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join Forehead Mask</h2>
     <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Put on a mask</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
     try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("mk:"+code,{me,hostKey}); curView=""; poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
 }
+
 function lobby(){
   curView="lobby";
   const s=room.settings, ps=Object.keys(room.players), mine=P(me.pid), H=!!hostKey;
   const sel=(id,opts,val)=>`<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
-  $("#stage").innerHTML=`<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"}</h1>
-    <p class="sub">Share code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b>. Best with 3 to 8 friends on Discord VC!</p></div>
+  const genres = room.allGenres || ["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Mystery","Thriller","Slice of Life","Sports","Horror","Supernatural"];
+  const pickedG = s.genres || [];
+  const showGenres = s.assign === "auto" && (s.mode === "characters" || s.mode === "anime_title");
+
+  $("#stage").innerHTML=`<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"} ready</h1>
+    <p class="sub">Share code <b style="font-family:var(--mono);letter-spacing:.18em;color:var(--amber)">${room.code}</b>. Great for 2 to 10 friends on Discord VC!</p></div>
     <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
-      <div><b>${esc(mine.name)}</b><p class="hint">Tap to pick your avatar.</p></div></div></div>
-    <div class="ring">${ps.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div>
-    <div class="panel" style="margin-top:16px"><h2>${H?"Mask settings":"Settings"}</h2>
-      <div><label>Who picks the identities?</label><div class="seg">
-        <button type="button" class="${s.assign==="auto"?"on":""}" data-as="auto" ${H?"":"disabled"}><b>Auto / AniList</b><small>Game deals characters or items automatically</small></button>
-        <button type="button" class="${s.assign==="friends"?"on":""}" data-as="friends" ${H?"":"disabled"}><b>Friends Pick!</b><small>Secretly write an identity for the player next to you</small></button>
+      <div><b>${esc(mine.name)}</b><p class="hint">Tap to pick your avatar.</p></div></div>
+      <div class="ring">${ps.map(pid=>`<div class="tok">${face(pid,"face")}<span class="nm">${esc(P(pid).name)}</span></div>`).join("")}</div>
+    </div>
+    <div class="panel" style="margin-top:14px"><h2>${H?"Game setup":"Game setup (host picks)"}</h2>
+      <div><label>Who picks the masks?</label><div class="seg">
+        <button type="button" class="${s.assign==="auto"?"on":""}" data-as="auto" ${H?"":"disabled"}><b>Auto Deal (AniList / AI)</b><small>Automatic posters, portraits & progressive hints</small></button>
+        <button type="button" class="${s.assign==="friends"?"on":""}" data-as="friends" ${H?"":"disabled"}><b>Friends Pick!</b><small>Secretly write an identity + vibe for the player next to you</small></button>
       </div></div>
-      ${s.assign==="auto" ? `<div><label>Category</label><div class="chips">${[["anime","Anime (with portraits!)"],["movies","Movies & Games"],["animals","Animals"],["objects","Objects"],["mix","Mix"],["custom","Custom (AI)"]].map(([v,t])=>`<button type="button" class="${s.category===v?"on":""}" data-cat="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
-        ${s.category==="custom" ? `<div><label for="sCust">Custom identity theme</label><input type="text" id="sCust" maxlength="160" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. Famous YouTubers, Pokemon, Historical figures"></div>` : ""}` : ""}
-      <div><label for="sRounds">Rounds</label>${sel("sRounds",[[1,"1 round"],[2,"2 rounds"],[3,"3 rounds"],[5,"5 rounds"]], s.rounds)}</div>
+      ${s.assign==="auto" ? `
+        <div><label>Game version</label><div class="modes">${MODES.map(([v,t,d])=>`<button type="button" class="mbtn ${s.mode===v?"on":""}" data-mode="${v}" ${H?"":"disabled"}><b>${t}</b><small>${d}</small></button>`).join("")}</div></div>
+        ${showGenres ? `<div><label>Anime Genres ${pickedG.length?`(${pickedG.length} selected)`:"(All genres)"}</label><div class="chips">
+          <button type="button" class="${pickedG.length===0?"on":""}" data-g="ALL" ${H?"":"disabled"}>All Genres</button>
+          ${genres.map(g=>`<button type="button" class="${pickedG.includes(g)?"on":""}" data-g="${esc(g)}" ${H?"":"disabled"}>${esc(g)}</button>`).join("")}
+        </div></div>` : ""}
+        ${s.mode==="custom" ? `<div><label for="sCust">Custom topic</label><input type="text" id="sCust" maxlength="160" value="${esc(s.custom)}" ${H?"":"disabled"} placeholder="e.g. One Piece characters, Football players, Pokemon, Video Games"></div>` : ""}
+      ` : ""}
+      <div><label>Mystery Hints (so nobody gets stuck)</label><div class="seg3">
+        <button type="button" class="${s.hints==="helpful"?"on":""}" data-hints="helpful" ${H?"":"disabled"}><b>Helpful (3 hints)</b><small>Genre/Era, starting letter & big clue</small></button>
+        <button type="button" class="${s.hints==="subtle"?"on":""}" data-hints="subtle" ${H?"":"disabled"}><b>Subtle (1 hint)</b><small>Only genre & era clue</small></button>
+        <button type="button" class="${s.hints==="off"?"on":""}" data-hints="off" ${H?"":"disabled"}><b>Hardcore (Off)</b><small>Zero hints, pure Yes/No</small></button>
+      </div></div>
+      <div class="row2">
+        <div><label for="sRounds">Rounds</label>${sel("sRounds",[[1,"1 round"],[2,"2 rounds"],[3,"3 rounds"],[5,"5 rounds"]], s.rounds)}</div>
+        <div><label>Turn timer</label><div class="chips">${[[20,"20s"],[30,"30s"],[45,"45s"],[60,"60s"],[0,"Off"]].map(([v,t])=>`<button type="button" class="${(s.turnSec??30)===v?"on":""}" data-tsec="${v}" ${H?"":"disabled"}>${t}</button>`).join("")}</div></div>
+      </div>
       ${H ? `<button class="btn primary wide" data-host="start" ${ps.length<2?"disabled":""}>${ps.length<2?"Need 1 more player":"Hand out the masks"}</button>` : '<p class="hint" style="text-align:center">Waiting for host to start.</p>'}
     </div>${HowTo.button("mask")}`;
   $("#photoBtn").onclick = ()=>Avatars.open(act);
   if(H){
     const send = x => act("settings", x).catch(err=>toast(err.message));
     document.querySelectorAll("[data-as]").forEach(b=>b.onclick=()=>send({assign:b.dataset.as}));
-    document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>send({category:b.dataset.cat}));
+    document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>send({mode:b.dataset.mode}));
+    document.querySelectorAll("[data-hints]").forEach(b=>b.onclick=()=>send({hints:b.dataset.hints}));
+    document.querySelectorAll("[data-tsec]").forEach(b=>b.onclick=()=>send({turnSec:+b.dataset.tsec}));
+    document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{
+      const g = b.dataset.g;
+      if(g === "ALL") return send({genres:[]});
+      const cur = new Set(s.genres || []);
+      cur.has(g) ? cur.delete(g) : (cur.size < 4 ? cur.add(g) : toast("Up to 4 genres at once"));
+      send({genres:[...cur]});
+    });
     $("#sRounds").onchange=e=>send({rounds:+e.target.value});
     if($("#sCust")) $("#sCust").onchange=e=>send({custom:e.target.value});
   }
@@ -237,7 +467,7 @@ function lobby(){
 
 function assignView(){
   const t = room.table, target = t.assignTarget;
-  const viewKey = `as:${room.round}:${t.assignedDone}`;
+  const viewKey = `as:${room.round}:${t.assignedDone}:${t.assignedCount}`;
   if(curView !== viewKey){
     curView = viewKey;
     $("#stage").innerHTML = `<div class="fadeup" style="max-width:520px;margin:6vh auto 0">
@@ -245,71 +475,169 @@ function assignView(){
       <h1 class="title">Pick ${esc(P(target).name)}'s mask!</h1>
       <p class="sub">Everyone will see it on ${esc(P(target).name)}'s forehead except them. (${t.assignedCount}/${t.order.length} ready)</p>
       ${t.assignedDone ? '<div class="panel" style="margin-top:16px;text-align:center"><b>Mask sealed!</b><p class="hint">Waiting for everyone else…</p></div>'
-        : `<form class="panel" id="asForm" style="margin-top:16px"><input type="text" id="asIn" maxlength="40" autocomplete="off" placeholder="e.g. Goku, Spider-Man, Shrek, Toaster"><button class="btn primary wide">Stick it on their forehead</button></form>`}
+        : `<form class="panel" id="asForm" style="margin-top:16px">
+            <div><label for="asIn">Secret character, anime, or thing</label><input type="text" id="asIn" maxlength="44" autocomplete="off" placeholder="e.g. Satoru Gojo, Death Note, Shrek, Toaster"></div>
+            <div><label for="asShow">Optional vibe / category hint</label><input type="text" id="asShow" maxlength="32" autocomplete="off" placeholder="e.g. Anime villain, 2000s anime, Kitchen item"></div>
+            <button class="btn primary wide">Stick it on their forehead</button></form>`}
     </div>`;
     if($("#asForm")){
       $("#asIn").focus();
-      $("#asForm").onsubmit = async e=>{ e.preventDefault(); const nm=$("#asIn").value.trim(); if(!nm) return;
-        try{ await act("assign",{name:nm}); buzz(25); }catch(err){ toast(err.message); } };
+      $("#asForm").onsubmit = async e=>{ e.preventDefault(); const nm=$("#asIn").value.trim(), sh=$("#asShow").value.trim(); if(!nm) return;
+        try{ await act("assign",{name:nm, show:sh}); Juice?.sfx.clack(); buzz(25); }catch(err){ toast(err.message); } };
     }
   }
 }
 
 function playView(){
   const t = room.table, ph = room.phase, myTurn = ph === "play" && t.turnPid === me.pid, q = t.question;
-  const sig = JSON.stringify([ph, room.round, t.turnPid, t.solved, q, (t.myLog||[]).length, (t.wrongGuesses||[]).length]);
+  const stage = t.turnStage || "choose", H = !!hostKey;
+  const myCard = t.cards[me.pid];
+  const sig = JSON.stringify([ph, room.round, t.turnPid, stage, t.solved, q, (t.myLog||[]).length, (t.myHints||[]).length, (t.myNudges||[]).length, (t.wrongGuesses||[]).length, turnTab, H]);
   if(curView === sig) return;
   curView = sig;
 
-  const cards = t.order.map(pid=>{
-    const c = t.cards[pid] || {hidden:true}, isMe = pid === me.pid, isSolved = t.solved.includes(pid);
-    return `<div class="mcard ${t.turnPid===pid?"turn":""} ${isSolved?"solved":""} ${c.hidden?"secret":""}">
-      <div class="head">${face(pid,"mini")}<span>${esc(P(pid).name)}${isMe?" (you)":""}</span>${isSolved?"<span>✓</span>":""}</div>
-      <div class="idbox">${c.hidden
-        ? `<span class="mystery">🎭</span><b>Who am I?</b><small>Only others can see your mask!</small>`
-        : `${c.img?`<img src="${esc(c.img)}" alt="" referrerpolicy="no-referrer">`:""}<b>${esc(c.name)}</b><small>${esc(c.show||"")}</small>`}
-      </div></div>`;
-  }).join("");
-
-  let stageBox = "";
-  if(ph === "play"){
-    const votes = q?.votes || {};
-    const cnt = k => Object.values(votes).filter(v=>v===k).length;
-    const myV = votes[me.pid];
-    stageBox = `<div class="qstage">
-      ${q ? `<div><small class="hint">${esc(P(q.pid).name)} asks:</small><div class="qtxt">"${esc(q.text)}"</div></div>
-        <div class="qvotes">
-          ${q.pid !== me.pid && t.order.includes(me.pid) ? `
-            <button type="button" class="yes ${myV==="yes"?"on":""}" data-rep="yes">Yes (${cnt("yes")})</button>
-            <button type="button" class="no ${myV==="no"?"on":""}" data-rep="no">No (${cnt("no")})</button>
-            <button type="button" class="kinda ${myV==="kinda"?"on":""}" data-rep="kinda">Kinda (${cnt("kinda")})</button>`
-          : `<span class="hint">Answers so far: <b style="color:#4ADE80">Yes ${cnt("yes")}</b> · <b style="color:#FF8A7A">No ${cnt("no")}</b> · <b style="color:var(--amber)">Kinda ${cnt("kinda")}</b></span>`}
-        </div>` : `<p class="hint">${myTurn ? "Ask a Yes/No question (typed or on Discord VC), or try to guess who you are!" : `Waiting for ${esc(P(t.turnPid).name)} to ask a question or guess…`}</p>`}
-      ${myTurn ? `
-        <form class="qform" id="askForm"><input type="text" id="askIn" maxlength="120" autocomplete="off" placeholder="Ask a Yes/No question… (e.g. Am I from an anime?)"><button class="btn paper small">Ask</button><button type="button" class="btn small" id="voiceAsk">Asked on VC</button></form>
-        <form class="qform" id="guessForm"><input type="text" id="guessIn" maxlength="50" autocomplete="off" placeholder="Ready? Guess who you are!"><button class="btn primary small">Guess!</button><button type="button" class="btn small" id="endTurnBtn">End turn</button></form>` : ""}
+  // Featured Mystery Hero Card for YOU (while still hidden)
+  let myHero = "";
+  if(myCard && myCard.hidden && ph === "play"){
+    const used = myCard.hintsUsed || 0, maxH = myCard.maxHints || 0;
+    const canHint = used < maxH;
+    const hintsHtml = (t.myHints || []).map((h, i) => `<span class="hpill"><b>Hint ${i+1}</b> ${esc(h)}</span>`).join("");
+    const nudgesHtml = (t.myNudges || []).map(n => `<span class="hpill nudge"><b>${esc(n.by)}</b> ${esc(n.text)}</span>`).join("");
+    const nextHintLabel = used === 0 ? "Unlock Hint 1 (Genre & Era)" : used === 1 ? "Unlock Hint 2 (Letters)" : "Unlock Hint 3 (Big Clue)";
+    myHero = `<div class="my-mask ${myTurn?"my-turn":""}">
+      <div class="my-mask-top">
+        <div class="mask-emblem">${room.settings.mode==="anime_title"?"📺":"🎭"}</div>
+        <div class="my-mask-info">
+          <div style="display:flex;align-items:center;gap:8px">${face(me.pid,"mini")}<b>${esc(P(me.pid).name)} (you)</b></div>
+          <h2>Who am I?</h2>
+          <p>Everyone else sees your ${room.settings.mode==="anime_title"?"anime poster":"character card"}. 1 question or 1 guess per turn!</p>
+        </div>
+        ${canHint ? `<button type="button" class="btn teal small" id="hintBtn">${nextHintLabel}</button>` : (maxH > 0 ? `<span class="hint">All ${maxH} hints unlocked</span>` : "")}
+      </div>
+      ${(hintsHtml || nudgesHtml) ? `<div class="hint-pills">${hintsHtml}${nudgesHtml}</div>` : ""}
     </div>`;
   }
+
+  // Everyone else's cards (plus YOUR card once unmasked or roundover!)
+  const visibleOrder = t.order.filter(pid => !(pid === me.pid && myCard && myCard.hidden && ph === "play"));
+  const cards = visibleOrder.map(pid=>{
+    const c = t.cards[pid] || {hidden:true}, isMe = pid === me.pid, isSolved = t.solved.includes(pid), isTurn = t.turnPid === pid && ph === "play";
+    const isPoster = c.kind === "anime_title" || room.settings.mode === "anime_title";
+    const art = c.img
+      ? `<img class="${isPoster?"poster":"portrait"}" src="${esc(c.img)}" alt="" referrerpolicy="no-referrer">`
+      : `<span class="no-img">${isPoster?"📺":"✨"}</span>`;
+    const gtags = (c.genres||[]).slice(0,3).map(g=>`<i>${esc(g)}</i>`).join("");
+    const badge = isSolved ? '<span class="st-badge done">Unmasked ✓</span>'
+      : isTurn ? `<span class="st-badge asking">${stage==="answer"?"Waiting":"Turn"}</span>` : "";
+    const hostAward = H && ph === "play" && !isSolved && !isMe
+      ? `<div class="card-foot"><button type="button" class="award-btn" data-award="${esc(pid)}" title="Award correct (for typos or voice guesses)">✓ Award Correct</button></div>` : "";
+    return `<div class="mcard ${isTurn?"turn":""} ${isSolved?"solved":""} ${justSolved.has(pid)?"just-solved":""}">
+      <div class="head">${face(pid,"mini")}<span class="pname">${esc(P(pid).name)}${isMe?" (you)":""}</span>${badge}</div>
+      <div class="idbox">${art}<b>${esc(c.name)}</b>${c.show?`<small>${esc(c.show)}</small>`:""}${gtags?`<div class="gtags">${gtags}</div>`:""}</div>
+      ${hostAward}
+    </div>`;
+  }).join("");
+
+  // Unified Turn Console (strict 1 question OR 1 guess per turn -> live answer vote!)
+  let stageBox = "";
+  if(ph === "play"){
+    if(stage === "answer" && q){
+      const votes = q.votes || {};
+      const cnt = k => Object.values(votes).filter(v=>v===k).length;
+      const totalV = Object.keys(votes).length, needV = t.votersNeed || Math.max(1, t.order.length - 1);
+      const myV = votes[me.pid];
+      const canVote = q.pid !== me.pid && t.order.includes(me.pid);
+      stageBox = `<div class="console answering">
+        <div class="qstage-head">
+          <span class="hint">${esc(P(q.pid).name)} asked (1 question this turn):</span>
+          <span class="hint" style="font-family:var(--mono);font-weight:800;color:var(--teal)">${totalV}/${needV} answered</span>
+        </div>
+        <div class="qtxt">${q.voice ? "🎙️ " : ""}"${esc(q.text)}"</div>
+        ${canVote ? `<div class="qvotes">
+            <button type="button" class="yes ${myV==="yes"?"on":""}" data-rep="yes">✓ Yes <b>(${cnt("yes")})</b></button>
+            <button type="button" class="no ${myV==="no"?"on":""}" data-rep="no">✕ No <b>(${cnt("no")})</b></button>
+            <button type="button" class="kinda ${myV==="kinda"?"on":""}" data-rep="kinda">≈ Kinda <b>(${cnt("kinda")})</b></button>
+          </div>`
+        : `<div class="c-foot">
+            <span class="hint">Live answers: <b style="color:#1FE6A8">Yes ${cnt("yes")}</b> · <b style="color:#FF3E78">No ${cnt("no")}</b> · <b style="color:var(--amber)">Kinda ${cnt("kinda")}</b></span>
+            ${q.pid === me.pid ? '<button type="button" class="btn small" id="endTurnBtn">Got it &rarr; Next player</button>' : ""}
+          </div>`}
+        ${canVote ? `<form class="nudge-row" id="nudgeForm"><span class="hint" style="white-space:nowrap">${esc(P(q.pid).name)} stuck?</span>
+          <input type="text" id="nudgeIn" maxlength="36" autocomplete="off" placeholder="Optional 1–2 word hint…">
+          <button class="btn small">Send hint</button></form>` : ""}
+      </div>`;
+    } else if(myTurn){
+      const starters = STARTERS[room.settings.mode] || STARTERS.characters;
+      stageBox = `<div class="console">
+        <div class="ctabs" role="tablist">
+          <button type="button" class="${turnTab==="ask"?"on":""}" data-ttab="ask">💬 Ask 1 Question</button>
+          <button type="button" class="g-tab ${turnTab==="guess"?"on":""}" data-ttab="guess">🎯 Guess Who I Am</button>
+        </div>
+        ${turnTab === "ask" ? `
+          <form class="c-row" id="askForm"><input type="text" id="askIn" maxlength="120" autocomplete="off" placeholder="Type your 1 Yes/No question for this turn…"><button class="btn teal">Ask</button></form>
+          <div class="starters">${starters.map(st=>`<button type="button" data-qpick="${esc(st)}">${esc(st)}</button>`).join("")}</div>
+          <div class="c-foot">
+            <button type="button" class="vc-btn" id="voiceAsk">🎙️ Asked out loud on Discord VC</button>
+            <button type="button" class="btn small" id="endTurnBtn">Pass turn</button>
+          </div>`
+        : `
+          <form class="c-row" id="guessForm"><input type="text" id="guessIn" maxlength="50" autocomplete="off" placeholder="Type the character or anime name…"><button class="btn primary">Lock Guess!</button></form>
+          <div class="c-foot">
+            <span class="hint">Misspellings? The host can always count close answers as correct!</span>
+            <button type="button" class="btn small" id="endTurnBtn">Pass turn</button>
+          </div>`}
+      </div>`;
+    } else {
+      stageBox = `<div class="console">
+        <div class="qstage-head"><b>Waiting for ${esc(P(t.turnPid).name)}</b><span class="hint">Choosing 1 question or taking a guess…</span></div>
+        ${t.order.includes(me.pid) && t.turnPid ? `<form class="nudge-row" id="nudgeForm" style="border-top:0;padding-top:0"><span class="hint" style="white-space:nowrap">Want to help?</span>
+          <input type="text" id="nudgeIn" maxlength="36" autocomplete="off" placeholder="Send ${esc(P(t.turnPid).name)} a subtle 1–2 word hint…">
+          <button class="btn small">Send hint</button></form>` : ""}
+      </div>`;
+    }
+  }
+
   const lastWrong = (t.wrongGuesses||[]).slice(-1)[0];
-  const logHtml = (t.myLog||[]).length ? `<div class="panel" style="margin-top:14px"><b>Your Clue Log</b><div class="loglist">${t.myLog.slice().reverse().map(x=>{
+  const wrongBanner = lastWrong && ph === "play" && !t.solved.includes(lastWrong.pid)
+    ? `<div class="wg-bar"><span><b>${esc(P(lastWrong.pid).name)}</b> guessed <b>"${esc(lastWrong.text)}"</b> — didn't auto-match.</span>
+        ${H ? `<button type="button" class="award-btn" data-award="${esc(lastWrong.pid)}">✓ Count as Correct (Typo / Alias)</button>` : ""}</div>` : "";
+
+  const logHtml = (t.myLog||[]).length ? `<div class="panel" style="margin-top:14px"><b>Your Clue Log (${t.myLog.length})</b><div class="loglist">${t.myLog.slice().reverse().map(x=>{
     const vs = Object.values(x.votes||{});
     const y=vs.filter(v=>v==="yes").length, n=vs.filter(v=>v==="no").length, k=vs.filter(v=>v==="kinda").length;
-    return `<div class="logitem"><span>"${esc(x.text)}"</span><span style="flex:none;font-weight:800;font-size:12px"><b style="color:#4ADE80">Y:${y}</b> <b style="color:#FF8A7A">N:${n}</b> <b style="color:var(--amber)">K:${k}</b></span></div>`;
+    return `<div class="logitem"><span>${x.voice?"🎙️ ":""}"${esc(x.text)}"</span><span style="flex:none;font-weight:800;font-size:12px"><b style="color:#1FE6A8">Y:${y}</b> <b style="color:#FF3E78">N:${n}</b> <b style="color:var(--amber)">K:${k}</b></span></div>`;
   }).join("")}</div></div>` : "";
 
+  const headline = ph === "roundover" ? "Masks off!"
+    : stage === "answer" && q ? (q.pid === me.pid ? "Waiting for answers…" : `Answer ${P(q.pid).name}'s question!`)
+    : myTurn ? "Your turn — Ask 1 question or Guess!"
+    : `${P(t.turnPid).name}'s turn`;
+
   $("#stage").innerHTML = `<div class="fadeup">
+    <div style="text-align:center"><span class="scope-pill">${esc(room.scope || "Who Am I?")}</span></div>
     <div class="eyebrow">Round ${room.round+1} of ${room.settings.rounds}</div>
-    <h1 class="title">${ph==="roundover" ? "Masks off!" : myTurn ? "Your turn!" : `${esc(P(t.turnPid).name)}'s turn`}</h1>
-    ${lastWrong && ph==="play" ? `<p class="sub">Last wrong guess: <b>${esc(P(lastWrong.pid).name)}</b> guessed "${esc(lastWrong.text)}" 😅</p>` : ""}
+    <h1 class="title">${esc(headline)}</h1>
+    ${wrongBanner}
+    ${myHero}
+    ${stageBox}
     <div class="masks">${cards}</div>
-    ${stageBox}${logHtml}${ph==="roundover"?scoreRows():""}
+    ${logHtml}${ph==="roundover"?scoreRows():""}
   </div>`;
 
-  if($("#askForm")) $("#askForm").onsubmit = async e=>{ e.preventDefault(); const tx=$("#askIn").value.trim(); if(!tx) return; try{ await act("ask",{text:tx}); }catch(err){ toast(err.message); } };
-  if($("#voiceAsk")) $("#voiceAsk").onclick = ()=>act("ask",{text:"(Asked out loud on Discord VC)"}).catch(err=>toast(err.message));
-  if($("#guessForm")) $("#guessForm").onsubmit = async e=>{ e.preventDefault(); const tx=$("#guessIn").value.trim(); if(!tx) return; try{ await act("guess",{text:tx}); buzz(40); }catch(err){ toast(err.message); } };
-  if($("#endTurnBtn")) $("#endTurnBtn").onclick = ()=>act("endturn").catch(err=>toast(err.message));
-  document.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>act("reply",{ans:b.dataset.rep}).catch(err=>toast(err.message)));
+  if($("#hintBtn")) $("#hintBtn").onclick = async ()=>{ try{ await act("hint"); Juice?.sfx.flip(); buzz(25); }catch(err){ toast(err.message); } };
+  document.querySelectorAll("[data-ttab]").forEach(b=>b.onclick=()=>{ turnTab = b.dataset.ttab; Juice?.sfx.click(); render(); });
+  document.querySelectorAll("[data-qpick]").forEach(b=>b.onclick=async ()=>{ try{ await act("ask",{text:b.dataset.qpick}); Juice?.sfx.pop(); }catch(err){ toast(err.message); } });
+  if($("#askForm")) $("#askForm").onsubmit = async e=>{ e.preventDefault(); const tx=$("#askIn").value.trim(); if(!tx) return; try{ await act("ask",{text:tx}); Juice?.sfx.pop(); }catch(err){ toast(err.message); } };
+  if($("#voiceAsk")) $("#voiceAsk").onclick = ()=>act("ask",{voice:true, text:"Asked out loud on Discord voice"}).then(()=>Juice?.sfx.pop()).catch(err=>toast(err.message));
+  if($("#guessForm")) $("#guessForm").onsubmit = async e=>{ e.preventDefault(); const tx=$("#guessIn").value.trim(); if(!tx) return; try{ await act("guess",{text:tx}); turnTab="ask"; buzz(40); }catch(err){ toast(err.message); } };
+  if($("#endTurnBtn")) $("#endTurnBtn").onclick = ()=>act("endturn").then(()=>{ turnTab="ask"; Juice?.sfx.click(); }).catch(err=>toast(err.message));
+  if($("#nudgeForm")) $("#nudgeForm").onsubmit = async e=>{ e.preventDefault(); const tx=$("#nudgeIn").value.trim(); if(!tx) return;
+    try{ await act("nudge",{target:q?.pid || t.turnPid, text:tx}); $("#nudgeIn").value=""; Juice?.sfx.pop(); toast("Hint sent!"); }catch(err){ toast(err.message); } };
+  document.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>act("reply",{ans:b.dataset.rep}).then(()=>Juice?.sfx.click()).catch(err=>toast(err.message)));
+  document.querySelectorAll("[data-award]").forEach(b=>b.onclick=async ()=>{
+    if(b.dataset.sure !== "1"){ b.dataset.sure = "1"; b.textContent = "Confirm Correct ✓"; return; }
+    try{ await act("award",{pid:b.dataset.award}); Juice?.sfx.win(); }catch(err){ toast(err.message); }
+  });
 }
 
 function scoreRows(){
@@ -341,7 +669,7 @@ $("#hCode").onclick = async ()=>{ if(!code) return; const l=location.origin+"/ma
 function tickTimer(){
   const el = $("#timer"); if(!room || !room.deadline){ el.hidden = true; return; }
   const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
-  el.hidden = false; el.textContent = `${left}s`;
+  el.hidden = false; el.textContent = `${left}s`; el.classList.toggle("low", left <= 5);
 }
 setInterval(tickTimer, 200);
 const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();

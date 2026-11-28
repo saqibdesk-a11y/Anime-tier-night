@@ -490,11 +490,11 @@ Hit a <b>Cursed Fox Mask</b>? BOOM—you lose one coaster permanently for the re
 
   /* ---------- Forehead Mask ---------- */
   T.mask = {
-    en:`Every player gets a secret character or object stuck to their forehead. You can see <b>everyone else's</b> card, while your own stays hidden behind a festival mask!
-In <b>Friends Pick</b> mode, everyone secretly chooses the character on the next player's forehead before the round begins.
-On your turn, ask a <b>Yes / No question</b>—either type it in the box or ask out loud on Discord voice chat and tap <b>"Asked on VC"</b>!
-Everyone else taps <b>Yes</b>, <b>No</b>, or <b>Kinda</b>. Every answer saves automatically into your personal <b>Clue Log</b> so you never forget.
-Think you know who you are? Type your answer in the guess box and hit <b>"Guess!"</b>—earlier finishers earn more points!`,
+    en:`Play <b>Which Character Am I?</b>, <b>Which Anime Am I?</b> (with anime genre filters!), Movies & Games, Animals & Objects, Custom AI topics, or <b>Friends Pick</b>!
+Everyone sees the portrait or anime poster stuck to your forehead—except YOU. Your own card stays masked with the round's theme badge so you always know what world you're guessing in.
+Stuck? Tap <b>"Unlock Hint"</b> on your mystery card for progressive clues (Genre & Era → Starting letter & word count → Big Clue), or let friends send you a subtle 1-word nudge!
+On your turn, tap a starter question, type your own, or ask out loud on Discord voice chat and hit <b>"Asked on VC"</b>. Everyone taps <b>Yes</b>, <b>No</b>, or <b>Kinda</b> and answers save into your personal <b>Clue Log</b>.
+Think you know who you are? Type your answer and hit <b>"Guess!"</b>—earlier finishers earn more points!`,
     ar:`يحصل كل لاعب على شخصية أو شيء سرّي مُلصق على جبينه. ترى بطاقات <b>الجميع</b>، بينما تبقى بطاقتك مخفيّة خلف قناع المهرجان!
 في وضع <b>Friends Pick</b>، يختار كل لاعب سرًّا الشخصية التي ستوضع على جبين اللاعب التالي قبل بدء الجولة.
 في دورك، اسأل سؤال <b>نعم أو لا</b>—إمّا بكتابته أو طرحه صوتيًا على Discord والضغط على <b>"Asked on VC"</b>!
@@ -512,32 +512,61 @@ Think you know who you are? Type your answer in the guess box and hit <b>"Guess!
 लगता है आप समझ गए कि आप कौन हैं? गेस बॉक्स में नाम लिखें और <b>"Guess!"</b> दबाएँ—पहले पहचानने वालों को ज़्यादा पॉइंट्स मिलते हैं!`,
   };
 
+  /* ---------- Guess the OP & Songs ---------- */
+  T.op = {
+    en:`Turn up your volume and race friends to name the track from live 30-second previews!
+Pick <b>Anime OPs &amp; EDs</b> (All, Shounen Bangers, Modern 2019+, Classics, or Movies &amp; Romance)—or switch to normal songs: <b>Global Pop</b>, <b>Hip-Hop &amp; Rap</b>, <b>K-Pop</b>, <b>Rock</b>, <b>Bollywood &amp; Desi</b>, <b>All Songs Mix</b>, or type any <b>Custom Artist / Topic</b>!
+In <b>4 Choices</b> mode, tap the matching option (or press keys <b>1–4</b>) as fast as you can.
+In <b>Type Name</b> mode, type the anime title, song name, or artist—small typos are forgiven!
+# Scoring &amp; Streaks
+Faster correct answers earn up to <b>+1000</b> points. Chain correct tracks in a row for a <b>Streak Bonus</b> (+150 extra per streak level)!`,
+    ar:`ارفع الصوت وسابق أصدقاءك لمعرفة الأغنية من مقاطع حقيقية مدتها 30 ثانية!
+اختر <b>Anime OPs &amp; EDs</b> (الكل، شونين، حديث، كلاسيكي، أو أفلام ورومانسية)—أو اختر أغاني عادية: <b>Global Pop</b> أو <b>Hip-Hop &amp; Rap</b> أو <b>K-Pop</b> أو <b>Rock</b> أو <b>Bollywood &amp; Desi</b> أو ابحث عن أي <b>فنان مخصص</b>!
+في وضع <b>4 Choices</b>، اضغط على الخيار الصحيح (أو مفاتيح <b>1–4</b>) بأسرع ما يمكن.
+في وضع <b>Type Name</b>، اكتب اسم الأنمي أو الأغنية أو الفنان—والأخطاء الإملائية البسيطة مقبولة!
+# النقاط والسلسلة
+الإجابات الأسرع تمنح حتى <b>+1000</b> نقطة، ومع كل إجابة صحيحة متتالية تحصل على مكافأة سلسلة إضافية!`,
+    ur:`آواز تیز کریں اور 30 سیکنڈ کے لائیو میوزک کلپ سے گانا پہچاننے میں دوستوں سے مقابلہ کریں!
+<b>Anime OPs &amp; EDs</b> منتخب کریں (آل، شونن، ماڈرن، کلاسک، یا موویز)—یا عام گانے کھیلیں: <b>Global Pop</b>، <b>Hip-Hop &amp; Rap</b>، <b>K-Pop</b>، <b>Rock</b>، <b>Bollywood &amp; Desi</b>، یا کوئی بھی <b>Custom Artist</b> سرچ کریں!
+<b>4 Choices</b> موڈ میں صحیح آپشن پر ٹیپ کریں (یا کی بورڈ پر <b>1–4</b> دبائیں)۔
+<b>Type Name</b> موڈ میں اینیمے، گانے، یا گلوکار کا نام ٹائپ کریں—چھوٹی اسپیلنگ کی غلطیاں معاف ہیں!
+# پوائنٹس اور اسٹریک
+جتنی جلدی صحیح جواب دیں گے اتنے زیادہ پوائنٹس (<b>+1000</b> تک)، اور لگاتار صحیح جوابات پر اضافی <b>Streak Bonus</b> ملتا ہے!`,
+    hi:`आवाज़ बढ़ाएँ और 30 सेकंड के लाइव म्यूज़िक क्लिप से गाना पहचानने में दोस्तों से रेस लगाएँ!
+<b>Anime OPs &amp; EDs</b> चुनें (ऑल, शोनन, मॉडर्न, क्लासिक, या मूवीज़)—या नॉर्मल गाने खेलें: <b>Global Pop</b>, <b>Hip-Hop &amp; Rap</b>, <b>K-Pop</b>, <b>Rock</b>, <b>Bollywood &amp; Desi</b>, या कोई भी <b>Custom Artist</b> सर्च करें!
+<b>4 Choices</b> मोड में सही विकल्प चुनें (या कीबोर्ड पर <b>1–4</b> दबाएँ)।
+<b>Type Name</b> मोड में एनीमे, गाने, या सिंगर का नाम टाइप करें—छोटी स्पेलिंग की ग़लतियाँ माफ़ हैं!
+# स्कोर और स्ट्रीक
+जितनी जल्दी सही जवाब देंगे उतने ज़्यादा पॉइंट्स (<b>+1000</b> तक), और लगातार सही जवाबों पर एक्स्ट्रा <b>Streak Bonus</b> मिलता है!`,
+  };
+
   /* ---------- the sheet ---------- */
   const css = `
-.howto-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;border:1px solid var(--line-2,rgba(255,255,255,.2));background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:13px 16px;font:700 15px var(--body,system-ui);cursor:pointer}
+.howto-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;border:1px solid var(--line-2,rgba(255,255,255,.2));background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:13px 16px;font:700 15px var(--body,system-ui);cursor:pointer;transition:background .15s,border-color .15s}
+.howto-btn:hover{background:rgba(255,255,255,.1);border-color:color-mix(in srgb,var(--lantern,#FF3E78) 55%,var(--line-2))}
 .howto-btn svg{width:18px;height:18px}
-.howto-btn small{font-weight:600;opacity:.6;font-size:12px}
-.howto-scrim{position:fixed;inset:0;z-index:90;background:rgba(6,7,20,.66);display:flex;align-items:flex-end;justify-content:center;animation:howtoFade .2s}
+.howto-btn small{font-weight:600;opacity:.65;font-size:12px}
+.howto-scrim{position:fixed;inset:0;z-index:90;background:rgba(4,6,14,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;animation:howtoFade .2s}
 @media (min-width:700px){.howto-scrim{align-items:center;padding:24px}}
-.howto{background:var(--paper,#F3EBDD);color:var(--ink,#1E1A2E);width:min(640px,100%);max-height:88vh;max-height:88svh;border-radius:22px 22px 0 0;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,.5);animation:howtoUp .32s cubic-bezier(.2,.9,.3,1)}
+.howto{background:var(--night-2,#12172B);color:var(--fg,#F4F6FF);border:1px solid var(--line-2,rgba(255,255,255,.18));width:min(640px,100%);max-height:88vh;max-height:88svh;border-radius:22px 22px 0 0;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,.78);animation:howtoUp .32s cubic-bezier(.2,.9,.3,1)}
 @media (min-width:700px){.howto{border-radius:22px}}
-.howto header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 8px}
+.howto header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 10px}
 .howto header h2{font-size:24px;margin:0}
-.howto .x{border:0;background:rgba(0,0,0,.08);color:inherit;width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;flex:none}
+.howto .x{border:1px solid var(--line,rgba(255,255,255,.12));background:rgba(255,255,255,.07);color:inherit;width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;flex:none}
 .howto .langs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 18px 12px}
-.howto .langs button{border:1.5px solid rgba(30,26,46,.18);background:transparent;color:inherit;border-radius:12px;padding:9px 4px;font:700 15px/1.2 var(--body,system-ui);cursor:pointer}
-.howto .langs button.on{background:var(--ink,#1E1A2E);color:var(--paper,#F3EBDD);border-color:var(--ink,#1E1A2E)}
+.howto .langs button{border:1.5px solid var(--line,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:inherit;border-radius:12px;padding:9px 4px;font:700 15px/1.2 var(--body,system-ui);cursor:pointer;transition:background .14s,border-color .14s}
+.howto .langs button.on{background:var(--paper,#F5F7FF);color:var(--ink,#0D1122);border-color:var(--paper,#F5F7FF)}
 .howto .body{overflow-y:auto;padding:2px 20px 18px;overscroll-behavior:contain}
-.howto .body h3{font-size:17px;font-weight:800;letter-spacing:0;margin:18px 0 8px;font-family:inherit}
+.howto .body h3{font-size:17px;font-weight:800;letter-spacing:0;margin:18px 0 8px;font-family:inherit;color:var(--gold,#FFC83D)}
 .howto .body ol{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:s}
-.howto .body li{position:relative;padding-inline-start:36px;font-size:16px;line-height:1.55}
-.howto .body ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;inset-inline-start:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--lantern,#E2513A);color:#fff;font:800 13px/26px var(--body,system-ui);text-align:center}
-.howto .body ol.bullets li::before{content:"";position:absolute;inset-inline-start:9px;top:.62em;width:8px;height:8px;border-radius:50%;background:var(--gold,#D9A441)}
+.howto .body li{position:relative;padding-inline-start:36px;font-size:15.5px;line-height:1.55;color:rgba(244,246,255,.92)}
+.howto .body ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;inset-inline-start:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--lantern,#FF3E78);color:var(--on-lantern,#fff);font:800 13px/26px var(--body,system-ui);text-align:center}
+.howto .body ol.bullets li::before{content:"";position:absolute;inset-inline-start:9px;top:.62em;width:8px;height:8px;border-radius:50%;background:var(--gold,#FFC83D)}
 .howto .body[dir=rtl] li{font-size:17px}
 .howto .body.ur li{line-height:2.25;font-size:17px}
 .howto .body.ur h3{line-height:2}
-.howto footer{padding:10px 18px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(30,26,46,.1)}
-.howto footer button{width:100%;border:0;border-radius:999px;padding:13px;background:var(--lantern,#E2513A);color:var(--on-lantern,#fff);font:800 16px var(--body,system-ui);cursor:pointer}
+.howto footer{padding:10px 18px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(255,255,255,.1))}
+.howto footer button{width:100%;border:0;border-radius:999px;padding:13px;background:var(--lantern,#FF3E78);color:var(--on-lantern,#fff);font:800 16px var(--body,system-ui);cursor:pointer}
 @keyframes howtoUp{from{transform:translateY(40px);opacity:0}}
 @keyframes howtoFade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){.howto,.howto-scrim{animation:none}}`;

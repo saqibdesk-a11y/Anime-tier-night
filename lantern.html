@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -135,9 +135,24 @@ body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0
 .arena > *{--cw:clamp(40px,14.5cqw,88px)}
 .arena.c-r{--cc:var(--c-r)} .arena.c-b{--cc:var(--c-b)} .arena.c-g{--cc:var(--c-g)} .arena.c-y{--cc:var(--c-y)}
 .felt{position:absolute;inset:8.5%;border-radius:50%;overflow:hidden;
-  background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.028) 0 2deg,transparent 2deg 10deg),radial-gradient(circle at 50% 42%,#2e3170 0%,#1b1e4c 52%,#0f1131 100%);
-  box-shadow:0 0 0 2px color-mix(in srgb,var(--cc) 80%,#fff),0 0 0 9px rgba(255,255,255,.035),0 0 54px 6px color-mix(in srgb,var(--cc) 50%,transparent),0 30px 60px -20px #000,inset 0 0 70px rgba(0,0,0,.6);transition:box-shadow .7s}
-.felt::before{content:"";position:absolute;inset:9%;border-radius:50%;border:1px solid rgba(255,255,255,.08)}
+  background:
+    repeating-conic-gradient(from 0deg,rgba(255,255,255,.022) 0 2deg,transparent 2deg 12deg),
+    radial-gradient(circle at 50% 38%,#1a2248 0%,#0e132b 56%,#070a18 100%);
+  box-shadow:
+    0 0 0 2.5px color-mix(in srgb,var(--cc) 88%,#fff),
+    0 0 0 10px rgba(255,255,255,.03),
+    0 0 64px 8px color-mix(in srgb,var(--cc) 48%,transparent),
+    0 32px 64px -20px #000,
+    inset 0 0 80px rgba(0,0,0,.72);
+  transition:box-shadow .6s}
+.felt::before{content:"";position:absolute;inset:8.5%;border-radius:50%;border:1px solid color-mix(in srgb,var(--cc) 30%,rgba(255,255,255,.08));transition:border-color .6s}
+.felt::after{content:"";position:absolute;inset:19%;border-radius:50%;border:1px dashed rgba(255,255,255,.07)}
+.twave{position:absolute;left:50%;top:50%;width:22%;height:22%;margin:-11% 0 0 -11%;border-radius:50%;border:4px solid var(--cc);box-shadow:0 0 28px var(--cc);pointer-events:none;z-index:2;animation:twave .72s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes twave{to{transform:scale(4.8);opacity:0;border-width:1px}}
+.seat .fan{display:flex;justify-content:center;align-items:center;height:18px;margin-top:-2px;pointer-events:none}
+.seat .fan i{display:block;width:11px;height:16px;border-radius:3px;background:linear-gradient(150deg,#6246c9,#211a54);border:1px solid rgba(255,255,255,.45);margin-left:-5px;box-shadow:0 2px 5px rgba(0,0,0,.6);transform:rotate(var(--r,0deg)) translateY(var(--y,0px));transition:transform .25s}
+.seat .fan i:first-child{margin-left:0}
+.seat .fan.one i{background:linear-gradient(150deg,#ff6b8b,#ff2e5b);border-color:#fff;box-shadow:0 0 10px #ff2e5b;animation:beat .85s infinite}
 .halo{position:absolute;left:50%;top:50%;width:66%;height:66%;transform:translate(-50%,-50%);border-radius:50%;background:var(--cc);filter:blur(42px);opacity:.38;transition:background-color .7s}
 .spot{position:absolute;left:50%;top:50%;height:22cqw;width:0;margin-top:-11cqw;transform-origin:0 50%;z-index:1;pointer-events:none;
   background:linear-gradient(90deg,transparent 10%,color-mix(in srgb,var(--gold) 14%,transparent) 45%,color-mix(in srgb,var(--gold) 42%,transparent) 100%);
@@ -256,7 +271,7 @@ body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0
 </head>
 <body>
 <header class="top noren">
-  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
   <h1>Last Lantern</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
@@ -273,6 +288,7 @@ body.has-hostbar .stage{padding-bottom:calc(170px + env(safe-area-inset-bottom,0
 <script src="/pranks.js"></script>
 <script src="/roombar.js"></script>
 <script src="/howto.js"></script>
+<script src="/juice.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -293,6 +309,7 @@ const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}
 Chat.mount({act});
 Pranks.mount({act});
 RoomBar.mount({act, game:"lantern", onHostChange:(hk, became)=>{ hostKey = hk; if(became) toast("You are now the host!"); if(room){ render(); document.body.classList.toggle("has-hostbar", !$("#hostbar").hidden); } }});
+if(window.Juice) Juice.mountMute();
 const P = pid => room.players[pid] || {name:"Someone who left"};
 const picOf = p => { const src = Avatars.src(p); return src ? `<img src="${esc(src)}" alt="">` : esc(p.name[0].toUpperCase()); };
 const face = (pid, cls="face") => { const p = P(pid); return `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(p.name)}">${picOf(p)}</span>`; };
@@ -424,7 +441,7 @@ function lobby(){
   const H = !!hostKey, s = room.settings, ps = Object.keys(room.players), mine = P(me.pid);
   const chip = (key, val, text) => `<button type="button" data-set="${key}" data-val="${val}" class="${s[key] === val ? "on" : ""}" ${H ? "" : "disabled"}>${text}</button>`;
   const tog = (key, title, note) => `<div class="toggle"><div><b>${title}</b><small>${note}</small></div><button type="button" data-tog="${key}" class="${s[key] ? "on" : ""}" ${H ? "" : "disabled"} aria-pressed="${s[key]}" aria-label="${title}"></button></div>`;
-  $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} at the stall</h1><p class="sub">Share the code <b style="color:var(--gold)">${esc(room.code)}</b>. ${ps.length < 2 ? "You need at least 2 players." : "2 to 10 players."}</p></div>
+  $("#stage").innerHTML = `<div class="fadeup"><h1 class="title">${ps.length} at the table</h1><p class="sub">Share the code <b style="color:var(--gold)">${esc(room.code)}</b>. ${ps.length < 2 ? "You need at least 2 players." : "2 to 10 players."}</p></div>
     <div class="panel" style="margin-top:16px"><div style="display:flex;align-items:center;gap:12px"><button type="button" class="face" id="myPic" style="background:${hue(mine.name)};border:0;cursor:pointer;width:56px;height:56px" aria-label="Change your picture">${picOf(mine)}</button>
       <div><b>${esc(mine.name)}</b><p class="hint">Tap your picture to change it.</p></div></div>
       <div class="people">${ps.map(pid=>`<div class="person">${face(pid)}<b>${esc(P(pid).name)}${pid === me.pid ? " (you)" : ""}</b>${H && pid !== me.pid ? `<button class="kick" data-kick="${pid}">Kick</button>` : ""}</div>`).join("")}</div></div>
@@ -465,9 +482,14 @@ function table(){
     const a = (base + i * 360 / N) * Math.PI / 180, x = 50 + 45 * Math.cos(a), y = 50 + 45 * Math.sin(a);
     const n = t.counts[pid] ?? 0, called = t.called.includes(pid), exposed = t.exposed === pid, turn = t.turn === pid && !over;
     const tag = exposed && pid !== me.pid ? `<button class="catch" data-catch="1">Catch!</button>` : called && n === 1 ? `<span class="tag">Last card</span>` : "";
+    const showN = pid === me.pid ? 0 : Math.min(n, 7);
+    const fan = showN > 0 ? `<span class="fan ${n === 1 ? "one" : ""}" aria-hidden="true">${Array.from({length:showN}, (_, k) => {
+      const m = k - (showN - 1) / 2;
+      return `<i style="--r:${(m * 9).toFixed(1)}deg;--y:${(Math.abs(m) * 1.4).toFixed(1)}px"></i>`;
+    }).join("")}</span>` : "";
     return `<div class="seat ${turn ? "turn" : ""} ${t.winner === pid ? "won" : ""}" data-seat="${esc(pid)}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%">
       <span class="av">${face(pid)}${turn && room.deadline ? '<i class="tring"></i>' : ""}<span class="n ${n === 1 ? "low" : ""}" aria-label="${n} cards">${n}</span></span>
-      <b>${pid === me.pid ? "You" : esc(P(pid).name)}</b>${tag}</div>`;
+      <b>${pid === me.pid ? "You" : esc(P(pid).name)}</b>${fan}${tag}</div>`;
   };
   let status = "";
   if(!over){
@@ -611,9 +633,15 @@ function land(topEl){
   topEl.animate([{scale:"1.07"}, {scale:"1"}], {duration:260, easing:"cubic-bezier(.3,1.6,.5,1)"});
   const r = document.createElement("i"); r.className = "ripple"; $("#discard")?.appendChild(r); setTimeout(()=>r.remove(), 700);
 }
+function tableWave(){
+  if(calm) return;
+  const f = document.querySelector(".felt"); if(!f) return;
+  const w = document.createElement("i"); w.className = "twave"; f.appendChild(w); setTimeout(()=>w.remove(), 760);
+}
 function runFx(){
   const list = fx.splice(0), deckBox = $("#deck")?.getBoundingClientRect(), discard = $("#discard")?.getBoundingClientRect();
   const topEl = document.querySelector("#discard .card.top");
+  const sfx = window.Juice?.sfx;
   let d = 0;
   for(const e of list){
     const mine = e.pid === me.pid;
@@ -621,35 +649,53 @@ function runFx(){
       const from = mine && handRects[e.card] ? handRects[e.card] : seatBox(e.pid);
       const isTop = e.card === room.table.top && topEl;
       if(isTop && !calm) topEl.style.opacity = 0;
-      fly(cardHTML(e.card), from, discard, {delay:d, spin: mine ? -6 : 160, endRot: tilt(e.card), lift: mine ? 40 : 70, done: ()=>{ if(isTop) land(topEl); }});
-      if(valueOf(e.card) === "W4") pop("+4", discard, "red", d + .45);
-      else if(valueOf(e.card) === "D") pop("+2", discard, "red", d + .45);
+      const v = valueOf(e.card);
+      fly(cardHTML(e.card), from, discard, {delay:d, spin: mine ? -6 : 160, endRot: tilt(e.card), lift: mine ? 40 : 70, done: ()=>{
+        if(isTop) land(topEl);
+        if(v === "W4"){ sfx?.boom(); tableWave(); window.Juice?.shake($("#arena"), 7); }
+        else if(v === "W"){ sfx?.wild(); tableWave(); }
+        else if(v === "D"){ sfx?.boom(); tableWave(); window.Juice?.shake($("#arena"), 5); }
+        else { sfx?.card(); }
+      }});
+      if(v === "W4") pop("+4", discard, "red", d + .45);
+      else if(v === "D") pop("+2", discard, "red", d + .45);
       d += .18;
     } else if(e.what === "drew" && !mine){
       const n = Math.min(e.n || 0, 6);
-      for(let i = 0; i < n; i++) fly(backHTML(), deckBox, seatBox(e.pid), {delay:d + i*.09, size: deckBox?.width, endScale:.42, fade:true, lift:30, dur:460});
+      for(let i = 0; i < n; i++){
+        setTimeout(()=>sfx?.deal(), (d + i * .09) * 1000);
+        fly(backHTML(), deckBox, seatBox(e.pid), {delay:d + i*.09, size: deckBox?.width, endScale:.42, fade:true, lift:30, dur:460});
+      }
       if(e.forced) pop(`+${e.n}`, seatBox(e.pid), "red", d + .2);
       d += .1;
     } else if(e.what === "drew" && mine && e.forced){
       pop(`+${e.n}`, seatBox(e.pid), "red", d + .2);
     } else if(e.what === "skip"){
+      setTimeout(()=>sfx?.warn(), (d + .25) * 1000);
       pop("Blocked", seatBox(e.pid), "red", d + .3);
     } else if(e.what === "reverse"){
+      setTimeout(()=>sfx?.reverse(), (d + .2) * 1000);
       $("#dirring")?.classList.add("flip");
+      tableWave();
       pop("⇄ Turned back", discard, "gold", d + .3);
     } else if(e.what === "call"){
+      sfx?.turn();
       pop("Last card!", seatBox(e.pid), "gold", d);
     } else if(e.what === "caught"){
+      sfx?.boom(); window.Juice?.shake($("#arena"), 8);
       pop(`Caught! +${e.n}`, seatBox(e.pid), "red", d);
       if(!mine) for(let i = 0; i < Math.min(e.n, 4); i++) fly(backHTML(), deckBox, seatBox(e.pid), {delay:d + .2 + i*.09, size: deckBox?.width, endScale:.42, fade:true, lift:30, dur:460});
     } else if(e.what === "jump"){
+      sfx?.wild(); tableWave();
       pop(mine ? "You jumped in!" : `${esc(P(e.pid).name)} jumps in!`, $("#arena")?.getBoundingClientRect(), "red big", d);
       const ar = $("#arena"); ar?.classList.remove("shake"); ar?.offsetWidth; ar?.classList.add("shake");
       buzz([60,40,60]);
     } else if(e.what === "won"){
+      sfx?.win();
       confetti(seatBox(e.pid));
       setTimeout(()=>confetti(seatBox(e.pid)), 500);
     } else if(e.what === "myturn"){
+      setTimeout(()=>sfx?.turn(), (d + .25) * 1000);
       pop("Your turn", $("#arena")?.getBoundingClientRect(), "gold big", d + .35);
     }
   }
@@ -659,7 +705,9 @@ function runFx(){
     if(calm) return;
     el.style.opacity = 0;
     const r = el.getBoundingClientRect();
-    fly(backHTML(), deckBox, r, {delay: d + i * (dealt.length > 4 ? .06 : .1), size: el.offsetWidth, spin: 24, lift: 40, dur: 480,
+    const wait = d + i * (dealt.length > 4 ? .06 : .1);
+    setTimeout(()=>sfx?.deal(), wait * 1000);
+    fly(backHTML(), deckBox, r, {delay: wait, size: el.offsetWidth, spin: 24, lift: 40, dur: 480,
       done: ()=>{ el.style.opacity = ""; el.animate([{rotate:"y 90deg"}, {rotate:"y 0deg"}], {duration:240, easing:"ease-out"}); }});
   });
 }

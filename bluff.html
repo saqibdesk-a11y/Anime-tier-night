@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -14,10 +14,14 @@
 <title>Fox's Bluff</title>
 <link rel="stylesheet" href="/festival.css">
 <style>
+/* Fox's Bluff — Overhead Circular Neon Tokyo Bluffing Table:
+   You sit at the bottom; everyone else sits clockwise around the glowing crimson-obsidian table rim.
+   Each player's 3D coaster stack rests on the felt right in front of them, coasters physically fly
+   from seat to stack on placement, and flipping triggers a 3D rotateY reveal with full arcade juice! */
 :root{
-  --cloth:#B53535; --on-cloth:#F3EBDD;
-  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 92%,transparent);
-  --glass2:rgba(243,235,221,.07); --amber:var(--gold); --mint:var(--shrine);
+  --line2:var(--line-2); --glass:color-mix(in srgb,var(--night-2) 90%,transparent);
+  --glass2:rgba(255,255,255,.07); --amber:var(--gold); --mint:var(--shrine);
+  --crimson:#FF3E6C; --sakura:#FF85B3;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;overflow-x:hidden}
@@ -25,27 +29,28 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 [hidden]{display:none!important}
 .muted{color:var(--muted)}
-.noren{background:var(--cloth);color:var(--on-cloth)}
-.noren .th-btn,.noren .iconbtn,.noren .rb-btn{border-color:rgba(243,235,221,.35)}
-.code{font-weight:700;font-size:14px;letter-spacing:.16em;border:1.5px solid currentColor;border-radius:999px;padding:1px 10px;opacity:.9}
-.timer{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:var(--ink);color:var(--paper)}
-.timer.low{background:var(--lantern);color:var(--on-lantern);animation:beat 1s infinite}
+.iconbtn{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:50%;width:38px;height:38px;display:grid;place-items:center;padding:0;color:inherit}
+.iconbtn svg{width:18px;height:18px}
+.timer{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 12px;background:rgba(255,255,255,.09);color:var(--fg)}
+.timer.low{background:var(--crimson);color:#fff;animation:beat 1s infinite}
 @keyframes beat{50%{transform:scale(1.07)}}
 
-.stage{width:min(820px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
-.eyebrow{text-align:center;font-size:15px;font-weight:700;color:var(--amber)}
-.title{font-size:clamp(30px,7.5vw,50px);line-height:1.08;text-align:center;margin-top:4px}
+.stage{width:min(860px,100%);margin:0 auto;padding:8px max(14px,env(safe-area-inset-left,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+.eyebrow{text-align:center;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+.title{font-size:clamp(28px,7vw,46px);line-height:1.08;text-align:center;margin-top:4px}
 .sub{text-align:center;color:var(--muted);margin:8px auto 0;max-width:54ch}
-.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;backdrop-filter:blur(10px)}
-.panel h2{font-size:24px}
-.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s}
-.btn:active{transform:scale(.97)}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:14px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.panel h2{font-size:22px}
+.btn{border:1px solid var(--line2);background:var(--glass2);border-radius:999px;padding:11px 20px;font-weight:700;transition:transform .12s,background .15s}
+.btn:hover:not(:disabled){background:rgba(255,255,255,.13)}
+.btn:active:not(:disabled){transform:scale(.96)}
 .btn:disabled{opacity:.42;cursor:not-allowed}
-.btn.primary{background:var(--lantern);border-color:var(--lantern);color:var(--on-lantern)}
-.btn.small{padding:6px 13px;font-size:13px}
+.btn.primary{background:linear-gradient(135deg,var(--crimson),#FF6B4A);border-color:transparent;color:#fff;box-shadow:0 10px 26px -8px rgba(255,62,108,.65)}
+.btn.small{padding:6px 14px;font-size:13px}
 .btn.wide{width:100%}
-label{display:block;font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
-input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+label{display:block;font-size:13.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
+input[type=text],select{width:100%;background:var(--night);border:1px solid var(--line);border-radius:12px;padding:11px 13px;outline:none;color:var(--fg);font-size:16px}
+input[type=text]:focus,select:focus{border-color:var(--amber)}
 select option{background:var(--night)}
 .err{color:var(--danger);font-size:14px;min-height:1.3em}
 .hint{font-size:13px;color:var(--muted);margin:0}
@@ -62,48 +67,225 @@ select option{background:var(--night)}
 .tok .face{width:62px;height:62px;border:3px solid rgba(255,255,255,.18);font-size:22px}
 .tok .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* velvet table of coaster mats */
-.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:14px 0}
-.mat{position:relative;border:2px solid var(--line);background:radial-gradient(circle at 50% 35%,rgba(181,53,53,.28),rgba(20,16,38,.9));border-radius:18px;padding:12px;display:grid;gap:8px;justify-items:center;text-align:center;transition:transform .15s,border-color .2s,box-shadow .2s}
-.mat.turn{border-color:var(--amber);box-shadow:0 0 26px -6px var(--amber)}
-.mat.pickable{cursor:pointer;border-color:#4ADE80;box-shadow:0 0 22px -6px #4ADE80}
-.mat.pickable:hover{transform:translateY(-4px)}
-.mat.out{opacity:.42;filter:grayscale(.7)}
-.mat.passed{opacity:.72}
-.mat .who{display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;max-width:100%}
-.mat .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mat .pts{font-size:13px;color:var(--amber);font-weight:900}
-.stack-visual{display:flex;align-items:center;justify-content:center;gap:6px;min-height:66px;flex-wrap:wrap}
-.disc{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:900;box-shadow:0 8px 18px -6px #000;border:3px solid rgba(255,255,255,.2);animation:pop .3s cubic-bezier(.2,1.5,.4,1) backwards}
-@keyframes pop{from{transform:scale(.4) rotate(-20deg);opacity:0}}
-.disc.back{background:radial-gradient(circle at 35% 30%,#433776,#1E1A2E);border-color:var(--amber);color:var(--amber);font-size:16px}
-.disc.flower{background:radial-gradient(circle at 35% 30%,#FFE3EC,#F48FB1);border-color:#fff}
-.disc.fox{background:radial-gradient(circle at 35% 30%,#FF6B6B,#8E1B1B);border-color:#FFD166;animation:shake .5s}
-@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+/* ---------- CIRCULAR BLUFFING TABLE ---------- */
+.b-arena{
+  position:relative;container-type:inline-size;
+  width:min(100%,610px,max(290px,calc(100svh - 330px)));
+  aspect-ratio:1;margin:8px auto 0;
+  --rail:var(--amber);
+}
+.b-arena.ph-bid{--rail:var(--crimson)}
+.b-arena.ph-flip{--rail:var(--mint)}
+.b-arena.ph-boom{--rail:#FF2E4D}
 
-.bid-banner{background:var(--paper);color:var(--ink);border-radius:16px;padding:12px 16px;text-align:center;margin:10px auto;max-width:540px;box-shadow:0 16px 36px -16px #000}
-.bid-banner b{font-family:var(--display);font-size:26px;display:block}
-.hand-bar{background:var(--glass);border:1.5px solid var(--line2);border-radius:18px;padding:14px;display:grid;gap:12px;margin-top:12px}
-.coasters{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-.coaster-btn{width:76px;height:76px;border-radius:50%;border:3px solid rgba(255,255,255,.35);display:grid;place-items:center;font-size:34px;box-shadow:0 12px 24px -10px #000;transition:transform .15s}
-.coaster-btn:hover:not(:disabled){transform:translateY(-6px) scale(1.06)}
-.coaster-btn.flower{background:radial-gradient(circle at 35% 30%,#FFE3EC,#F48FB1)}
-.coaster-btn.fox{background:radial-gradient(circle at 35% 30%,#FF6B6B,#8E1B1B);border-color:var(--amber)}
-.coaster-btn:disabled{opacity:.38;cursor:not-allowed}
-.bid-nums{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.bid-nums button{min-width:44px;height:42px;border-radius:12px;border:1.5px solid var(--line2);background:rgba(0,0,0,.3);font-weight:900;font-size:16px}
-.bid-nums button:hover{border-color:var(--amber);background:rgba(217,164,65,.2)}
-.logline{text-align:center;font-size:14px;color:var(--muted);min-height:1.4em;margin-top:6px}
-.fadeup{animation:fadeup .4s cubic-bezier(.2,.8,.2,1) backwards}
-@keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
-.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:3px solid var(--gold)}
+.b-felt{
+  position:absolute;inset:8%;border-radius:50%;overflow:hidden;
+  background:
+    repeating-conic-gradient(from 0deg,rgba(255,255,255,.02) 0 3deg,transparent 3deg 15deg),
+    radial-gradient(circle at 50% 38%,#2b122c 0%,#160b22 54%,#0a0715 100%);
+  box-shadow:
+    0 0 0 2.5px color-mix(in srgb,var(--rail) 85%,#fff),
+    0 0 0 10px rgba(255,255,255,.03),
+    0 0 60px 6px color-mix(in srgb,var(--rail) 45%,transparent),
+    0 34px 66px -22px #000,
+    inset 0 0 76px rgba(0,0,0,.78);
+  transition:box-shadow .55s;
+}
+.b-felt::before{
+  content:"";position:absolute;inset:9%;border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--rail) 35%,rgba(255,255,255,.08));
+  transition:border-color .5s;
+}
+.b-felt::after{
+  content:"";position:absolute;inset:24%;border-radius:50%;
+  border:1px dashed rgba(255,255,255,.09);
+}
+.b-halo{
+  position:absolute;left:50%;top:50%;width:58%;height:58%;transform:translate(-50%,-50%);
+  border-radius:50%;background:var(--rail);filter:blur(46px);opacity:.26;
+  transition:background-color .55s,opacity .55s;
+}
+.b-arena.ph-bid .b-halo,.b-arena.ph-flip .b-halo{opacity:.38;animation:pulseHalo 2s ease-in-out infinite}
+@keyframes pulseHalo{50%{transform:translate(-50%,-50%) scale(1.12);opacity:.48}}
+
+/* Sweeping Spotlight Beam */
+.b-spot{
+  position:absolute;left:50%;top:50%;height:20cqw;width:0;margin-top:-10cqw;
+  transform-origin:0 50%;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,transparent 12%,color-mix(in srgb,var(--rail) 18%,transparent) 50%,color-mix(in srgb,var(--rail) 46%,transparent) 100%);
+  clip-path:polygon(0 50%,100% 0,100% 100%);
+  transition:transform .58s cubic-bezier(.3,1.2,.45,1),width .58s,opacity .3s;
+}
+
+/* Center Medallion */
+.b-center{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;
+  width:clamp(108px,30cqw,168px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 35% 25%,rgba(34,20,52,.94),rgba(11,9,22,.96));
+  border:2px solid color-mix(in srgb,var(--rail) 65%,rgba(255,255,255,.15));
+  box-shadow:0 16px 40px -12px #000,0 0 34px -6px color-mix(in srgb,var(--rail) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.15);
+  display:grid;place-items:center;align-content:center;gap:2px;padding:10px;text-align:center;
+  transition:border-color .4s,box-shadow .4s;
+}
+.b-center small{font-size:clamp(9.5px,2.2cqw,11.5px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);line-height:1.15}
+.b-center b{font-family:var(--display);font-size:clamp(22px,6.5cqw,36px);line-height:1;color:var(--fg)}
+.b-center .who-bid{font-size:clamp(10px,2.4cqw,12px);font-weight:700;color:var(--amber);max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.b-pips{display:flex;gap:4px;justify-content:center;margin-top:3px;flex-wrap:wrap}
+.b-pips i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);transition:background .25s,transform .25s}
+.b-pips i.ok{background:var(--mint);border-color:#fff;box-shadow:0 0 8px var(--mint);transform:scale(1.18)}
+.b-pips i.fox{background:var(--crimson);border-color:var(--amber);box-shadow:0 0 10px var(--crimson)}
+
+/* Seated Players Around Rim */
+.b-seat{
+  position:absolute;z-index:4;transform:translate(-50%,-50%);
+  display:grid;justify-items:center;gap:2px;width:min(24cqw,96px);text-align:center;
+  transition:opacity .3s,filter .3s;
+}
+.b-seat.out{opacity:.38;filter:grayscale(.85)}
+.b-seat.passed{opacity:.64}
+.b-seat .av{position:relative;width:clamp(36px,11.5cqw,58px);aspect-ratio:1;transition:transform .32s cubic-bezier(.3,1.5,.5,1)}
+.b-seat .face{width:100%;height:100%;border:2.5px solid #0e1022;box-shadow:0 8px 18px -6px rgba(0,0,0,.85);transition:border-color .3s,box-shadow .3s}
+.b-seat.turn .av{transform:scale(1.12)}
+.b-seat.turn .face{border-color:var(--rail);box-shadow:0 0 0 3px color-mix(in srgb,var(--rail) 40%,transparent),0 0 28px 6px color-mix(in srgb,var(--rail) 55%,transparent)}
+.b-seat .tring{
+  position:absolute;inset:-6px;border-radius:50%;
+  background:conic-gradient(var(--rail) calc(var(--p,1)*360deg),rgba(255,255,255,.08) 0);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3.5px),#000 calc(100% - 3px));
+          mask:radial-gradient(farthest-side,transparent calc(100% - 3.5px),#000 calc(100% - 3px));
+}
+.b-seat .cnt{
+  position:absolute;right:-8px;bottom:-3px;min-width:20px;height:20px;border-radius:50%;
+  background:var(--night-2);color:var(--amber);border:1.5px solid var(--amber);
+  font:800 11px/17px var(--mono);text-align:center;box-shadow:0 3px 8px rgba(0,0,0,.6);
+}
+.b-seat b{
+  font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:rgba(10,13,24,.84);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:1px 8px;
+}
+.b-seat.turn b{background:var(--rail);color:#080B14;border-color:var(--rail)}
+.b-seat .stars{font-size:10px;line-height:1;letter-spacing:1px;color:var(--amber);text-shadow:0 0 8px rgba(255,200,61,.55)}
+.b-seat .badge{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:1px 7px;background:rgba(255,255,255,.12);color:var(--muted)}
+.b-seat .badge.chal{background:var(--crimson);color:#fff}
+
+/* 3D Coaster Stacks Sitting On The Felt */
+.c-spot{
+  position:absolute;z-index:5;transform:translate(-50%,-50%);
+  width:clamp(46px,12.5cqw,66px);height:clamp(46px,12.5cqw,66px);
+  border:0;background:none;padding:0;display:grid;place-items:center;
+  perspective:600px;
+}
+.c-spot .pad{
+  position:absolute;inset:4px;border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,.16);
+  background:rgba(0,0,0,.22);transition:border-color .25s,box-shadow .25s,transform .2s;
+}
+.c-spot.pickable{cursor:pointer}
+.c-spot.pickable .pad{
+  border-style:solid;border-color:var(--mint);
+  box-shadow:0 0 22px 2px color-mix(in srgb,var(--mint) 60%,transparent);
+  animation:padPulse 1.2s ease-in-out infinite;
+}
+@keyframes padPulse{50%{transform:scale(1.12);box-shadow:0 0 32px 6px color-mix(in srgb,var(--mint) 80%,transparent)}}
+.c-spot.pickable:hover .disc{transform:translateY(calc(var(--ty,0px) - 6px)) scale(1.08)}
+.c-spot .tap-lbl{
+  position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);
+  font:900 10px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
+  background:var(--mint);color:#061712;border-radius:999px;padding:3px 8px;
+  box-shadow:0 4px 12px rgba(0,212,170,.5);pointer-events:none;
+}
+.c-spot .stk-badge{
+  position:absolute;top:-5px;right:-4px;z-index:10;
+  min-width:19px;height:19px;border-radius:999px;padding:0 5px;
+  background:#0A0D18;color:#fff;border:1.5px solid var(--amber);
+  font:800 10.5px/16px var(--mono);pointer-events:none;
+}
+
+.disc{
+  position:absolute;width:100%;height:100%;border-radius:50%;
+  display:grid;place-items:center;font-size:clamp(20px,5.6cqw,30px);
+  transform:translateY(var(--ty,0px));
+  box-shadow:0 5px 0 rgba(0,0,0,.55),0 10px 18px -4px rgba(0,0,0,.8);
+  border:2.5px solid rgba(255,255,255,.28);
+  transition:transform .22s cubic-bezier(.2,1.3,.4,1);
+}
+.disc.back{
+  background:radial-gradient(circle at 32% 28%,#4c2e6b,#1b1232 72%);
+  border-color:color-mix(in srgb,var(--amber) 75%,#fff);
+  color:var(--amber);font-size:clamp(14px,3.6cqw,18px);font-weight:900;
+}
+.disc.back::after{
+  content:"";position:absolute;inset:5px;border-radius:50%;
+  border:1px solid rgba(255,200,61,.35);
+}
+.disc.flower{
+  background:radial-gradient(circle at 30% 25%,#FFF0F6,#FF7EB3 72%,#C93B78 100%);
+  border-color:#fff;box-shadow:0 5px 0 #8a1d4f,0 0 22px rgba(255,133,179,.65);
+}
+.disc.fox{
+  background:radial-gradient(circle at 30% 25%,#FF6B6B,#D9163C 65%,#5E081B 100%);
+  border-color:var(--amber);box-shadow:0 5px 0 #4a0513,0 0 28px rgba(255,46,77,.85);
+}
+.disc.flipped-fresh{animation:flip3d .52s cubic-bezier(.2,1.15,.35,1) both}
+@keyframes flip3d{
+  0%{transform:translateY(var(--ty,0px)) rotateY(-180deg) scale(.85)}
+  55%{transform:translateY(calc(var(--ty,0px) - 16px)) rotateY(-20deg) scale(1.18)}
+  100%{transform:translateY(var(--ty,0px)) rotateY(0deg) scale(1)}
+}
+.disc.dim{opacity:.58}
+
+/* Flying Coaster & Table Ripple */
+.fly-disc{position:fixed;z-index:70;pointer-events:none;border-radius:50%;display:grid;place-items:center}
+.b-wave{position:absolute;left:50%;top:50%;width:24%;height:24%;margin:-12% 0 0 -12%;border-radius:50%;border:4px solid var(--rail);box-shadow:0 0 26px var(--rail);pointer-events:none;z-index:2;animation:bwave .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes bwave{to{transform:scale(4.6);opacity:0;border-width:1px}}
+
+/* Status Pill & Hand Dock */
+.status-pill{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  margin:14px auto 4px;width:max-content;max-width:100%;
+  font-family:var(--display);font-weight:700;font-size:clamp(16px,4.2vw,21px);
+  padding:7px 18px;border-radius:999px;
+  background:rgba(16,22,42,.82);border:1px solid var(--line-2);
+  box-shadow:0 10px 28px -12px #000;text-align:center;
+}
+.status-pill.mine{background:linear-gradient(135deg,var(--amber),#FF9F43);color:#090C16;border-color:transparent;box-shadow:0 0 28px -4px rgba(255,200,61,.65)}
+.status-pill.danger{background:linear-gradient(135deg,#FF3E6C,#D9163C);color:#fff;border-color:transparent;box-shadow:0 0 30px -4px rgba(255,62,108,.7)}
+.status-pill.win{background:linear-gradient(135deg,var(--mint),#38BDF8);color:#061712;border-color:transparent}
+
+.hand-bar{
+  background:var(--glass);border:1px solid var(--line2);border-radius:22px;
+  padding:14px 16px;display:grid;gap:12px;margin-top:12px;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+.coasters{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;padding:4px 0}
+.coaster-btn{
+  position:relative;width:74px;height:74px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.4);display:grid;place-items:center;font-size:33px;
+  box-shadow:0 6px 0 rgba(0,0,0,.45),0 14px 26px -8px #000;
+  transition:transform .18s cubic-bezier(.2,1.4,.4,1),box-shadow .18s,filter .18s;
+}
+.coaster-btn:hover:not(:disabled){transform:translateY(-8px) scale(1.07)}
+.coaster-btn:active:not(:disabled){transform:translateY(-1px) scale(.96)}
+.coaster-btn.flower{background:radial-gradient(circle at 30% 25%,#FFF0F6,#FF7EB3 72%,#C93B78 100%);box-shadow:0 6px 0 #8a1d4f,0 14px 26px -8px rgba(255,126,179,.5)}
+.coaster-btn.fox{background:radial-gradient(circle at 30% 25%,#FF6B6B,#D9163C 65%,#5E081B 100%);border-color:var(--amber);box-shadow:0 6px 0 #4a0513,0 14px 26px -8px rgba(255,46,77,.55)}
+.coaster-btn:disabled{opacity:.34;filter:grayscale(.45);cursor:not-allowed}
+.bid-nums{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:center}
+.bid-nums button[data-bid]{
+  min-width:44px;height:42px;border-radius:12px;border:1.5px solid var(--line2);
+  background:rgba(255,255,255,.06);font-family:var(--mono);font-weight:800;font-size:16px;
+  transition:transform .12s,background .15s,border-color .15s;
+}
+.bid-nums button[data-bid]:hover{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 22%,transparent);color:var(--amber);transform:translateY(-2px)}
+.logline{text-align:center;font-size:13.5px;color:var(--muted);min-height:1.4em;margin:8px 0 0}
+.fadeup{animation:fadeup .38s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(12px)}}
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--night-2);border-top:2px solid var(--gold)}
 body.has-hostbar{--chat-lift:66px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
 <header class="top noren">
-  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a>
+  <a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a>
   <h1>Fox's Bluff</h1>
   <button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button>
   <span class="spacer"></span>
@@ -120,6 +302,7 @@ body.has-hostbar{--chat-lift:66px}
 <script src="/pranks.js"></script>
 <script src="/roombar.js"></script>
 <script src="/howto.js"></script>
+<script src="/juice.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -127,6 +310,7 @@ const hue = n => { let h=0; for(const c of String(n)) h=(h*31+c.charCodeAt(0))%3
 function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
 function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
 const buzz = p => { try{ if(navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(p); }catch(e){} };
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 async function api(path, body){
   const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
   const j = await r.json().catch(()=>({error:"The server didn't answer. Try again."}));
@@ -135,20 +319,22 @@ async function api(path, body){
 }
 
 let code=null, room=null, me=null, hostKey=null, pollGen=0, clockOffset=0;
+let spotAngle=null, spotLen=0, prevSnap=null, freshFlips={}, pendingFly=[];
 const serverNow = () => Date.now()/1000 + clockOffset;
 const act = (a, extra={}) => api(`/api/rooms/${code}/${a}`, {hostKey, ...(me||{}), ...extra});
 Chat.mount({act});
 Pranks.mount({act});
 RoomBar.mount({act, game:"bluff", onHostChange:(hk, became)=>{ hostKey = hk; if(became) toast("You are now the host!"); if(room) render(); }});
+if(window.Juice) Juice.mountMute();
 const P = pid => room.players[pid] || {name:"Someone"};
 const picOf = p => { const s = Avatars.src(p); return s ? `<img src="${esc(s)}" alt="">` : esc((p.name||"?")[0].toUpperCase()); };
-const face = (pid, cls="mini") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
+const face = (pid, cls="face") => `<span class="${cls}" data-pid="${esc(pid)}" style="background:${hue(P(pid).name)}">${picOf(P(pid))}</span>`;
 
 function home(){
   $("#hCode").hidden = true; $("#timer").hidden = true; $("#hostbar").hidden = true;
   document.body.classList.remove("has-hostbar");
-  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">The Coaster Bluffing Stall</div><h1 class="title">Fox's Bluff</h1>
-    <p class="sub">3 Sakura Blossoms, 1 Cursed Fox Trap. Stack coasters face-down, bluff your friends into bidding too high, and survive the flips!</p></div>
+  $("#stage").innerHTML = `<div class="fadeup" style="margin-top:3vh"><div class="eyebrow">Circular Mind-Game Table</div><h1 class="title">Fox's Bluff</h1>
+    <p class="sub">3 Sakura Blossoms, 1 Cursed Fox Trap. Stack coasters face-down around the table, bluff your friends into bidding too high, and survive the flips!</p></div>
     <div class="row2 fadeup" style="margin-top:20px">
       <form class="panel" id="createForm"><h2>Host a table</h2>
         <div><label for="cName">Your name</label><input type="text" id="cName" maxlength="24" autocomplete="nickname"></div>
@@ -164,7 +350,7 @@ function home(){
     try{ const m=await api(`/api/rooms/${c}/join`,{name:n}); store("fb2:"+c,{me:m,hostKey:null}); history.replaceState({},"","/bluff?room="+c); openRoom(c); }catch(err){ $("#jErr").textContent=err.message; } };
 }
 function openRoom(c){
-  code=c; const s=store("fb2:"+c)||{}; me=s.me||null; hostKey=s.hostKey||null;
+  code=c; const s=store("fb2:"+c)||{}; me=s.me||null; hostKey=s.hostKey||null; prevSnap=null;
   $("#hCode").textContent=c; $("#hCode").hidden=false; BackGuard.arm(); poll(++pollGen,-1);
 }
 async function poll(gen, v){
@@ -176,9 +362,51 @@ async function poll(gen, v){
       const prev = room; room = next; v = room.version; clockOffset = room.now - Date.now()/1000;
       if(me && !room.players[me.pid]){ me = null; if(!room.roomMeta?.isHost) hostKey = null; store("fb2:"+code, {hostKey}); toast("You were removed from this game"); }
       if(me && room.players[me.pid]) Avatars.apply(act, room.players[me.pid]);
-      if(!Chat.socialOnly(prev, room)) render();
+      if(!Chat.socialOnly(prev, room)){ diffTable(prev); render(); }
       Chat.update(room, me); Pranks.update(room, me); RoomBar.update(room, me, hostKey);
     }catch(e){ if(e.message.includes("not found")){ toast("Room not found"); return home(); } await new Promise(r=>setTimeout(r,2000)); }
+  }
+}
+
+function diffTable(prev){
+  freshFlips = {}; pendingFly = [];
+  const t = room.table, pt = prev?.table;
+  if(!t || !pt || t.round !== pt.round){
+    prevSnap = t ? {stackCount:{...t.stackCount}, flipped:JSON.parse(JSON.stringify(t.flipped||{}))} : null;
+    if(t && prev?.phase === "lobby") Juice?.sfx.deal();
+    return;
+  }
+  const sfx = window.Juice?.sfx;
+  // Detect newly placed coasters -> fly coaster from seat to stack + clack!
+  let anyPlaced = false;
+  for(const pid of t.order){
+    if((t.stackCount[pid]||0) > (pt.stackCount[pid]||0)){
+      pendingFly.push(pid); anyPlaced = true;
+    }
+    const oldF = (pt.flipped?.[pid] || []).length;
+    const newF = (t.flipped?.[pid] || []).length;
+    if(newF > oldF){
+      freshFlips[pid] = newF - 1;
+      const card = t.flipped[pid][newF - 1];
+      if(card === "fox"){ sfx?.boom(); buzz([90,40,90]); }
+      else { sfx?.flip(); buzz(25); }
+    }
+  }
+  if(anyPlaced) sfx?.clack();
+  if(t.bid > pt.bid){ sfx?.pop(); }
+  if(room.phase === "roundover" && prev.phase !== "roundover"){
+    if(t.outcome?.win){ sfx?.win(); setTimeout(()=>Juice?.confetti(), 120); }
+    else { setTimeout(()=>Juice?.shake($("#bluffArena"), 10), 60); }
+  }
+  if(room.phase === "final" && prev.phase !== "final"){
+    sfx?.win();
+    setTimeout(()=>Juice?.confetti({count:110}), 80);
+    setTimeout(()=>Juice?.confetti({count:80}), 520);
+  }
+  const nowActive = room.phase === "flip" ? t.bidder : t.turn;
+  const prevActive = prev.phase === "flip" ? pt.bidder : pt.turn;
+  if(["turn","bid","flip"].includes(room.phase) && nowActive === me?.pid && (nowActive !== prevActive || room.phase !== prev.phase)){
+    sfx?.turn(); buzz(60);
   }
 }
 
@@ -192,15 +420,15 @@ function render(){
 }
 function gate(){
   if($("#gate")) return;
-  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin-top:8vh"><h2 style="text-align:center">Join Fox's Bluff</h2>
-    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Sit at the mat</button></form>`;
+  $("#stage").innerHTML=`<form class="panel fadeup" id="gate" style="margin:8vh auto 0;max-width:420px"><h2 style="text-align:center">Join Fox's Bluff</h2>
+    <input type="text" id="gName" placeholder="Your name" maxlength="24" autocomplete="nickname"><div class="err" id="gErr"></div><button class="btn primary wide">Take a seat</button></form>`;
   $("#gate").onsubmit = async e=>{ e.preventDefault(); const n=$("#gName").value.trim(); if(!n) return;
     try{ me=await api(`/api/rooms/${code}/join`,{name:n}); store("fb2:"+code,{me,hostKey}); poll(++pollGen,-1); }catch(err){ $("#gErr").textContent=err.message; } };
 }
 function lobby(){
   const s=room.settings, ps=Object.keys(room.players), mine=P(me.pid), H=!!hostKey;
   const sel=(id,opts,val)=>`<select id="${id}" ${H?"":"disabled"}>${opts.map(([v,t])=>`<option value="${v}" ${String(v)===String(val)?"selected":""}>${t}</option>`).join("")}</select>`;
-  $("#stage").innerHTML=`<div class="fadeup"><h1 class="title">${ps.length} player${ps.length===1?"":"s"}</h1>
+  $("#stage").innerHTML=`<div class="fadeup"><h1 class="title">${ps.length} at the table</h1>
     <p class="sub">Share code <b style="letter-spacing:.2em;color:var(--amber)">${room.code}</b>. 2 to 8 players.</p></div>
     <div class="panel" style="margin-top:14px"><div class="photo-pick"><button class="face" id="photoBtn" type="button">${Avatars.src(mine)?picOf(mine):"Choose"}</button>
       <div><b>${esc(mine.name)}</b><p class="hint">Tap to change your avatar.</p></div></div></div>
@@ -219,41 +447,103 @@ function lobby(){
   }
 }
 
+function seatOrder(t){
+  const o = t.order, i = o.indexOf(me.pid);
+  return i < 0 ? o : o.slice(i).concat(o.slice(0, i));
+}
+
 function tableView(){
   const t = room.table, mine = room.me, ph = room.phase;
   const isTurn = t.turn === me.pid, isChal = t.bidder === me.pid;
+  const activePid = ph === "flip" ? t.bidder : (ph === "turn" || ph === "bid" ? t.turn : null);
   const lastLog = (t.log || []).slice(-1)[0]?.text || "";
-  let headline = "";
-  if(ph === "final") headline = `${P(t.winner).name} wins Fox's Bluff!`;
-  else if(ph === "place") headline = mine && !mine.placed ? "Place 1 coaster face-down" : "Waiting for everyone to place…";
-  else if(ph === "turn") headline = isTurn ? "Stack a coaster, or start bidding!" : `${P(t.turn).name}'s turn`;
-  else if(ph === "bid") headline = isTurn ? `Raise above ${t.bid} or Pass!` : `${P(t.turn).name} is deciding…`;
-  else if(ph === "flip") headline = isChal ? (mine.ownUnflipped > 0 ? "Flip your own stack first!" : `Flip ${t.bid - t.flippedSafe} more safe blossom${t.bid - t.flippedSafe===1?"":"s"}!`) : `${P(t.bidder).name} is flipping…`;
-  else headline = t.outcome?.win ? `${P(t.outcome.challenger).name} nailed it! +1 pt` : `BOOM! ${P(t.outcome?.challenger).name} hit a Fox!`;
+  const boom = ph === "roundover" && t.outcome && !t.outcome.win;
+  const wonRound = (ph === "roundover" && t.outcome?.win) || ph === "final";
 
-  const mats = t.order.map(pid=>{
+  let statusText = "", statusCls = "";
+  if(ph === "final"){ statusText = `👑 ${P(t.winner).name} wins Fox's Bluff!`; statusCls = "win"; }
+  else if(ph === "place"){
+    statusText = mine && !mine.placed ? "Place 1 coaster face-down" : "Waiting for everyone to place…";
+    if(mine && !mine.placed) statusCls = "mine";
+  } else if(ph === "turn"){
+    statusText = isTurn ? "Your turn — stack a coaster or start bidding!" : `${P(t.turn).name}'s turn`;
+    if(isTurn) statusCls = "mine";
+  } else if(ph === "bid"){
+    statusText = isTurn ? `Raise above ${t.bid} or Pass!` : `${P(t.turn).name} is deciding…`;
+    if(isTurn) statusCls = "mine";
+  } else if(ph === "flip"){
+    statusText = isChal ? (mine.ownUnflipped > 0 ? "Flip your own stack first!" : `Tap a glowing stack (${t.bid - t.flippedSafe} left)`) : `${P(t.bidder).name} is flipping…`;
+    if(isChal) statusCls = "mine";
+  } else if(t.outcome?.win){
+    statusText = `✨ ${P(t.outcome.challenger).name} flipped ${t.outcome.bid} blossoms! +1 ★`; statusCls = "win";
+  } else {
+    statusText = `🦊 BOOM! ${P(t.outcome?.challenger).name} hit a Cursed Fox!`; statusCls = "danger";
+  }
+
+  // Center medallion HTML
+  let medHtml = "";
+  if(ph === "final"){
+    medHtml = `<small>Champion</small><b>👑</b><span class="who-bid">${esc(P(t.winner).name)}</span>`;
+  } else if(ph === "roundover"){
+    medHtml = t.outcome?.win
+      ? `<small>Bluff Won</small><b>+1 ★</b><span class="who-bid">${esc(P(t.outcome.challenger).name)}</span>`
+      : `<small>Trap Sprung</small><b>🦊</b><span class="who-bid">${esc(P(t.outcome?.challenger).name)}</span>`;
+  } else if(t.bid > 0){
+    const pips = Array.from({length:t.bid}, (_, i) => `<i class="${i < t.flippedSafe ? "ok" : ""}"></i>`).join("");
+    medHtml = `<small>${ph === "flip" ? "Flipping" : "Current Bid"}</small><b>${ph === "flip" ? `${t.flippedSafe}/${t.bid}` : t.bid} 🌸</b><span class="who-bid">${esc(P(t.bidder).name)}</span><div class="b-pips">${pips}</div>`;
+  } else {
+    medHtml = `<small>Round ${t.round}</small><b>${t.totalPlaced}</b><span class="who-bid">coaster${t.totalPlaced===1?"":"s"} down</span>`;
+  }
+
+  const seats = seatOrder(t), N = seats.length, base = t.order.includes(me.pid) ? 90 : 270;
+  const seatHtml = [], spotHtml = [];
+  seats.forEach((pid, i) => {
+    const rad = (base + i * 360 / N) * Math.PI / 180;
+    const sx = 50 + 46 * Math.cos(rad), sy = 50 + 46 * Math.sin(rad);
+    const cx = 50 + 27.5 * Math.cos(rad), cy = 50 + 27.5 * Math.sin(rad);
     const deckN = t.deckCount[pid] || 0, stkN = t.stackCount[pid] || 0, fl = t.flipped[pid] || [];
     const unflipped = Math.max(0, stkN - fl.length);
+    const isAct = activePid === pid;
+    const passed = t.passed.includes(pid) && ph === "bid";
+    const stars = "★".repeat(t.points[pid]||0) + "☆".repeat(Math.max(0, room.settings.goal - (t.points[pid]||0)));
+    const badge = ph === "flip" && t.bidder === pid ? '<span class="badge chal">Challenger</span>'
+      : passed ? '<span class="badge">Passed</span>'
+      : deckN === 0 ? '<span class="badge">Out</span>' : "";
+    seatHtml.push(`<div class="b-seat ${isAct?"turn":""} ${deckN===0?"out":""} ${passed?"passed":""}" data-seat="${esc(pid)}" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%">
+      <span class="av">${face(pid,"face")}${isAct && room.deadline ? '<i class="tring"></i>' : ""}<span class="cnt" title="${deckN} coasters left">${deckN}</span></span>
+      <b>${pid===me.pid?"You":esc(P(pid).name)}</b>
+      <span class="stars">${stars}</span>${badge}</div>`);
+
+    // 3D Coaster Stack resting on the felt in front of this player
     const canFlip = ph === "flip" && isChal && unflipped > 0 && ((mine?.ownUnflipped || 0) === 0 || pid === me.pid);
     const showReal = ph === "roundover" || ph === "final";
     const discs = [];
-    fl.forEach(c => discs.push(`<span class="disc ${c}">${c==="fox"?"🦊":"🌸"}</span>`));
+    // Build bottom-to-top layered stack!
     if(showReal && t.allStacks?.[pid]){
-      t.allStacks[pid].slice(0, unflipped).reverse().forEach(c => discs.push(`<span class="disc ${c}" style="opacity:.65">${c==="fox"?"🦊":"🌸"}</span>`));
+      t.allStacks[pid].forEach((c, idx) => {
+        const isFl = idx >= unflipped;
+        discs.push(`<span class="disc ${c} ${isFl?"":"dim"}" style="--ty:${(-idx * 4.5).toFixed(1)}px">${c==="fox"?"🦊":"🌸"}</span>`);
+      });
     } else {
-      for(let i=0;i<unflipped;i++) discs.push(`<span class="disc back">${pid===me.pid?"?":""}</span>`);
+      for(let k = 0; k < unflipped; k++){
+        discs.push(`<span class="disc back" style="--ty:${(-k * 4.5).toFixed(1)}px">${k === unflipped - 1 ? "✦" : ""}</span>`);
+      }
+      fl.forEach((c, idx) => {
+        const layer = unflipped + idx;
+        const fresh = freshFlips[pid] === idx;
+        discs.push(`<span class="disc ${c} ${fresh?"flipped-fresh":""}" style="--ty:${(-layer * 4.5).toFixed(1)}px">${c==="fox"?"🦊":"🌸"}</span>`);
+      });
     }
-    const pts = "⭐".repeat(t.points[pid]||0) + "☆".repeat(Math.max(0, room.settings.goal - (t.points[pid]||0)));
-    const tag = canFlip ? `button type="button" data-flip="${pid}"` : "div";
-    const closeTag = canFlip ? "button" : "div";
-    return `<${tag} class="mat ${t.turn===pid&&ph!=="place"&&ph!=="roundover"&&ph!=="final"?"turn":""} ${canFlip?"pickable":""} ${deckN===0?"out":""} ${t.passed.includes(pid)?"passed":""}">
-      <div class="who">${face(pid,"mini")}<span>${esc(P(pid).name)}${pid===me.pid?" (you)":""}</span></div>
-      <div class="pts">${pts} · ${deckN} coaster${deckN===1?"":"s"}</div>
-      <div class="stack-visual">${discs.length ? discs.join("") : '<span class="hint">Empty mat</span>'}</div>
-      ${t.passed.includes(pid) && ph==="bid" ? '<span class="hint">Passed</span>' : canFlip ? '<span style="color:#4ADE80;font-weight:800;font-size:12px">Tap to flip!</span>' : ""}
-    </${closeTag}>`;
-  }).join("");
+    const tag = canFlip ? `button type="button" data-flip="${esc(pid)}"` : "div";
+    const endTag = canFlip ? "button" : "div";
+    spotHtml.push(`<${tag} class="c-spot ${canFlip?"pickable":""}" data-spot="${esc(pid)}" style="left:${cx.toFixed(2)}%;top:${cy.toFixed(2)}%" ${canFlip?`aria-label="Flip ${esc(P(pid).name)}'s top coaster"`:""}>
+      <span class="pad"></span>${discs.join("")}
+      ${stkN > 1 ? `<span class="stk-badge">${stkN}</span>` : ""}
+      ${canFlip ? '<span class="tap-lbl">Flip!</span>' : ""}
+    </${endTag}>`);
+  });
 
+  // Hand & Bid Controls
   let controls = "";
   if(mine && ph !== "final" && ph !== "roundover"){
     const canPlace = (ph === "place" && !mine.placed) || (ph === "turn" && isTurn);
@@ -261,9 +551,11 @@ function tableView(){
     const nums = [];
     for(let n = t.bid + 1; n <= t.totalPlaced; n++) nums.push(n);
     controls = `<div class="hand-bar">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>Your coasters in hand (${mine.hand.length})</b>
-        ${mine.myStack.length ? `<span class="hint">On your mat (bottom &rarr; top): ${mine.myStack.map(c=>c==="fox"?"🦊":"🌸").join(" ")}</span>` : ""}</div>
-      <div class="coasters">${mine.hand.length ? mine.hand.map(c=>`<button type="button" class="coaster-btn ${c}" data-place="${c}" ${canPlace?"":"disabled"} title="${c==="fox"?"Cursed Fox Mask (trap)":"Sakura Blossom (safe)"}">${c==="fox"?"🦊":"🌸"}</button>`).join("") : '<span class="hint">All your coasters are on the table!</span>'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <b>Your hand (${mine.hand.length})</b>
+        ${mine.myStack.length ? `<span class="hint">Your stack (bottom &rarr; top): ${mine.myStack.map(c=>c==="fox"?"🦊":"🌸").join(" ")}</span>` : '<span class="hint">Tap a coaster to place face-down</span>'}
+      </div>
+      <div class="coasters">${mine.hand.length ? mine.hand.map(c=>`<button type="button" class="coaster-btn ${c}" data-place="${c}" ${canPlace?"":"disabled"} title="${c==="fox"?"Cursed Fox Mask (trap)":"Sakura Blossom (safe)"}">${c==="fox"?"🦊":"🌸"}</button>`).join("") : '<span class="hint">All your coasters are stacked on the table!</span>'}</div>
       ${canBid ? `<div><p class="hint" style="text-align:center;margin-bottom:8px">Or bid how many safe blossoms you can flip:</p>
         <div class="bid-nums">${nums.map(n=>`<button type="button" data-bid="${n}">${n}</button>`).join("")}
         ${ph==="bid" && !isChal ? '<button type="button" class="btn small" data-pass="1" style="border-color:var(--danger);color:var(--danger)">Pass</button>' : ""}</div></div>`
@@ -271,14 +563,74 @@ function tableView(){
     </div>`;
   }
 
-  $("#stage").innerHTML = `<div class="fadeup">
-    <div class="eyebrow">Round ${t.round} · Goal: ${room.settings.goal} point${room.settings.goal===1?"":"s"}</div>
-    <h1 class="title">${esc(headline)}</h1>
-    ${t.bid > 0 ? `<div class="bid-banner"><small>Current bid by ${esc(P(t.bidder).name)}</small><b>${t.bid} Safe Blossom${t.bid===1?"":"s"}${ph==="flip"?` (${t.flippedSafe}/${t.bid} flipped)`:""}</b></div>` : ""}
-    <div class="mat-grid">${mats}</div>
-    ${controls}
+  const arenaCls = boom ? "ph-boom" : ph === "bid" ? "ph-bid" : ph === "flip" ? "ph-flip" : "";
+  $("#stage").innerHTML = `
+    <div class="b-arena ${arenaCls}" id="bluffArena">
+      <div class="b-felt"><span class="b-halo"></span></div>
+      <span class="b-spot" id="bSpot"></span>
+      <div class="b-center">${medHtml}</div>
+      ${spotHtml.join("")}
+      ${seatHtml.join("")}
+    </div>
+    <div class="status-pill ${statusCls}">${statusText}</div>
     <p class="logline">${esc(lastLog)}</p>
-  </div>`;
+    ${controls}`;
+
+  aimBluffSpot(true);
+  runBluffFx();
+}
+
+function aimBluffSpot(animate){
+  const spot = $("#bSpot"), arena = $("#bluffArena"), s = document.querySelector(".b-seat.turn .av");
+  if(!spot || !arena) return;
+  if(!s){ spot.style.opacity = 0; return; }
+  spot.style.opacity = 1;
+  const A = arena.getBoundingClientRect(), S = s.getBoundingClientRect();
+  const dx = S.left + S.width/2 - (A.left + A.width/2), dy = S.top + S.height/2 - (A.top + A.height/2);
+  const ang = Math.atan2(dy, dx) * 180 / Math.PI, len = Math.max(0, Math.hypot(dx, dy) - S.width * .55);
+  const from = spotAngle ?? ang, to = from + (((ang - from) % 360) + 540) % 360 - 180;
+  spot.style.transition = "none";
+  spot.style.transform = `rotate(${from}deg)`; spot.style.width = (spotLen || len) + "px";
+  if(animate){ spot.offsetWidth; spot.style.transition = ""; }
+  spot.style.transform = `rotate(${to}deg)`; spot.style.width = len + "px";
+  spotAngle = to; spotLen = len;
+}
+addEventListener("resize", () => aimBluffSpot(false));
+
+function runBluffFx(){
+  if(calm) return;
+  // Fly newly placed coasters from player seat onto their coaster spot!
+  const flyList = pendingFly.splice(0);
+  flyList.forEach(pid => {
+    const fromEl = document.querySelector(`[data-seat="${CSS.escape(pid)}"] .av`);
+    const toEl = document.querySelector(`[data-spot="${CSS.escape(pid)}"]`);
+    if(!fromEl || !toEl) return;
+    const F = fromEl.getBoundingClientRect(), T = toEl.getBoundingClientRect();
+    const d = document.createElement("div");
+    d.className = "fly-disc disc back";
+    d.textContent = "✦";
+    d.style.cssText = `width:${T.width}px;height:${T.height}px;left:${T.left}px;top:${T.top}px`;
+    document.body.appendChild(d);
+    const dx = (F.left + F.width/2) - (T.left + T.width/2), dy = (F.top + F.height/2) - (T.top + T.height/2);
+    d.animate([
+      {transform:`translate(${dx}px,${dy}px) scale(.55) rotate(-40deg)`, opacity:0},
+      {opacity:1, offset:.12},
+      {transform:`translate(${dx*.45}px,${dy*.45 - 32}px) scale(1.12) rotate(12deg)`, offset:.55},
+      {transform:"translate(0,0) scale(1) rotate(0deg)", opacity:1}
+    ], {duration:400, easing:"cubic-bezier(.2,.85,.3,1)"}).onfinish = () => d.remove();
+  });
+  // Burst neon ring on freshly flipped coaster!
+  Object.keys(freshFlips).forEach(pid => {
+    const sp = document.querySelector(`[data-spot="${CSS.escape(pid)}"]`);
+    if(!sp) return;
+    const r = sp.getBoundingClientRect();
+    const card = room.table?.flipped?.[pid]?.[freshFlips[pid]];
+    window.Juice?.burst(r.left + r.width/2, r.top + r.height/2, card === "fox" ? "#FF2E4D" : "#FF85B3");
+    if(card === "fox"){
+      const f = document.querySelector(".b-felt");
+      if(f){ const w = document.createElement("i"); w.className = "b-wave"; f.appendChild(w); setTimeout(()=>w.remove(), 740); }
+    }
+  });
 }
 
 document.addEventListener("click", async e=>{
@@ -307,8 +659,13 @@ function tickTimer(){
   const el = $("#timer"); if(!room || !room.deadline){ el.hidden = true; return; }
   const left = Math.max(0, Math.ceil(room.deadline - serverNow()));
   el.hidden = false; el.textContent = `${left}s`; el.classList.toggle("low", left <= 5);
+  const ring = document.querySelector(".b-seat.turn .tring");
+  if(ring && room.settings?.turnSec){
+    const p = Math.max(0, Math.min(1, (room.deadline - serverNow()) / room.settings.turnSec));
+    ring.style.setProperty("--p", p.toFixed(3));
+  }
 }
-setInterval(tickTimer, 200);
+setInterval(tickTimer, 120);
 const c0 = (new URLSearchParams(location.search).get("room")||"").toUpperCase();
 if(c0) openRoom(c0); else home();
 </script>

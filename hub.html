@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -10,168 +10,376 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Game Night">
-<meta name="theme-color" content="#1B1F4B">
-<title>Anime Game Night</title>
+<meta name="theme-color" content="#0A0D18">
+<title>Anime Game Night · Neon Tokyo Arcade</title>
 <link rel="stylesheet" href="/festival.css">
-<link rel="preload" as="image" href="/img/scenes/hero.webp?v=4">
+<link rel="preload" as="image" href="/img/scenes/arcade-hero.jpg?v=1">
 <style>
-/* The festival entrance: one wide painting of the street at night, then the stalls, one per game.
-   Each stall has its own curtain color so the games read apart at a glance. */
-.hero{position:relative;min-height:min(78vh,720px);display:grid;align-content:end;isolation:isolate;
-  padding:calc(18px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
-.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--night) url(/img/scenes/hero.webp?v=4) 70% 40%/cover no-repeat}
-/* darkens the painting where the words sit so they stay readable */
-.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--night) 0%,color-mix(in srgb,var(--night) 70%,transparent) 35%,transparent 70%),linear-gradient(90deg,color-mix(in srgb,var(--night) 75%,transparent),transparent 60%)}
-.hero-top{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:center}
-.hero-top .th-btn{background:color-mix(in srgb,var(--night) 60%,transparent)}
-.me{display:flex;align-items:center;gap:10px;border:0;background:color-mix(in srgb,var(--night) 60%,transparent);border-radius:999px;padding:4px 16px 4px 4px;cursor:pointer;text-align:left;box-shadow:inset 0 0 0 1px var(--line-2)}
-.me .pic{width:40px;height:40px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--night-3);font-size:20px;color:var(--gold)}
-.me .pic img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
-.me b{font-size:15px}
-.hero-copy{width:min(1180px,100%);margin:0 auto}
-.hero h1{font-size:clamp(52px,11vw,124px);line-height:.95;max-width:9ch}
-.hero p{margin:14px 0 22px;font-size:clamp(17px,2.2vw,20px);max-width:34ch;color:var(--paper)}
-.join{display:flex;gap:8px;max-width:360px}
-.join input{flex:1;min-width:0;background:var(--paper);color:var(--ink);border:0;border-radius:999px;padding:12px 18px;outline:none;font-size:18px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
-.join input::placeholder{letter-spacing:0;text-transform:none;font-weight:500;color:var(--ink-2)}
-.join input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.err{color:var(--danger);font-size:15px;min-height:1.5em;margin-top:8px}
+/* Neon Tokyo Arcade Hub: sleek floating glass nav, cinematic anime-lounge hero,
+   category filter bar, and interactive 3D-tilt neon spotlight game cards. */
+body{overflow-x:hidden}
 
-.stalls{width:min(1180px,100%);margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 72px max(16px,env(safe-area-inset-left,0px))}
-.stalls h2{font-size:clamp(28px,4vw,38px);margin:0 0 20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:22px}
-.stall{--cloth:var(--lantern);--on-cloth:var(--on-lantern);display:grid;grid-template-rows:auto 1fr;border-radius:var(--r-panel);overflow:hidden;background:var(--paper);color:var(--ink);text-decoration:none;transition:transform .2s}
-.stall:hover{transform:translateY(-4px)}
-.stall:focus-visible{outline-offset:4px}
-.stall .art{position:relative;display:grid}
-/* the picture sits under the curtain, not behind it, so nothing at the top gets hidden; only the flaps overlap it */
-.stall .art::after{content:"";aspect-ratio:3/2;margin-top:-10px;background:var(--night-2) var(--img) center/cover no-repeat}
-/* the stall's curtain, hanging above its picture */
-.stall .cloth{position:relative;z-index:1;padding:10px 16px 18px;background:var(--cloth);color:var(--on-cloth);
-  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 10px) no-repeat,repeating-linear-gradient(90deg,#000 0 calc(33.33% - 3px),transparent calc(33.33% - 3px) 33.33%) bottom/100% 10px no-repeat;
-          mask:linear-gradient(#000 0 0) top/100% calc(100% - 10px) no-repeat,repeating-linear-gradient(90deg,#000 0 calc(33.33% - 3px),transparent calc(33.33% - 3px) 33.33%) bottom/100% 10px no-repeat}
-.stall .cloth h3{font-size:30px;line-height:1.1}
-.stall .body{padding:16px 18px 18px;display:grid;gap:12px;align-content:space-between}
-.stall p{margin:0;font-size:16px;line-height:1.5}
-.stall .foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.stall .who{font-size:14px;color:var(--ink-2)}
-.stall .go{font-weight:700;border-radius:999px;padding:7px 16px;background:var(--ink);color:var(--paper);font-size:15px}
-.s-tier{--cloth:var(--gold);--on-cloth:var(--ink)}
-.s-draw{--cloth:var(--shrine);--on-cloth:var(--on-shrine)}
-.s-imp{--cloth:var(--paper-2);--on-cloth:var(--ink)}
-.s-wolf{--cloth:var(--ink);--on-cloth:var(--paper)}
-.s-code{--cloth:var(--lantern);--on-cloth:var(--on-lantern)}
-.s-lant{--cloth:#3F6FD8;--on-cloth:#F3EBDD}
-.s-forged{--cloth:#7A4BC7;--on-cloth:#F3EBDD}
-.s-scroll{--cloth:#D6456B;--on-cloth:#F3EBDD}
-.s-sil{--cloth:#1E7F9E;--on-cloth:#F3EBDD}
-.s-dial{--cloth:#E07A2F;--on-cloth:#1E1A2E}
-.s-clash{--cloth:#C93B8E;--on-cloth:#F3EBDD}
-.s-bluff{--cloth:#B53535;--on-cloth:#F3EBDD}
-.s-mask{--cloth:#2B8C82;--on-cloth:#F3EBDD}
-@media (max-width:600px){.hero{min-height:88vh}.hero::before{background-position:62% 30%}}
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) 10px max(18px,env(safe-area-inset-left,0px));
+  background:color-mix(in srgb,var(--night) 74%,transparent);
+  -webkit-backdrop-filter:blur(22px) saturate(1.5);
+  backdrop-filter:blur(22px) saturate(1.5);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);min-width:0}
+.brand-mark{
+  width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--lantern),var(--gold));
+  box-shadow:0 0 22px -4px color-mix(in srgb,var(--lantern) 85%,transparent);
+  color:var(--on-lantern);font-family:var(--display);font-weight:700;font-size:17px;
+}
+.brand-txt{display:grid;line-height:1.05;min-width:0}
+.brand-txt b{font-family:var(--display);font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-txt small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--shrine);font-weight:700}
+.top-act{display:flex;align-items:center;gap:8px;flex:none}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);display:inline-grid;place-items:center;padding:0;cursor:pointer;transition:background .15s,border-color .15s,transform .14s}
+.iconbtn:hover{background:rgba(255,255,255,.13);border-color:var(--line-2);transform:translateY(-1px)}
+.iconbtn svg{width:18px;height:18px}
+.me{
+  display:flex;align-items:center;gap:9px;border:1px solid var(--line);
+  background:rgba(255,255,255,.06);border-radius:999px;padding:3px 14px 3px 3px;
+  cursor:pointer;text-align:left;transition:background .16s,border-color .16s,transform .14s;
+}
+.me:hover{background:rgba(255,255,255,.12);border-color:color-mix(in srgb,var(--lantern) 60%,var(--line-2));transform:translateY(-1px)}
+.me .pic{width:32px;height:32px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--night-3);font-size:16px;font-weight:800;color:var(--gold)}
+.me .pic img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.me b{font-size:13.5px;font-weight:700}
+
+/* Cinematic Arcade Hero */
+.hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:min(66vh,590px);display:grid;align-content:end;
+  padding:42px max(18px,env(safe-area-inset-right,0px)) 44px max(18px,env(safe-area-inset-left,0px));
+  border-bottom:1px solid var(--line);
+}
+.hero::before{
+  content:"";position:absolute;inset:-4% 0;z-index:-2;
+  background:var(--night) url(/img/scenes/arcade-hero.jpg?v=1) 66% 42%/cover no-repeat;
+  transform:scale(1.02);
+  animation:heroFloat 18s ease-in-out infinite alternate;
+}
+@keyframes heroFloat{from{transform:scale(1.02) translate3d(0,0,0)}to{transform:scale(1.07) translate3d(-1.2%,1%,0)}}
+.hero::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:
+    linear-gradient(0deg,var(--night) 0%,color-mix(in srgb,var(--night) 78%,transparent) 34%,color-mix(in srgb,var(--night) 28%,transparent) 72%,color-mix(in srgb,var(--night) 50%,transparent) 100%),
+    linear-gradient(95deg,color-mix(in srgb,var(--night) 92%,transparent) 0%,color-mix(in srgb,var(--night) 55%,transparent) 48%,transparent 85%);
+}
+.hero-inner{width:min(1200px,100%);margin:0 auto;display:grid;gap:14px}
+.live-pill{
+  display:inline-flex;align-items:center;gap:8px;width:fit-content;
+  padding:5px 13px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  background:color-mix(in srgb,var(--night-2) 78%,transparent);
+  border:1px solid color-mix(in srgb,var(--shrine) 45%,var(--line));
+  color:var(--shrine);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+.live-pill i{width:8px;height:8px;border-radius:50%;background:var(--shrine);box-shadow:0 0 12px var(--shrine);animation:pulseDot 1.8s infinite}
+@keyframes pulseDot{50%{opacity:.35;transform:scale(.75)}}
+.hero h1{
+  font-size:clamp(44px,8.5vw,92px);line-height:.94;letter-spacing:-.04em;max-width:12ch;
+  text-shadow:0 12px 40px rgba(0,0,0,.65);
+}
+.hero h1 span{
+  background:linear-gradient(120deg,var(--fg) 15%,var(--gold) 58%,var(--lantern) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero p{margin:0;font-size:clamp(15.5px,2vw,18.5px);max-width:44ch;color:rgba(244,246,255,.84)}
+.hero-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
+.join{
+  display:flex;align-items:center;gap:6px;flex:0 1 390px;max-width:100%;
+  background:color-mix(in srgb,var(--night-2) 84%,transparent);
+  border:1px solid var(--line-2);border-radius:999px;padding:5px 5px 5px 18px;
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  box-shadow:0 16px 40px -14px rgba(0,0,0,.8);
+  transition:border-color .18s,box-shadow .18s;
+}
+.join:focus-within{
+  border-color:var(--lantern);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--lantern) 22%,transparent),0 16px 40px -14px rgba(0,0,0,.8);
+}
+.join input{
+  flex:1;min-width:0;background:transparent;color:var(--fg);border:0;outline:none;
+  font-family:var(--mono);font-size:15.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:8px 0;
+}
+.join input::placeholder{font-family:var(--body);letter-spacing:0;text-transform:none;font-weight:500;color:var(--muted)}
+.join .f-btn{padding:10px 22px;font-size:14.5px}
+.rand-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 18px;border-radius:999px;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.07);color:var(--fg);font-weight:700;font-size:14.5px;cursor:pointer;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  transition:background .16s,border-color .16s,transform .15s;
+}
+.rand-btn:hover{background:rgba(255,255,255,.14);border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
+.rand-btn:active{transform:scale(.96)}
+.err{color:var(--danger);font-size:14px;font-weight:600;min-height:1.3em}
+
+/* Arcade Library & Category Tabs */
+.library{width:min(1200px,100%);margin:0 auto;padding:28px max(18px,env(safe-area-inset-right,0px)) 86px max(18px,env(safe-area-inset-left,0px))}
+.lib-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.lib-head h2{font-size:clamp(24px,3.6vw,34px);letter-spacing:-.03em}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{
+  border:1px solid var(--line);background:rgba(255,255,255,.045);color:var(--muted);
+  border-radius:999px;padding:8px 16px;font-weight:700;font-size:13.5px;cursor:pointer;
+  transition:background .16s,color .16s,border-color .16s,transform .14s,box-shadow .18s;
+}
+.tab:hover{color:var(--fg);background:rgba(255,255,255,.09);border-color:var(--line-2)}
+.tab.on{
+  background:var(--fg);color:var(--ink);border-color:var(--fg);
+  box-shadow:0 8px 24px -8px rgba(255,255,255,.45);
+}
+.tab b{opacity:.6;font-weight:700;margin-left:4px;font-size:12px}
+
+/* Interactive Neon Arcade Game Cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:20px}
+.gcard{
+  --acc:var(--lantern);--mx:50%;--my:50%;
+  position:relative;display:grid;grid-template-rows:auto 1fr;
+  border-radius:22px;overflow:hidden;text-decoration:none;color:var(--fg);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--night-2) 92%,transparent),color-mix(in srgb,var(--night) 96%,transparent));
+  border:1px solid var(--line);
+  box-shadow:0 18px 42px -24px rgba(0,0,0,.9);
+  transform-style:preserve-3d;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .25s;
+  animation:cardIn .42s cubic-bezier(.2,.85,.25,1) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}}
+.gcard::before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:radial-gradient(320px circle at var(--mx) var(--my),color-mix(in srgb,var(--acc) 22%,transparent),transparent 65%);
+}
+.gcard:hover{
+  transform:translateY(-6px);
+  border-color:color-mix(in srgb,var(--acc) 68%,var(--line-2));
+  box-shadow:0 24px 54px -20px color-mix(in srgb,var(--acc) 45%,#000), 0 0 0 1px color-mix(in srgb,var(--acc) 35%,transparent);
+}
+.gcard:hover::before{opacity:1}
+.gcard:active{transform:translateY(-2px) scale(.985)}
+
+.gcard .art{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--night-3)}
+.gcard .art img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .48s cubic-bezier(.2,.8,.2,1),filter .3s;
+}
+.gcard.legacy-art .art img{
+  transform:scale(1.05);
+  filter:hue-rotate(var(--rh,-14deg)) saturate(1.34) contrast(1.18) brightness(.82);
+}
+.gcard:hover .art img{transform:scale(1.08)}
+.gcard.legacy-art:hover .art img{
+  transform:scale(1.11);
+  filter:hue-rotate(var(--rh,-14deg)) saturate(1.42) contrast(1.16) brightness(.9);
+}
+.gcard .art::after{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,13,24,.38) 0%,transparent 35%,color-mix(in srgb,var(--night-2) 96%,transparent) 100%);
+}
+.gcard.legacy-art .art::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(circle at 82% 20%,color-mix(in srgb,var(--acc) 55%,transparent),transparent 58%),
+    radial-gradient(circle at 18% 76%,rgba(0,224,255,.32),transparent 56%),
+    linear-gradient(160deg,rgba(12,16,42,.38),rgba(8,10,24,.48));
+  mix-blend-mode:hard-light;
+  opacity:.82;
+}
+.gcard .badges{
+  position:absolute;top:12px;left:12px;right:12px;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.gcard .tag{
+  font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;
+  background:rgba(10,13,24,.68);color:var(--fg);
+  border:1px solid color-mix(in srgb,var(--acc) 55%,rgba(255,255,255,.15));
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+.gcard .tag::before{
+  content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:1px;
+  background:var(--acc);box-shadow:0 0 8px var(--acc);
+}
+.gcard .pcnt{
+  font-family:var(--mono);font-size:11.5px;font-weight:700;
+  padding:4px 9px;border-radius:999px;
+  background:rgba(10,13,24,.66);color:rgba(244,246,255,.88);
+  border:1px solid rgba(255,255,255,.12);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+
+.gcard .body{position:relative;z-index:3;padding:14px 18px 18px;display:grid;gap:10px;align-content:space-between}
+.gcard h3{font-size:23px;line-height:1.12;letter-spacing:-.025em;display:flex;align-items:center;gap:8px}
+.gcard p{margin:0;font-size:14.5px;line-height:1.5;color:var(--muted)}
+.gcard .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:4px}
+.gcard .meta{font-size:12.5px;color:rgba(244,246,255,.65);font-weight:600}
+.gcard .play{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 15px;border-radius:999px;font-weight:800;font-size:13px;
+  background:color-mix(in srgb,var(--acc) 18%,rgba(255,255,255,.06));
+  color:var(--fg);border:1px solid color-mix(in srgb,var(--acc) 55%,transparent);
+  transition:background .18s,color .18s,transform .15s,box-shadow .18s;
+}
+.gcard:hover .play{
+  background:var(--acc);color:#080B14;border-color:var(--acc);
+  box-shadow:0 0 20px -2px color-mix(in srgb,var(--acc) 85%,transparent);
+  transform:translateX(2px);
+}
+
+@media (max-width:600px){
+  .hero{min-height:58vh;padding-top:28px;padding-bottom:32px}
+  .brand-txt small{display:none}
+  .me b{display:none}
+  .me{padding:3px}
+}
 </style>
 </head>
 <body>
+<nav class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-mark">A</span>
+    <span class="brand-txt"><b>Anime Game Night</b><small>Neon Tokyo Arcade</small></span>
+  </a>
+  <div class="top-act" data-theme-slot>
+    <button class="me" id="meBtn" type="button" title="Your avatar"><span class="pic" id="mePic"></span><b>Avatar</b></button>
+  </div>
+</nav>
+
 <header class="hero">
-  <div class="hero-top" data-theme-slot><button class="me" id="meBtn" type="button"><span class="pic" id="mePic"></span><b>Your picture</b></button></div>
-  <div class="hero-copy">
-    <h1>Anime Game Night</h1>
-    <p>Party games for you and your friends. Pick a stall, share the code.</p>
-    <form class="join" id="joinForm"><input id="code" maxlength="6" placeholder="Got a room code?" autocomplete="off" aria-label="Room code"><button class="f-btn primary">Join</button></form>
+  <div class="hero-inner">
+    <span class="live-pill"><i></i>14 Multiplayer Games · Zero Downloads</span>
+    <h1>Play together.<br><span>Chaos included.</span></h1>
+    <p>Jump into a room with friends on Discord or mobile—anime OP &amp; music quizzes, card tables, live sketching, bluffing, and social deduction.</p>
+    <div class="hero-bar">
+      <form class="join" id="joinForm">
+        <input id="code" maxlength="6" placeholder="Enter room code..." autocomplete="off" aria-label="Room code">
+        <button class="f-btn primary">Join</button>
+      </form>
+      <button class="rand-btn" id="randBtn" type="button">Surprise us</button>
+    </div>
     <div class="err" id="err" role="alert"></div>
   </div>
 </header>
 
-<main class="stalls">
-  <h2>Pick a stall</h2>
-  <div class="grid">
-    <a class="stall s-code" href="/codenames">
-      <div class="art" style="--img:url(/img/scenes/stall-codenames.webp?v=4)"><div class="cloth"><h3>Codenames</h3></div></div>
-      <div class="body"><p>Two teams, one grid of words. Your spymaster gives one-word clues.</p>
-        <div class="foot"><span class="who">2+ players, AI spymaster</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-lant" href="/lantern">
-      <div class="art" style="--img:url(/img/scenes/stall-lantern.webp?v=4)"><div class="cloth"><h3>Last Lantern</h3></div></div>
-      <div class="body"><p>Match the colour or symbol and empty your hand first. Call your last card before someone catches you.</p>
-        <div class="foot"><span class="who">2 to 10 players</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-forged" href="/forged">
-      <div class="art" style="--img:url(/img/scenes/stall-forged.jpg?v=1)"><div class="cloth"><h3>Forged Brush</h3></div></div>
-      <div class="body"><p>Everyone draws the same secret subject—one stroke per turn—except the Forger, who has to fake it.</p>
-        <div class="foot"><span class="who">3 to 10 players</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-scroll" href="/scroll">
-      <div class="art" style="--img:url(/img/scenes/stall-scroll.jpg?v=1)"><div class="cloth"><h3>Broken Scroll</h3></div></div>
-      <div class="body"><p>Write a prompt, draw it, guess the drawing, repeat—then watch every scroll derail in the reveal theater.</p>
-        <div class="foot"><span class="who">2 to 12 players · 3 modes</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-sil" href="/silhouette">
-      <div class="art" style="--img:url(/img/scenes/stall-silhouette.jpg?v=1)"><div class="cloth"><h3>Guess the Silhouette</h3></div></div>
-      <div class="body"><p>Name anime characters as shadows, blurs, or zooms clear up—or play Higher or Lower and AI speed trivia.</p>
-        <div class="foot"><span class="who">1 to 12 players · 3 modes</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-dial" href="/dial">
-      <div class="art" style="--img:url(/img/scenes/stall-dial.jpg?v=1)"><div class="cloth"><h3>Festival Dial</h3></div></div>
-      <div class="body"><p>One Psychic sees the hidden target on a spectrum and gives one clue. Everyone else slides the fan to match.</p>
-        <div class="foot"><span class="who">2 to 12 players</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-clash" href="/clash">
-      <div class="art" style="--img:url(/img/scenes/stall-clash.jpg?v=1)"><div class="cloth"><h3>Caption Clash</h3></div></div>
-      <div class="body"><p>Secretly write the funniest answer to unhinged prompts, vote head-to-head, and watch the AI roast the losers.</p>
-        <div class="foot"><span class="who">3 to 10 players · AI roast</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-bluff" href="/bluff">
-      <div class="art" style="--img:url(/img/scenes/stall-bluff.jpg?v=1)"><div class="cloth"><h3>Fox's Bluff</h3></div></div>
-      <div class="body"><p>Hide Sakura Blossoms or your Cursed Fox Mask face-down, raise the stakes, and flip coasters without hitting a trap.</p>
-        <div class="foot"><span class="who">2 to 8 players · mind games</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-mask" href="/mask">
-      <div class="art" style="--img:url(/img/scenes/stall-mask.jpg?v=1)"><div class="cloth"><h3>Forehead Mask</h3></div></div>
-      <div class="body"><p>Everyone sees the character stuck to your forehead except you. Ask Yes/No questions and guess who you are first.</p>
-        <div class="foot"><span class="who">2 to 10 players · VC friendly</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-wolf" href="/werewolf">
-      <div class="art" style="--img:url(/img/scenes/stall-werewolf.webp?v=4)"><div class="cloth"><h3>Werewolf</h3></div></div>
-      <div class="body"><p>Secret roles. Wolves hunt at night, the village votes by day.</p>
-        <div class="foot"><span class="who">4+ players, 13 roles</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-imp" href="/imposter">
-      <div class="art" style="--img:url(/img/scenes/stall-imposter.webp?v=4)"><div class="cloth"><h3>Imposter</h3></div></div>
-      <div class="body"><p>Everyone gets the same word except one. Give clues, find the fake.</p>
-        <div class="foot"><span class="who">3+ players</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-tier" href="/tierlist">
-      <div class="art" style="--img:url(/img/scenes/stall-tierlist.webp?v=4)"><div class="cloth"><h3>Tier List</h3></div></div>
-      <div class="body"><p>Rank anime, characters or anything else together. The AI roasts your taste.</p>
-        <div class="foot"><span class="who">Any group size</span><span class="go">Play</span></div></div>
-    </a>
-    <a class="stall s-draw" href="/draw">
-      <div class="art" style="--img:url(/img/scenes/stall-draw.webp?v=4)"><div class="cloth"><h3>Draw It</h3></div></div>
-      <div class="body"><p>The AI picks what you draw. Friends rate it, the AI scores it.</p>
-        <div class="foot"><span class="who">Solo or teams</span><span class="go">Play</span></div></div>
-    </a>
+<main class="library">
+  <div class="lib-head">
+    <h2>Choose your game</h2>
+    <div class="tabs" id="tabs" role="tablist">
+      <button type="button" class="tab on" data-cat="all">All<b>14</b></button>
+      <button type="button" class="tab" data-cat="cards">Card &amp; Bluff<b>2</b></button>
+      <button type="button" class="tab" data-cat="draw">Draw &amp; Laugh<b>4</b></button>
+      <button type="button" class="tab" data-cat="social">Social &amp; Deduction<b>4</b></button>
+      <button type="button" class="tab" data-cat="quiz">Quiz &amp; Rank<b>4</b></button>
+    </div>
   </div>
+  <div class="grid" id="grid"></div>
 </main>
+
 <script src="/avatars.js"></script>
 <script src="/theme.js"></script>
+<script src="/juice.js"></script>
 <script>
-// your picture lives on this device and is used whenever you join a game
+const GAMES = [
+  {slug:"op", title:"Guess the OP", cat:"quiz", tag:"Music Quiz", players:"1–12P", meta:"Anime OPs & Normal Songs", acc:"#C084FC", img:"/img/scenes/arcade-op.jpg?v=1",
+    desc:"Blast live 30-second previews of iconic Anime Openings—or switch to Global Pop, Hip-Hop, K-Pop, Rock, Bollywood, or any Custom Artist!"},
+  {slug:"lantern", title:"Last Lantern", cat:"cards", tag:"Card Table", players:"2–10P", meta:"Fast Uno · Speed mode", acc:"#38BDF8", img:"/img/scenes/arcade-lantern.jpg?v=1",
+    desc:"Match the colour or symbol and empty your hand first. Stack +2s and catch anyone who forgets their last card."},
+  {slug:"bluff", title:"Fox's Bluff", cat:"cards", tag:"Bluff Table", players:"2–8P", meta:"Pure mind games", acc:"#FF4D6D", img:"/img/scenes/arcade-bluff.jpg?v=1",
+    desc:"Hide Sakura Blossoms or your Cursed Fox Mask face-down, raise the bid, and flip coasters without hitting a trap."},
+  {slug:"forged", title:"Forged Brush", cat:"draw", tag:"Fake Artist", players:"3–10P", meta:"1 stroke per turn", acc:"#A855F7", img:"/img/scenes/arcade-forged.jpg?v=1",
+    desc:"Everyone draws the same secret subject together—one stroke each—except the Forger, who has to fake it."},
+  {slug:"scroll", title:"Broken Scroll", cat:"draw", tag:"Telephone", players:"2–12P", meta:"3 modes · Comic export", acc:"#FF4D9D", img:"/img/scenes/arcade-scroll.jpg?v=1",
+    desc:"Write a wild prompt, draw it, guess the drawing, repeat—then watch every chain derail in the reveal theater."},
+  {slug:"clash", title:"Caption Clash", cat:"draw", tag:"Comedy Battle", players:"3–10P", meta:"2× Finale · AI Roast", acc:"#F43F8E", rh:"-18deg", img:"/img/scenes/stall-clash.jpg?v=1", legacy:true,
+    desc:"Secretly write the funniest reply to unhinged prompts, vote head-to-head, and watch the AI roast the losers."},
+  {slug:"silhouette", title:"Guess the Silhouette", cat:"quiz", tag:"Speed Quiz", players:"1–12P", meta:"Reveal · Higher/Lower · AI", acc:"#00E0FF", img:"/img/scenes/arcade-silhouette.jpg?v=1",
+    desc:"Name anime characters as shadows, blurs, or zooms clear up—or play Higher or Lower and AI speed trivia."},
+  {slug:"dial", title:"Festival Dial", cat:"quiz", tag:"Spectrum", players:"2–12P", meta:"Zero typing for guessers", acc:"#FF9F43", img:"/img/scenes/arcade-dial.jpg?v=1",
+    desc:"One Psychic sees a hidden target on a wild spectrum and gives one clue. Everyone else slides the dial to match."},
+  {slug:"mask", title:"Forehead Mask", cat:"social", tag:"Who Am I?", players:"2–10P", meta:"Anime & Characters · Hints", acc:"#1FE6A8", img:"/img/scenes/arcade-mask.jpg?v=1",
+    desc:"Play Which Character Am I? or Which Anime Am I? with genre filters. Unlock progressive hints or ask Yes/No questions!"},
+  {slug:"codenames", title:"Codenames", cat:"social", tag:"Team Spy", players:"2+P", meta:"AI Spymaster optional", acc:"#FF6B4A", img:"/img/scenes/arcade-codenames.jpg?v=1",
+    desc:"Two teams, one grid of words or anime characters. Give one-word clues and find all your agents before the assassin."},
+  {slug:"werewolf", title:"Werewolf", cat:"social", tag:"Hidden Roles", players:"4+P", meta:"13 roles · Built-in chat", acc:"#818CF8", rh:"-10deg", img:"/img/scenes/stall-werewolf.webp?v=4", legacy:true,
+    desc:"Secret roles under a midnight sky. Wolves hunt at night, special powers clash, and the village votes by day."},
+  {slug:"imposter", title:"Imposter", cat:"social", tag:"Word Fake", players:"3+P", meta:"Undercover & Clueless", acc:"#FFC83D", rh:"-22deg", img:"/img/scenes/stall-imposter.webp?v=4", legacy:true,
+    desc:"Everyone gets the same secret word except one. Give careful clues, spot the fake, and survive the vote."},
+  {slug:"tierlist", title:"Tier List", cat:"quiz", tag:"Rank & Roast", players:"Any", meta:"Reveal show · AI Roast", acc:"#FBBF24", rh:"-16deg", img:"/img/scenes/stall-tierlist.webp?v=4", legacy:true,
+    desc:"Rank anime, characters, movies, or food together. Watch every board reveal and get roasted mercilessly by AI."},
+  {slug:"draw", title:"Draw It", cat:"draw", tag:"Sketch Arena", players:"Solo / Teams", meta:"Shared canvas · AI Score", acc:"#2DD4BF", rh:"12deg", img:"/img/scenes/stall-draw.webp?v=4", legacy:true,
+    desc:"The AI invents ridiculous prompts to draw solo or on a live team canvas—then friends or AI judge the masterpieces."},
+];
+
+let activeCat = "all";
+const grid = document.querySelector("#grid");
+
+function renderGrid(){
+  const list = activeCat === "all" ? GAMES : GAMES.filter(g => g.cat === activeCat);
+  grid.innerHTML = list.map((g, i) => `
+    <a class="gcard ${g.legacy ? "legacy-art" : ""}" href="/${g.slug}" style="--acc:${g.acc};${g.rh ? `--rh:${g.rh};` : ""}animation-delay:${Math.min(i * 35, 280)}ms">
+      <div class="art">
+        <img src="${g.img}" alt="${g.title}" loading="${i < 4 ? "eager" : "lazy"}">
+        <div class="badges"><span class="tag">${g.tag}</span><span class="pcnt">${g.players}</span></div>
+      </div>
+      <div class="body">
+        <div>
+          <h3>${g.title}</h3>
+          <p>${g.desc}</p>
+        </div>
+        <div class="foot"><span class="meta">${g.meta}</span><span class="play">Play →</span></div>
+      </div>
+    </a>`).join("");
+}
+
+grid.addEventListener("pointermove", e => {
+  const c = e.target.closest(".gcard");
+  if(!c || e.pointerType === "touch") return;
+  const r = c.getBoundingClientRect();
+  c.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
+  c.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+});
+grid.addEventListener("click", e => { if(e.target.closest(".gcard") && window.Juice) Juice.sfx.click(); });
+
+document.querySelector("#tabs").onclick = e => {
+  const b = e.target.closest("[data-cat]");
+  if(!b) return;
+  activeCat = b.dataset.cat;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t === b));
+  if(window.Juice) Juice.sfx.click();
+  renderGrid();
+};
+
+document.querySelector("#randBtn").onclick = () => {
+  if(window.Juice) Juice.sfx.wild();
+  const pool = activeCat === "all" ? GAMES : GAMES.filter(g => g.cat === activeCat);
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  setTimeout(() => { location.href = "/" + pick.slug; }, 160);
+};
+
+if(window.Juice) Juice.mountMute(document.querySelector(".top-act"));
 function showMe(){ const s = Avatars.mine(); document.querySelector("#mePic").innerHTML = s ? `<img src="${s.replace(/"/g, "")}" alt="">` : "+"; }
-document.querySelector("#meBtn").onclick = ()=>Avatars.open(async ()=>{ setTimeout(showMe, 50); });
+document.querySelector("#meBtn").onclick = () => Avatars.open(async () => { setTimeout(showMe, 50); });
 showMe();
+renderGrid();
+
 async function go(code){
-  const r = await fetch("/api/rooms/" + code + "?v=-1").catch(()=>null);
-  if(!r || !r.ok){ document.querySelector("#err").textContent = "No room with that code. Check the letters and try again."; return; }
+  const r = await fetch("/api/rooms/" + code + "?v=-1").catch(() => null);
+  if(!r || !r.ok){ document.querySelector("#err").textContent = "No room with that code. Check the letters and try again."; if(window.Juice) Juice.sfx.warn(); return; }
   const room = await r.json();
+  if(window.Juice) Juice.sfx.turn();
   location.href = `/${room.game || "tierlist"}?room=${code}`;
 }
-document.querySelector("#joinForm").onsubmit = e=>{
+document.querySelector("#joinForm").onsubmit = e => {
   e.preventDefault();
   const code = document.querySelector("#code").value.trim().toUpperCase();
   if(code) go(code);
 };
-// old invite links pointed at /?room=CODE: send them to the right game
 const q = new URLSearchParams(location.search).get("room");
 if(q) go(q.toUpperCase());
 </script>

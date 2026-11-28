@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#1B1F4B">
+<meta name="theme-color" content="#0A0D18">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -102,29 +102,47 @@ select option{background:var(--night)}
 .tg i{width:10px;height:10px;border-radius:50%}
 .hint{font-size:13px;color:var(--muted);margin:0}
 
-/* ---------- the round table ---------- */
+/* ---------- the round neon council table ---------- */
 .tablewrap{position:relative;width:min(100%,600px);aspect-ratio:1;margin:22px auto 0}
-.tabletop{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle at 50% 42%,rgba(255,200,120,.22),transparent 55%),radial-gradient(circle,var(--wood1),var(--wood2) 75%);box-shadow:0 0 0 6px rgba(255,220,170,.08),0 0 0 14px rgba(0,0,0,.35),0 30px 80px -10px rgba(0,0,0,.9),inset 0 0 50px rgba(0,0,0,.7);display:grid;place-items:center;text-align:center;padding:12%}
-.tabletop::after{content:"";position:absolute;inset:9%;border-radius:50%;border:1px solid rgba(255,220,170,.12)}
+.tabletop{
+  position:absolute;inset:19%;border-radius:50%;--rail:rgba(169,139,255,.72);
+  background:
+    repeating-conic-gradient(from 0deg,rgba(255,255,255,.02) 0 3deg,transparent 3deg 15deg),
+    radial-gradient(circle at 50% 38%,#1b2042 0%,#0e1229 56%,#070914 100%);
+  box-shadow:
+    0 0 0 2.5px var(--rail),
+    0 0 0 10px rgba(255,255,255,.03),
+    0 0 58px 4px color-mix(in srgb,var(--rail) 45%,transparent),
+    0 32px 76px -14px rgba(0,0,0,.95),
+    inset 0 0 60px rgba(0,0,0,.78);
+  display:grid;place-items:center;text-align:center;padding:12%;
+  transition:box-shadow .9s ease;
+}
+body.s-day .tabletop,body.s-dawn .tabletop,body.s-village .tabletop{--rail:rgba(255,200,61,.8)}
+body.s-vote .tabletop,body.s-wolves .tabletop{--rail:rgba(255,62,108,.88)}
+.tabletop::before{content:"";position:absolute;inset:8%;border-radius:50%;border:1px solid color-mix(in srgb,var(--rail) 42%,transparent);pointer-events:none}
+.tabletop::after{content:"";position:absolute;inset:18%;border-radius:50%;border:1px dashed rgba(255,255,255,.1);pointer-events:none;animation:spinSlow 48s linear infinite}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
 .center{position:relative;z-index:1;display:grid;gap:4px;justify-items:center}
 .center .ico{width:clamp(34px,10vw,58px);aspect-ratio:1;border-radius:50%}
-.center .ico.moonico{background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 60%,#c99d47);box-shadow:0 0 30px rgba(255,233,176,.6);animation:glow 3s ease-in-out infinite}
-.center .ico.sunico{background:radial-gradient(circle,#fff3c4,#ffb347 60%,#ff7a3d);box-shadow:0 0 30px rgba(255,150,70,.6)}
-.center .ico.voteico{background:radial-gradient(circle,#ff8aa0,var(--blood) 60%,var(--blood2));box-shadow:0 0 30px rgba(227,38,75,.6);animation:glow 1.6s ease-in-out infinite}
-@keyframes glow{50%{transform:scale(1.08)}}
+.center .ico.moonico{background:radial-gradient(circle at 35% 35%,#fffaf0,var(--moon) 60%,#c99d47);box-shadow:0 0 36px rgba(255,233,176,.68);animation:glow 3s ease-in-out infinite}
+.center .ico.sunico{background:radial-gradient(circle,#fff3c4,#ffb347 60%,#ff7a3d);box-shadow:0 0 36px rgba(255,150,70,.72);animation:glow 3s ease-in-out infinite}
+.center .ico.voteico{background:radial-gradient(circle,#ff8aa0,var(--blood) 60%,var(--blood2));box-shadow:0 0 38px rgba(255,62,108,.75);animation:glow 1.5s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.1)}}
 .center h2{font-size:clamp(16px,4.4vw,26px);line-height:1.15}
-.center .clock{font-weight:900;font-size:clamp(18px,5.5vw,30px);font-variant-numeric:tabular-nums;color:var(--moon)}
+.center .clock{font-family:var(--mono);font-weight:800;font-size:clamp(18px,5.5vw,30px);font-variant-numeric:tabular-nums;color:var(--moon)}
 .center .clock.low{color:var(--blood);animation:glow 1s infinite}
 .center .small{font-size:clamp(10px,2.8vw,13px);color:var(--muted);font-weight:700}
-.seat{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;width:var(--sz);border:0;background:none;padding:0;transition:transform .2s,filter .4s;z-index:2}
-.seat .av{width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.22);background:var(--night-3);display:grid;place-items:center;font-weight:900;font-size:calc(var(--sz)*.38);color:#0b0820;box-shadow:0 10px 24px -8px rgba(0,0,0,.95);position:relative}
+.seat{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:4px;width:var(--sz);border:0;background:none;padding:0;transition:transform .22s cubic-bezier(.2,1.4,.4,1),filter .4s;z-index:2}
+.seat .av{width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;border:2.5px solid rgba(255,255,255,.26);background:var(--night-3);display:grid;place-items:center;font-weight:900;font-size:calc(var(--sz)*.38);color:#0b0820;box-shadow:0 12px 26px -8px rgba(0,0,0,.95);position:relative;transition:box-shadow .25s,border-color .25s}
 .seat .av img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
-.seat .nm{font-weight:700;font-size:13px;max-width:calc(var(--sz) + 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 6px #000;background:rgba(5,6,15,.55);border-radius:999px;padding:0 7px}
-.seat.me .av{border-color:var(--moon)}
-.seat.pick{cursor:pointer}
-.seat.pick:hover{transform:translate(-50%,-50%) scale(1.07)}
-.seat.sel .av{border-color:var(--moon);box-shadow:0 0 0 4px rgba(255,233,176,.3),0 0 26px rgba(255,233,176,.55)}
-.seat.redsel .av{border-color:var(--blood);box-shadow:0 0 0 4px rgba(227,38,75,.35),0 0 26px rgba(227,38,75,.6)}
+.seat .nm{font-weight:700;font-size:12.5px;max-width:calc(var(--sz) + 36px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 6px #000;background:rgba(10,13,24,.84);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:1px 9px}
+.seat.me .av{border-color:var(--moon);box-shadow:0 0 0 2px rgba(255,233,184,.3),0 10px 24px -6px #000}
+.seat.pick{cursor:pointer;transition:transform .18s cubic-bezier(.2,1.5,.4,1)}
+.seat.pick:hover{transform:translate(-50%,-50%) scale(1.1)}
+.seat.sel .av{border-color:var(--moon);box-shadow:0 0 0 4px rgba(255,233,176,.35),0 0 32px rgba(255,233,176,.65)}
+.seat.redsel .av{border-color:var(--blood);box-shadow:0 0 0 4px rgba(227,38,75,.4),0 0 32px rgba(227,38,75,.72)}
+.lanterns{display:none!important}
 .seat.off{cursor:not-allowed}
 .seat.dead .av{filter:grayscale(1) brightness(.55)}
 .seat.dead .av::after{content:"";position:absolute;inset:0;background:linear-gradient(45deg,transparent 46%,var(--blood) 46% 54%,transparent 54%)}
@@ -134,7 +152,7 @@ select option{background:var(--night)}
 .seat .cnt{position:absolute;top:-4px;left:-6px;min-width:22px;height:22px;border-radius:999px;background:var(--blood);color:#fff;font-weight:900;font-size:12px;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 12px rgba(227,38,75,.7);animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{from{transform:scale(.3)}}
 .lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
-.lines path{fill:none;stroke-width:.7;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:0}
+.lines path{fill:none;stroke-width:.85;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:0;filter:drop-shadow(0 0 4px currentColor)}
 .lines path.new{animation:draw .6s ease-out}
 @keyframes draw{from{stroke-dashoffset:200}}
 .r-wolf{--c1:var(--wolf1);--c2:var(--wolf2)} .r-seer{--c1:var(--seer1);--c2:var(--seer2)} .r-doctor{--c1:var(--doc1);--c2:var(--doc2)}
@@ -224,7 +242,7 @@ details summary{cursor:pointer;font-weight:800}
   <svg class="trees" viewBox="0 0 1200 200" preserveAspectRatio="none"><path fill="#04050c" d="M0 200 L0 140 L30 90 L45 130 L70 60 L95 130 L110 100 L130 140 L160 70 L190 140 L220 110 L240 150 L270 80 L300 150 L340 120 L360 150 L400 90 L430 150 L470 130 L500 160 L540 100 L570 160 L620 140 L650 170 L700 110 L730 160 L770 130 L800 165 L840 90 L870 160 L900 120 L930 160 L970 70 L1000 150 L1030 120 L1060 160 L1100 80 L1130 150 L1160 110 L1200 140 L1200 200 Z"/></svg>
 </div>
 <div class="app">
-  <header class="top noren"><a class="noren-back" href="/" aria-label="Back to all games">&larr; Festival</a><h1>Werewolf</h1><button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button><span class="spacer"></span></header>
+  <header class="top noren"><a class="noren-back" href="/" aria-label="Back to all games">&larr; Arcade</a><h1>Werewolf</h1><button type="button" class="code" id="hCode" title="Copy invite link" aria-label="Copy invite link" hidden></button><span class="spacer"></span></header>
   <main class="stage" id="stage"></main>
 </div>
 <div class="hostbar" id="hostbar" hidden></div>
@@ -237,6 +255,7 @@ details summary{cursor:pointer;font-weight:800}
 <script src="/pranks.js"></script>
 <script src="/roombar.js"></script>
 <script src="/howto.js"></script>
+<script src="/juice.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -495,8 +514,8 @@ function popReveal(c, ph){
   $("#overlay").innerHTML = `<div class="reveal-pop"><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:16px">${c.dead.map((pid,i)=>`<div class="cardwrap" style="margin:0">${cardHTML(pid, c.roles?.[pid] || "hidden", {id:"dc"+i})}</div>`).join("")}</div></div>`;
   if(many) document.querySelectorAll(".reveal-pop .card").forEach(cd=>cd.style.width = `min(${c.dead.length > 2 ? 150 : 190}px, ${c.dead.length > 2 ? 30 : 44}vw)`);
   c.dead.forEach((pid,i)=>{
-    setTimeout(()=>$("#dc"+i)?.classList.add("flip"), 900 + i*500);
-    setTimeout(()=>$("#dc"+i)?.insertAdjacentHTML("beforeend", `<span class="stamp">${stamp}</span>`), 950 + i*500);
+    setTimeout(()=>{ $("#dc"+i)?.classList.add("flip"); window.Juice?.sfx.flip(); }, 900 + i*500);
+    setTimeout(()=>{ $("#dc"+i)?.insertAdjacentHTML("beforeend", `<span class="stamp">${stamp}</span>`); window.Juice?.sfx.boom(); window.Juice?.shake($(".tablewrap"), 8); }, 950 + i*500);
   });
   // the cards step aside after a few seconds so everyone sees the table again
   setTimeout(()=>{ if($("#overlay").dataset.cid === c.id) $("#overlay").innerHTML = ""; }, 5600 + c.dead.length*400);
@@ -504,13 +523,13 @@ function popReveal(c, ph){
 $("#stage").addEventListener("click", async e=>{
   const s = e.target.closest(".seat.pick"), v = e.target.closest("[data-vote]"), pass = e.target.closest("[data-pass]"), sh = e.target.closest("[data-shield]");
   try{
-    if(v){ await act("vote", {target:"skip"}); buzz(30); return; }
-    if(pass){ await act("night", {target:"pass"}); buzz(30); return; }
-    if(sh){ await act("shamanshield", {target:sh.dataset.shield}); toast(`${P(sh.dataset.shield).name} is protected today`); return; }
+    if(v){ await act("vote", {target:"skip"}); window.Juice?.sfx.click(); buzz(30); return; }
+    if(pass){ await act("night", {target:"pass"}); window.Juice?.sfx.click(); buzz(30); return; }
+    if(sh){ await act("shamanshield", {target:sh.dataset.shield}); window.Juice?.sfx.wild(); toast(`${P(sh.dataset.shield).name} is protected today`); return; }
     if(!s) return;
     const pid = s.dataset.seat, ph = room.phase;
-    if(ph === "night"){ await act("night", {target:pid}); buzz(40); if(nightMode() === "seer") seerVision(pid); }
-    else if(ph === "vote"){ await act("vote", {target:pid}); buzz(40); }
+    if(ph === "night"){ await act("night", {target:pid}); window.Juice?.sfx.pop(); buzz(40); if(nightMode() === "seer") seerVision(pid); }
+    else if(ph === "vote"){ await act("vote", {target:pid}); window.Juice?.sfx.pop(); buzz(40); }
   }catch(err){ toast(err.message); }
 });
 function seerVision(pid){
@@ -529,6 +548,7 @@ function syncVision(){
   box.dataset.shown = "1";
   const res = $("#visionRes");
   if(res){ res.style.color = v.evil ? "var(--blood)" : "var(--mint)"; res.textContent = v.evil ? "IS EVIL" : "is Good"; }
+  if(v.evil) window.Juice?.sfx.boom(); else window.Juice?.sfx.wild();
   buzz(v.evil ? [200,80,200] : 80);
 }
 $("#hCode").onclick = async ()=>{
@@ -596,7 +616,7 @@ function rolesView(){
       ${pack.length ? `<div class="panel"><b style="color:var(--wolf2)">Your evil team: ${pack.map(pid=>`${esc(P(pid).name)} (${rname(P(pid).role)})`).join(", ")}</b></div>` : ""}
       ${mine.ready ? `<p class="sub">Waiting for everyone · ${ready}/${ps.length} ready</p>` : `<button class="btn primary wide" id="readyBtn">I've memorized it</button>`}</div>
     <p class="hint" style="text-align:center;margin-top:8px">Hide your screen, then tap the card. Night falls when everyone is ready.</p>`;
-  $("#myCard").onclick = ()=>{ revealed = !revealed; $("#myCard").classList.toggle("flip", revealed); if(revealed){ buzz(80); $("#after").hidden = false; } };
+  $("#myCard").onclick = ()=>{ revealed = !revealed; $("#myCard").classList.toggle("flip", revealed); window.Juice?.sfx.flip(); if(revealed){ buzz(80); $("#after").hidden = false; } };
   if($("#readyBtn")) $("#readyBtn").onclick = ()=>act("ready").catch(err=>toast(err.message));
 }
 
@@ -628,11 +648,14 @@ function final(){
     ${prankAwards()}
     <div class="minicards">${ps.map((pid,i)=>cardHTML(pid, P(pid).role, {mini:true, dead:!P(pid).alive, st:P(pid).alive?"SURVIVED":"DIED", delay:.3+i*.15})).join("")}</div></div>`;
   setTimeout(()=>document.querySelectorAll(".minicards .card").forEach(c=>c.classList.add("flip")), 250);
+  window.Juice?.sfx.win();
+  window.Juice?.confetti({colors: w === "wolves" ? ["#FF3E6C","#FFC83D","#B56BFF","#FFFFFF"] : ["#00E0FF","#1FE6A8","#FFC83D","#FFFFFF"]});
 }
 
 Chat.mount({act});
 Pranks.mount({act, seat: pid => document.querySelector(`.seat[data-seat="${pid}"] .av`)});
 RoomBar.mount({act, game:"werewolf", onHostChange:(hk, became)=>{ hostKey = hk; lastSig = ""; if(became) toast("You are now the host!"); if(room) render(); }});
+if(window.Juice) Juice.mountMute();
 
 /* ---------- host controls, clock ---------- */
 function renderHostbar(){
